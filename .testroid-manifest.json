@@ -1,0 +1,45 @@
+{
+  "testroidVersion": "1.6.0",
+  "createdAt": "2026-11-17T16:30:18.108Z",
+  "mode": "scaffold",
+  "added": [
+    ".github",
+    "README.md",
+    "api",
+    "docs",
+    "fixtures",
+    "global-setup.ts",
+    "global-teardown.ts",
+    "locators",
+    "mobile",
+    "package.json",
+    "pages",
+    "playwright.config.ts",
+    "skills",
+    "src",
+    "tests",
+    "tsconfig.json",
+    "utils",
+    ".env",
+    "CLAUDE.md",
+    ".mcp.json"
+  ],
+  "packageJson": {
+    "merged": false,
+    "added": {
+      "dependencies": [],
+      "devDependencies": [
+        "@playwright/mcp"
+      ],
+      "scripts": []
+    }
+  },
+  "mcp": {
+    "configCreated": true,
+    "configEntryAdded": true
+  },
+  "reporting": {
+    "choice": "ortoni",
+    "configEntriesAdded": true
+  }
+}

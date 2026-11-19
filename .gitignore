@@ -1,0 +1,13 @@
+
+# bddgen output — regenerated from features/** + step-definitions/** on every test run
+
+test-results/
+playwright-report/
+ortoni-report/
+allure-results/
+allure-report/
+logs/
+screenshots/
+
+# Saved sign-in session for the app under test (cookies) - a live credential, never commit it
+.auth/

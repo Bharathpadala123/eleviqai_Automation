@@ -1,0 +1,219 @@
+<h1>Instructions</h1>
+<ul>
+<li>Following Playwright test failed.</li>
+<li>Explain why, be concise, respect Playwright best practices.</li>
+<li>Provide a snippet of code with the fix, if possible.</li>
+</ul>
+<h1>Test info</h1>
+<ul>
+<li>Name: features\revenue-analytics\001.feature.spec.js &gt;&gt; Revenue analytics questions in the EleviqAI chat &gt;&gt; Ask the chat: Show sales before discounts for this year.</li>
+<li>Location: .features-gen\features\revenue-analytics\001.feature.spec.js:490:3</li>
+</ul>
+<h1>Error details</h1>
+<pre><code>TimeoutError: locator.waitFor: Timeout 5000ms exceeded.
+Call log:
+  - waiting for getByText(&#39;Overview&#39;).first() to be visible
+</code></pre>
+<h1>Test source</h1>
+<pre><code class="language-ts">  1   | import { expect, type Locator, type Page } from &#39;@playwright/test&#39;;
+  2   | import { logger } from &#39;../utils/logger&#39;;
+  3   | import { type LocatorStrategy, type LocatorStrategyList, locatorConstants } from &#39;../locators/locatorConstants&#39;;
+  4   | import { retryAsync } from &#39;../utils/retryHelper&#39;;
+  5   | import { ConsoleLogger } from &#39;../utils/consoleHelper&#39;;
+  6   | 
+  7   | type OptionalWaitOptions = {
+  8   |   timeoutMs?: number;
+  9   |   force?: boolean;
+  10  | };
+  11  | 
+  12  | type CapturedConsoleMessage = {
+  13  |   type: string;
+  14  |   text: string;
+  15  | };
+  16  | 
+  17  | /**
+  18  |  * Base class every Page Object extends. Owns the &quot;auto-healing&quot; locator strategy:
+  19  |  * an element is described as an ordered `LocatorStrategyList` (see
+  20  |  * `locators/locatorConstants.ts`) instead of a single selector, and `findElement`/
+  21  |  * `findElements` walk that list — most semantic first, most brittle last — returning
+  22  |  * the first strategy that actually resolves. If a site&#39;s markup changes and breaks
+  23  |  * the primary strategy, a Page Object built on `BasePage` keeps working as long as
+  24  |  * one of the fallback strategies still matches, instead of failing outright.
+  25  |  */
+  26  | export class BasePage {
+  27  |   protected readonly page: Page;
+  28  |   private consoleMessages: CapturedConsoleMessage[] = [];
+  29  | 
+  30  |   constructor(page: Page) {
+  31  |     this.page = page;
+  32  |   }
+  33  | 
+  34  |   /** `timeoutMs` overrides the configured navigationTimeout for this navigation only. */
+  35  |   protected async goto(path = &#39;/&#39;, timeoutMs?: number): Promise&lt;void&gt; {
+  36  |     logger.ui.navigation(`Navigating to ${path}`);
+  37  |     await this.page.goto(path, { waitUntil: &#39;domcontentloaded&#39;, timeout: timeoutMs });
+  38  |   }
+  39  | 
+  40  |   protected async reload(): Promise&lt;void&gt; {
+  41  |     logger.ui.navigation(&#39;Reloading page&#39;);
+  42  |     await this.page.reload({ waitUntil: &#39;domcontentloaded&#39; });
+  43  |   }
+  44  | 
+  45  |   protected async pressKey(key: string): Promise&lt;void&gt; {
+  46  |     logger.ui.click(`Pressing key: ${key}`);
+  47  |     await this.page.keyboard.press(key);
+  48  |   }
+  49  | 
+  50  |   protected startConsoleCapture(): void {
+  51  |     this.consoleMessages = [];
+  52  |     this.page.on(&#39;console&#39;, (message) =&gt; {
+  53  |       this.consoleMessages.push({ type: message.type(), text: message.text() });
+  54  |       ConsoleLogger.handleMessage(message);
+  55  |     });
+  56  |     this.page.on(&#39;pageerror&#39;, (error) =&gt; {
+  57  |       this.consoleMessages.push({ type: &#39;pageerror&#39;, text: error.message });
+  58  |       ConsoleLogger.handlePageError(error);
+  59  |     });
+  60  |   }
+  61  | 
+  62  |   protected getCapturedConsoleMessages(): CapturedConsoleMessage[] {
+  63  |     return this.consoleMessages;
+  64  |   }
+  65  | 
+  66  |   protected async waitForReady(): Promise&lt;void&gt; {
+  67  |     await this.page.waitForLoadState(&#39;domcontentloaded&#39;);
+  68  |   }
+  69  | 
+  70  |   protected buildLocator(strategy: LocatorStrategy): Locator {
+  71  |     switch (strategy.kind) {
+  72  |       case &#39;role&#39;:
+  73  |         return this.page.getByRole(strategy.role, { name: strategy.name });
+  74  |       case &#39;label&#39;:
+  75  |         return this.page.getByLabel(strategy.text);
+  76  |       case &#39;placeholder&#39;:
+  77  |         return this.page.getByPlaceholder(strategy.text);
+  78  |       case &#39;text&#39;:
+  79  |         return this.page.getByText(strategy.text);
+  80  |       case &#39;testId&#39;:
+  81  |         return this.page.getByTestId(strategy.testId);
+  82  |       case &#39;css&#39;:
+  83  |         return this.page.locator(strategy.selector);
+  84  |       default:
+  85  |         return this.page.locator(&#39;html&#39;);
+  86  |     }
+  87  |   }
+  88  | 
+  89  |   /** Walks `strategies` in order, returning the first one that resolves within `timeoutMs`. */
+  90  |   protected async findElement(strategies: LocatorStrategyList, options: OptionalWaitOptions = {}): Promise&lt;Locator&gt; {
+  91  |     const timeoutMs = options.timeoutMs ?? 5000;
+  92  | 
+  93  |     return retryAsync(async () =&gt; {
+  94  |       let lastError: Error | undefined;
+  95  | 
+  96  |       for (const strategy of strategies) {
+  97  |         const locator = this.buildLocator(strategy).first();
+  98  | 
+  99  |         try {
+&gt; 100 |           await locator.waitFor({ state: &#39;visible&#39;, timeout: timeoutMs });
+      |                         ^ TimeoutError: locator.waitFor: Timeout 5000ms exceeded.
+  101 |           return locator;
+  102 |         } catch (error) {
+  103 |           lastError = error instanceof Error ? error : new Error(String(error));
+  104 |         }
+  105 |       }
+  106 | 
+  107 |       throw lastError ?? new Error(&#39;Unable to locate element&#39;);
+  108 |     }, { retries: 0 });
+  109 |   }
+  110 | 
+  111 |   protected getStrategyDescription(strategy: LocatorStrategy): string {
+  112 |     switch (strategy.kind) {
+  113 |       case &#39;role&#39;:
+  114 |         return `getByRole(&#39;${strategy.role}&#39;)`;
+  115 |       case &#39;label&#39;:
+  116 |         return `getByLabel(&#39;${strategy.text}&#39;)`;
+  117 |       case &#39;placeholder&#39;:
+  118 |         return `getByPlaceholder(&#39;${strategy.text}&#39;)`;
+  119 |       case &#39;text&#39;:
+  120 |         return `getByText(&#39;${strategy.text}&#39;)`;
+  121 |       case &#39;testId&#39;:
+  122 |         return `getByTestId(&#39;${strategy.testId}&#39;)`;
+  123 |       case &#39;css&#39;:
+  124 |         return strategy.selector;
+  125 |       default:
+  126 |         return &#39;unknown&#39;;
+  127 |     }
+  128 |   }
+  129 | 
+  130 |   protected async click(strategies: LocatorStrategyList, options: OptionalWaitOptions = {}): Promise&lt;void&gt; {
+  131 |     const locator = await this.findElement(strategies, options);
+  132 |     const context = strategies.map(s =&gt; this.getStrategyDescription(s)).join(&#39; | &#39;);
+  133 | 
+  134 |     logger.ui.click(`Clicking ${context}`);
+  135 |     try {
+  136 |       await locator.click({ timeout: 3000, force: options.force ?? false });
+  137 |     } catch (error) {
+  138 |       logger.error.exception(`Failed to click ${context}: ${(error as Error).message}`);
+  139 |       throw error;
+  140 |     }
+  141 |   }
+  142 | 
+  143 |   protected async fill(strategies: LocatorStrategyList, value: string, options: OptionalWaitOptions = {}): Promise&lt;void&gt; {
+  144 |     const locator = await this.findElement(strategies, options);
+  145 |     const context = strategies.map(s =&gt; this.getStrategyDescription(s)).join(&#39; | &#39;);
+  146 | 
+  147 |     logger.ui.fill(`Filling &quot;${context}&quot; with value length=${value.length}`);
+  148 |     try {
+  149 |       await locator.fill(value, { timeout: 3000 });
+  150 |     } catch (error) {
+  151 |       logger.error.exception(`Failed to fill &quot;${context}&quot;: ${(error as Error).message}`);
+  152 |       throw error;
+  153 |     }
+  154 |   }
+  155 | 
+  156 |   protected async selectOption(strategies: LocatorStrategyList, value: string, options: OptionalWaitOptions = {}): Promise&lt;void&gt; {
+  157 |     const locator = await this.findElement(strategies, options);
+  158 |     const context = strategies.map(s =&gt; this.getStrategyDescription(s)).join(&#39; | &#39;);
+  159 | 
+  160 |     logger.ui.dropdown(`Selecting &quot;${value}&quot; in ${context}`);
+  161 |     try {
+  162 |       await locator.selectOption(value, { timeout: 3000 });
+  163 |     } catch (error) {
+  164 |       logger.error.exception(`Failed to select in &quot;${context}&quot;: ${(error as Error).message}`);
+  165 |       throw error;
+  166 |     }
+  167 |   }
+  168 | 
+  169 |   protected async check(strategies: LocatorStrategyList, options: OptionalWaitOptions = {}): Promise&lt;void&gt; {
+  170 |     const locator = await this.findElement(strategies, options);
+  171 |     const context = strategies.map(s =&gt; this.getStrategyDescription(s)).join(&#39; | &#39;);
+  172 | 
+  173 |     logger.ui.check(`Checking ${context}`);
+  174 |     try {
+  175 |       await locator.check({ timeout: 3000 });
+  176 |     } catch (error) {
+  177 |       logger.error.exception(`Failed to check ${context}: ${(error as Error).message}`);
+  178 |       throw error;
+  179 |     }
+  180 |   }
+  181 | 
+  182 |   protected async uncheck(strategies: LocatorStrategyList, options: OptionalWaitOptions = {}): Promise&lt;void&gt; {
+  183 |     const locator = await this.findElement(strategies, options);
+  184 |     const context = strategies.map(s =&gt; this.getStrategyDescription(s)).join(&#39; | &#39;);
+  185 | 
+  186 |     logger.ui.check(`Unchecking ${context}`);
+  187 |     try {
+  188 |       await locator.uncheck({ timeout: 3000 });
+  189 |     } catch (error) {
+  190 |       logger.error.exception(`Failed to uncheck ${context}: ${(error as Error).message}`);
+  191 |       throw error;
+  192 |     }
+  193 |   }
+  194 | 
+  195 |   protected async hover(strategies: LocatorStrategyList, options: OptionalWaitOptions = {}): Promise&lt;void&gt; {
+  196 |     const locator = await this.findElement(strategies, options);
+  197 |     const context = strategies.map(s =&gt; this.getStrategyDescription(s)).join(&#39; | &#39;);
+  198 | 
+  199 |     logger.ui.hover(`Hovering over ${context}`);
+  200 |     try {
+</code></pre>

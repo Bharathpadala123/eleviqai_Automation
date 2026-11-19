@@ -1,0 +1,1447 @@
+<h1>Instructions</h1>
+<ul>
+<li>Following Playwright test failed.</li>
+<li>Explain why, be concise, respect Playwright best practices.</li>
+<li>Provide a snippet of code with the fix, if possible.</li>
+</ul>
+<h1>Test info</h1>
+<ul>
+<li>Name: features\revenue-analytics\001.feature.spec.js &gt;&gt; Revenue analytics questions in the EleviqAI chat &gt;&gt; Ask the chat: Break down sales before discounts by month for this year.</li>
+<li>Location: .features-gen\features\revenue-analytics\001.feature.spec.js:514:3</li>
+</ul>
+<h1>Error details</h1>
+<pre><code>Error: SQL oracle NOT MATCHED for REV-043:
+- Check 4 - Correctness (oracle figures match the chat figures): Oracle: 391.25, 521.00, 942.00, 8436.02. Chat: 391.25, 521.00, 942.00, 8346.52. No accepted alternative matched either (invoice gross_amount (fact_invoice)).
+</code></pre>
+<h1>Page snapshot</h1>
+<pre><code class="language-yaml">- generic [ref=e3]:
+  - complementary [ref=e4]:
+    - generic [ref=e5]:
+      - button &quot;Collapse sidebar&quot; [ref=e6] [cursor=pointer]
+      - link &quot;EleviqAI — visit eleviqai.com (opens in a new tab)&quot; [ref=e10] [cursor=pointer]:
+        - /url: https://www.eleviqai.com
+      - button &quot;New Chat&quot; [ref=e11] [cursor=pointer]
+    - navigation &quot;Workspace&quot; [ref=e14]:
+      - button &quot;Overview&quot; [ref=e15] [cursor=pointer]
+      - button &quot;Dashboards&quot; [ref=e20] [cursor=pointer]
+      - button &quot;What-If Analysis&quot; [ref=e27] [cursor=pointer]
+      - button &quot;Alerts&quot; [ref=e32] [cursor=pointer]
+    - generic [ref=e37]:
+      - group &quot;Pinned&quot; [ref=e38]:
+        - button &quot;Pinned&quot; [ref=e39] [cursor=pointer]
+      - group &quot;Recents&quot; [ref=e43]:
+        - button &quot;Recents&quot; [expanded] [ref=e44] [cursor=pointer]
+        - generic [ref=e49]:
+          - generic [ref=e50] [cursor=pointer]:
+            - generic &quot;Break down sales before discounts by month for this year.&quot; [ref=e51]
+            - button &quot;Options&quot; [ref=e53]
+          - generic [ref=e58] [cursor=pointer]:
+            - generic &quot;What was sales before discounts during this year?&quot; [ref=e59]
+            - button &quot;Options&quot; [ref=e61]
+          - generic [ref=e66] [cursor=pointer]:
+            - generic &quot;Show sales before discounts for this year.&quot; [ref=e67]
+            - button &quot;Options&quot; [ref=e69]
+          - generic [ref=e74] [cursor=pointer]:
+            - generic &quot;Identify the top five contributors to recognised sales for last quarter.&quot; [ref=e75]
+            - button &quot;Options&quot; [ref=e77]
+          - generic [ref=e82] [cursor=pointer]:
+            - generic &quot;How did recognised sales change during last quarter compared with the preceding&quot; [ref=e83]
+            - button &quot;Options&quot; [ref=e85]
+          - generic [ref=e90] [cursor=pointer]:
+            - generic &quot;Show recognised sales by customer for last quarter, highest to lowest.&quot; [ref=e91]
+            - button &quot;Options&quot; [ref=e93]
+          - generic [ref=e98] [cursor=pointer]:
+            - generic &quot;Which products or services generated the highest recognised sales in last quarte&quot; [ref=e99]
+            - button &quot;Options&quot; [ref=e101]
+          - generic [ref=e106] [cursor=pointer]:
+            - generic &quot;Which customers contributed the most to recognised sales in last quarter?&quot; [ref=e107]
+            - button &quot;Options&quot; [ref=e109]
+          - generic [ref=e114] [cursor=pointer]:
+            - generic &quot;Show the trend in recognised sales over last quarter.&quot; [ref=e115]
+            - button &quot;Options&quot; [ref=e117]
+          - generic [ref=e122] [cursor=pointer]:
+            - generic &quot;Compare recognised sales across the months in last quarter.&quot; [ref=e123]
+            - button &quot;Options&quot; [ref=e125]
+          - generic [ref=e130] [cursor=pointer]:
+            - generic &quot;Break down recognised sales by month for last quarter.&quot; [ref=e131]
+            - button &quot;Options&quot; [ref=e133]
+          - generic [ref=e138] [cursor=pointer]:
+            - generic &quot;What was recognised sales during last quarter?&quot; [ref=e139]
+            - button &quot;Options&quot; [ref=e141]
+          - generic [ref=e146] [cursor=pointer]:
+            - generic &quot;Show recognised sales for last quarter.&quot; [ref=e147]
+            - button &quot;Options&quot; [ref=e149]
+          - generic [ref=e154] [cursor=pointer]:
+            - generic &quot;Identify the top five contributors to invoiced revenue for this quarter.&quot; [ref=e155]
+            - button &quot;Options&quot; [ref=e157]
+          - generic [ref=e162] [cursor=pointer]:
+            - generic &quot;How did invoiced revenue change during this quarter compared with the preceding&quot; [ref=e163]
+            - button &quot;Options&quot; [ref=e165]
+          - generic [ref=e170] [cursor=pointer]:
+            - generic &quot;Show invoiced revenue by customer for this quarter, highest to lowest.&quot; [ref=e171]
+            - button &quot;Options&quot; [ref=e173]
+          - generic [ref=e178] [cursor=pointer]:
+            - generic &quot;Which products or services generated the highest invoiced revenue in this quarte&quot; [ref=e179]
+            - button &quot;Options&quot; [ref=e181]
+          - generic [ref=e186] [cursor=pointer]:
+            - generic &quot;Which customers contributed the most to invoiced revenue in this quarter?&quot; [ref=e187]
+            - button &quot;Options&quot; [ref=e189]
+          - generic [ref=e194] [cursor=pointer]:
+            - generic &quot;Show the trend in invoiced revenue over this quarter.&quot; [ref=e195]
+            - button &quot;Options&quot; [ref=e197]
+          - generic [ref=e202] [cursor=pointer]:
+            - generic &quot;Compare invoiced revenue across the months in this quarter.&quot; [ref=e203]
+            - button &quot;Options&quot; [ref=e205]
+          - generic [ref=e210] [cursor=pointer]:
+            - generic &quot;Break down invoiced revenue by month for this quarter.&quot; [ref=e211]
+            - button &quot;Options&quot; [ref=e213]
+          - generic [ref=e218] [cursor=pointer]:
+            - generic &quot;What was invoiced revenue during this quarter?&quot; [ref=e219]
+            - button &quot;Options&quot; [ref=e221]
+          - generic [ref=e226] [cursor=pointer]:
+            - generic &quot;Show invoiced revenue for this quarter.&quot; [ref=e227]
+            - button &quot;Options&quot; [ref=e229]
+          - generic [ref=e234] [cursor=pointer]:
+            - generic &quot;Identify the top five contributors to gross revenue for last month.&quot; [ref=e235]
+            - button &quot;Options&quot; [ref=e237]
+          - generic [ref=e242] [cursor=pointer]:
+            - generic &quot;How did gross revenue change during last month compared with the preceding perio&quot; [ref=e243]
+            - button &quot;Options&quot; [ref=e245]
+          - generic [ref=e250] [cursor=pointer]:
+            - generic &quot;Show gross revenue by customer for last month, highest to lowest.&quot; [ref=e251]
+            - button &quot;Options&quot; [ref=e253]
+          - generic [ref=e258] [cursor=pointer]:
+            - generic &quot;Which products or services generated the highest gross revenue in last month?&quot; [ref=e259]
+            - button &quot;Options&quot; [ref=e261]
+          - generic [ref=e266] [cursor=pointer]:
+            - generic &quot;Which customers contributed the most to gross revenue in last month?&quot; [ref=e267]
+            - button &quot;Options&quot; [ref=e269]
+          - generic [ref=e274] [cursor=pointer]:
+            - generic &quot;Show the trend in gross revenue over last month.&quot; [ref=e275]
+            - button &quot;Options&quot; [ref=e277]
+          - generic [ref=e282] [cursor=pointer]:
+            - generic &quot;Compare gross revenue across the months in last month.&quot; [ref=e283]
+            - button &quot;Options&quot; [ref=e285]
+          - generic [ref=e290] [cursor=pointer]:
+            - generic &quot;Break down gross revenue by month for last month.&quot; [ref=e291]
+            - button &quot;Options&quot; [ref=e293]
+          - generic [ref=e298] [cursor=pointer]:
+            - generic &quot;What was gross revenue during last month?&quot; [ref=e299]
+            - button &quot;Options&quot; [ref=e301]
+          - generic [ref=e306] [cursor=pointer]:
+            - generic &quot;Show gross revenue for last month.&quot; [ref=e307]
+            - button &quot;Options&quot; [ref=e309]
+          - generic [ref=e314] [cursor=pointer]:
+            - generic &quot;Identify the top five contributors to total sales for this month.&quot; [ref=e315]
+            - button &quot;Options&quot; [ref=e317]
+          - generic [ref=e322] [cursor=pointer]:
+            - generic &quot;How did total sales change during this month compared with the preceding period?&quot; [ref=e323]
+            - button &quot;Options&quot; [ref=e325]
+          - generic [ref=e330] [cursor=pointer]:
+            - generic &quot;Show total sales by customer for this month, highest to lowest.&quot; [ref=e331]
+            - button &quot;Options&quot; [ref=e333]
+          - generic [ref=e338] [cursor=pointer]:
+            - generic &quot;Which products or services generated the highest total sales in this month?&quot; [ref=e339]
+            - button &quot;Options&quot; [ref=e341]
+          - generic [ref=e346] [cursor=pointer]:
+            - generic &quot;Which customers contributed the most to total sales in this month?&quot; [ref=e347]
+            - button &quot;Options&quot; [ref=e349]
+          - generic [ref=e354] [cursor=pointer]:
+            - generic &quot;Show the trend in total sales over this month.&quot; [ref=e355]
+            - button &quot;Options&quot; [ref=e357]
+          - generic [ref=e362] [cursor=pointer]:
+            - generic &quot;Compare total sales across the months in this month.&quot; [ref=e363]
+            - button &quot;Options&quot; [ref=e365]
+          - generic [ref=e370] [cursor=pointer]:
+            - generic &quot;Break down total sales by month for this month.&quot; [ref=e371]
+            - button &quot;Options&quot; [ref=e373]
+          - generic [ref=e378] [cursor=pointer]:
+            - generic &quot;What was total sales during this month?&quot; [ref=e379]
+            - button &quot;Options&quot; [ref=e381]
+          - generic [ref=e386] [cursor=pointer]:
+            - generic &quot;Show total sales for this month.&quot; [ref=e387]
+            - button &quot;Options&quot; [ref=e389]
+          - generic [ref=e394] [cursor=pointer]:
+            - generic &quot;Show sales before discounts for this year.&quot; [ref=e395]
+            - button &quot;Options&quot; [ref=e397]
+          - generic [ref=e402] [cursor=pointer]:
+            - generic &quot;Show invoiced revenue for this quarter.&quot; [ref=e403]
+            - button &quot;Options&quot; [ref=e405]
+          - generic [ref=e410] [cursor=pointer]:
+            - generic &quot;Show gross revenue by customer for last month, highest to lowest.&quot; [ref=e411]
+            - button &quot;Options&quot; [ref=e413]
+          - generic [ref=e418] [cursor=pointer]:
+            - generic &quot;Show the trend in total sales over this month.&quot; [ref=e419]
+            - button &quot;Options&quot; [ref=e421]
+          - generic [ref=e426] [cursor=pointer]:
+            - generic &quot;Identify the top five contributors to sales before discounts for this year.&quot; [ref=e427]
+            - button &quot;Options&quot; [ref=e429]
+          - generic [ref=e434] [cursor=pointer]:
+            - generic &quot;How did sales before discounts change during this year compared with the precedi&quot; [ref=e435]
+            - button &quot;Options&quot; [ref=e437]
+          - generic [ref=e442] [cursor=pointer]:
+            - generic &quot;Show sales before discounts by customer for this year, highest to lowest.&quot; [ref=e443]
+            - button &quot;Options&quot; [ref=e445]
+          - generic [ref=e450] [cursor=pointer]:
+            - generic &quot;Compare sales before discounts across the months in this year.&quot; [ref=e451]
+            - button &quot;Options&quot; [ref=e453]
+          - generic [ref=e458] [cursor=pointer]:
+            - generic &quot;Show sales before discounts for this year.&quot; [ref=e459]
+            - button &quot;Options&quot; [ref=e461]
+          - generic [ref=e466] [cursor=pointer]:
+            - generic &quot;Show sales before discounts by customer for this year, highest to lowest.&quot; [ref=e467]
+            - button &quot;Options&quot; [ref=e469]
+          - generic [ref=e474] [cursor=pointer]:
+            - generic &quot;Which customers contributed the most to sales before discounts in this year?&quot; [ref=e475]
+            - button &quot;Options&quot; [ref=e477]
+          - generic [ref=e482] [cursor=pointer]:
+            - generic &quot;Show the trend in sales before discounts over this year.&quot; [ref=e483]
+            - button &quot;Options&quot; [ref=e485]
+          - generic [ref=e490] [cursor=pointer]:
+            - generic &quot;Compare sales before discounts across the months in this year.&quot; [ref=e491]
+            - button &quot;Options&quot; [ref=e493]
+          - generic [ref=e498] [cursor=pointer]:
+            - generic &quot;Break down sales before discounts by month for this year.&quot; [ref=e499]
+            - button &quot;Options&quot; [ref=e501]
+          - generic [ref=e506] [cursor=pointer]:
+            - generic &quot;What was sales before discounts during this year?&quot; [ref=e507]
+            - button &quot;Options&quot; [ref=e509]
+          - generic [ref=e514] [cursor=pointer]:
+            - generic &quot;Identify the top five contributors to recognised sales for last quarter.&quot; [ref=e515]
+            - button &quot;Options&quot; [ref=e517]
+          - generic [ref=e522] [cursor=pointer]:
+            - generic &quot;How did recognised sales change during last quarter compared with the preceding&quot; [ref=e523]
+            - button &quot;Options&quot; [ref=e525]
+          - generic [ref=e530] [cursor=pointer]:
+            - generic &quot;Show recognised sales by customer for last quarter, highest to lowest.&quot; [ref=e531]
+            - button &quot;Options&quot; [ref=e533]
+          - generic [ref=e538] [cursor=pointer]:
+            - generic &quot;Which customers contributed the most to recognised sales in last quarter?&quot; [ref=e539]
+            - button &quot;Options&quot; [ref=e541]
+          - generic [ref=e546] [cursor=pointer]:
+            - generic &quot;Show the trend in recognised sales over last quarter.&quot; [ref=e547]
+            - button &quot;Options&quot; [ref=e549]
+          - generic [ref=e554] [cursor=pointer]:
+            - generic &quot;Compare recognised sales across the months in last quarter.&quot; [ref=e555]
+            - button &quot;Options&quot; [ref=e557]
+          - generic [ref=e562] [cursor=pointer]:
+            - generic &quot;What was recognised sales during last quarter?&quot; [ref=e563]
+            - button &quot;Options&quot; [ref=e565]
+          - generic [ref=e570] [cursor=pointer]:
+            - generic &quot;Show recognised sales for last quarter.&quot; [ref=e571]
+            - button &quot;Options&quot; [ref=e573]
+          - generic [ref=e578] [cursor=pointer]:
+            - generic &quot;How did invoiced revenue change during this quarter compared with the preceding&quot; [ref=e579]
+            - button &quot;Options&quot; [ref=e581]
+          - generic [ref=e586] [cursor=pointer]:
+            - generic &quot;What was invoiced revenue during this quarter?&quot; [ref=e587]
+            - button &quot;Options&quot; [ref=e589]
+          - generic [ref=e594] [cursor=pointer]:
+            - generic &quot;Identify the top five contributors to sales before discounts for this year.&quot; [ref=e595]
+            - button &quot;Options&quot; [ref=e597]
+          - generic [ref=e602] [cursor=pointer]:
+            - generic &quot;How did sales before discounts change during this year compared with the precedi&quot; [ref=e603]
+            - button &quot;Options&quot; [ref=e605]
+          - generic [ref=e610] [cursor=pointer]:
+            - generic &quot;Show sales before discounts by customer for this year, highest to lowest.&quot; [ref=e611]
+            - button &quot;Options&quot; [ref=e613]
+          - generic [ref=e618] [cursor=pointer]:
+            - generic &quot;Which products or services generated the highest sales before discounts in this&quot; [ref=e619]
+            - button &quot;Options&quot; [ref=e621]
+          - generic [ref=e626] [cursor=pointer]:
+            - generic &quot;Which customers contributed the most to sales before discounts in this year?&quot; [ref=e627]
+            - button &quot;Options&quot; [ref=e629]
+          - generic [ref=e634] [cursor=pointer]:
+            - generic &quot;Show the trend in sales before discounts over this year.&quot; [ref=e635]
+            - button &quot;Options&quot; [ref=e637]
+          - generic [ref=e642] [cursor=pointer]:
+            - generic &quot;Break down sales before discounts by month for this year.&quot; [ref=e643]
+            - button &quot;Options&quot; [ref=e645]
+          - generic [ref=e650] [cursor=pointer]:
+            - generic &quot;What was sales before discounts during this year?&quot; [ref=e651]
+            - button &quot;Options&quot; [ref=e653]
+          - generic [ref=e658] [cursor=pointer]:
+            - generic &quot;Show sales before discounts for this year.&quot; [ref=e659]
+            - button &quot;Options&quot; [ref=e661]
+          - generic [ref=e666] [cursor=pointer]:
+            - generic &quot;Identify the top five contributors to recognised sales for last quarter.&quot; [ref=e667]
+            - button &quot;Options&quot; [ref=e669]
+          - generic [ref=e674] [cursor=pointer]:
+            - generic &quot;How did recognised sales change during last quarter compared with the preceding&quot; [ref=e675]
+            - button &quot;Options&quot; [ref=e677]
+          - generic [ref=e682] [cursor=pointer]:
+            - generic &quot;Show recognised sales by customer for last quarter, highest to lowest.&quot; [ref=e683]
+            - button &quot;Options&quot; [ref=e685]
+          - generic [ref=e690] [cursor=pointer]:
+            - generic &quot;Which products or services generated the highest recognised sales in last quarte&quot; [ref=e691]
+            - button &quot;Options&quot; [ref=e693]
+          - generic [ref=e698] [cursor=pointer]:
+            - generic &quot;Which customers contributed the most to recognised sales in last quarter?&quot; [ref=e699]
+            - button &quot;Options&quot; [ref=e701]
+          - generic [ref=e706] [cursor=pointer]:
+            - generic &quot;Show the trend in recognised sales over last quarter.&quot; [ref=e707]
+            - button &quot;Options&quot; [ref=e709]
+          - generic [ref=e714] [cursor=pointer]:
+            - generic &quot;Compare recognised sales across the months in last quarter.&quot; [ref=e715]
+            - button &quot;Options&quot; [ref=e717]
+          - generic [ref=e722] [cursor=pointer]:
+            - generic &quot;Break down recognised sales by month for last quarter.&quot; [ref=e723]
+            - button &quot;Options&quot; [ref=e725]
+          - generic [ref=e730] [cursor=pointer]:
+            - generic &quot;What was recognised sales during last quarter?&quot; [ref=e731]
+            - button &quot;Options&quot; [ref=e733]
+          - generic [ref=e738] [cursor=pointer]:
+            - generic &quot;Show recognised sales for last quarter.&quot; [ref=e739]
+            - button &quot;Options&quot; [ref=e741]
+          - generic [ref=e746] [cursor=pointer]:
+            - generic &quot;Identify the top five contributors to invoiced revenue for this quarter.&quot; [ref=e747]
+            - button &quot;Options&quot; [ref=e749]
+          - generic [ref=e754] [cursor=pointer]:
+            - generic &quot;How did invoiced revenue change during this quarter compared with the preceding&quot; [ref=e755]
+            - button &quot;Options&quot; [ref=e757]
+          - generic [ref=e762] [cursor=pointer]:
+            - generic &quot;Show invoiced revenue by customer for this quarter, highest to lowest.&quot; [ref=e763]
+            - button &quot;Options&quot; [ref=e765]
+          - generic [ref=e770] [cursor=pointer]:
+            - generic &quot;Which products or services generated the highest invoiced revenue in this quarte&quot; [ref=e771]
+            - button &quot;Options&quot; [ref=e773]
+          - generic [ref=e778] [cursor=pointer]:
+            - generic &quot;Which customers contributed the most to invoiced revenue in this quarter?&quot; [ref=e779]
+            - button &quot;Options&quot; [ref=e781]
+          - generic [ref=e786] [cursor=pointer]:
+            - generic &quot;Show the trend in invoiced revenue over this quarter.&quot; [ref=e787]
+            - button &quot;Options&quot; [ref=e789]
+          - generic [ref=e794] [cursor=pointer]:
+            - generic &quot;Compare invoiced revenue across the months in this quarter.&quot; [ref=e795]
+            - button &quot;Options&quot; [ref=e797]
+          - generic [ref=e802] [cursor=pointer]:
+            - generic &quot;Break down invoiced revenue by month for this quarter.&quot; [ref=e803]
+            - button &quot;Options&quot; [ref=e805]
+          - generic [ref=e810] [cursor=pointer]:
+            - generic &quot;What was invoiced revenue during this quarter?&quot; [ref=e811]
+            - button &quot;Options&quot; [ref=e813]
+          - generic [ref=e818] [cursor=pointer]:
+            - generic &quot;Show invoiced revenue for this quarter.&quot; [ref=e819]
+            - button &quot;Options&quot; [ref=e821]
+          - generic [ref=e826] [cursor=pointer]:
+            - generic &quot;Show the trend in total sales over this month.&quot; [ref=e827]
+            - button &quot;Options&quot; [ref=e829]
+          - generic [ref=e834] [cursor=pointer]:
+            - generic &quot;Identify the top five contributors to gross revenue for last month.&quot; [ref=e835]
+            - button &quot;Options&quot; [ref=e837]
+          - generic [ref=e842] [cursor=pointer]:
+            - generic &quot;How did gross revenue change during last month compared with the preceding perio&quot; [ref=e843]
+            - button &quot;Options&quot; [ref=e845]
+          - generic [ref=e850] [cursor=pointer]:
+            - generic &quot;Show gross revenue by customer for last month, highest to lowest.&quot; [ref=e851]
+            - button &quot;Options&quot; [ref=e853]
+          - generic [ref=e858] [cursor=pointer]:
+            - generic &quot;Which products or services generated the highest gross revenue in last month?&quot; [ref=e859]
+            - button &quot;Options&quot; [ref=e861]
+          - generic [ref=e866] [cursor=pointer]:
+            - generic &quot;Which customers contributed the most to gross revenue in last month?&quot; [ref=e867]
+            - button &quot;Options&quot; [ref=e869]
+          - generic [ref=e874] [cursor=pointer]:
+            - generic &quot;Show the trend in gross revenue over last month.&quot; [ref=e875]
+            - button &quot;Options&quot; [ref=e877]
+          - generic [ref=e882] [cursor=pointer]:
+            - generic &quot;Compare gross revenue across the months in last month.&quot; [ref=e883]
+            - button &quot;Options&quot; [ref=e885]
+          - generic [ref=e890] [cursor=pointer]:
+            - generic &quot;Break down gross revenue by month for last month.&quot; [ref=e891]
+            - button &quot;Options&quot; [ref=e893]
+          - generic [ref=e898] [cursor=pointer]:
+            - generic &quot;What was gross revenue during last month?&quot; [ref=e899]
+            - button &quot;Options&quot; [ref=e901]
+          - generic [ref=e906] [cursor=pointer]:
+            - generic &quot;Show gross revenue for last month.&quot; [ref=e907]
+            - button &quot;Options&quot; [ref=e909]
+          - generic [ref=e914] [cursor=pointer]:
+            - generic &quot;Identify the top five contributors to total sales for this month.&quot; [ref=e915]
+            - button &quot;Options&quot; [ref=e917]
+          - generic [ref=e922] [cursor=pointer]:
+            - generic &quot;How did total sales change during this month compared with the preceding period?&quot; [ref=e923]
+            - button &quot;Options&quot; [ref=e925]
+          - generic [ref=e930] [cursor=pointer]:
+            - generic &quot;Show total sales by customer for this month, highest to lowest.&quot; [ref=e931]
+            - button &quot;Options&quot; [ref=e933]
+          - generic [ref=e938] [cursor=pointer]:
+            - generic &quot;Which products or services generated the highest total sales in this month?&quot; [ref=e939]
+            - button &quot;Options&quot; [ref=e941]
+          - generic [ref=e946] [cursor=pointer]:
+            - generic &quot;Which customers contributed the most to total sales in this month?&quot; [ref=e947]
+            - button &quot;Options&quot; [ref=e949]
+          - generic [ref=e954] [cursor=pointer]:
+            - generic &quot;Compare total sales across the months in this month.&quot; [ref=e955]
+            - button &quot;Options&quot; [ref=e957]
+          - generic [ref=e962] [cursor=pointer]:
+            - generic &quot;Break down total sales by month for this month.&quot; [ref=e963]
+            - button &quot;Options&quot; [ref=e965]
+          - generic [ref=e970] [cursor=pointer]:
+            - generic &quot;What was total sales during this month?&quot; [ref=e971]
+            - button &quot;Options&quot; [ref=e973]
+          - generic [ref=e978] [cursor=pointer]:
+            - generic &quot;Show total sales for this month.&quot; [ref=e979]
+            - button &quot;Options&quot; [ref=e981]
+          - generic [ref=e986] [cursor=pointer]:
+            - generic &quot;Identify the top five contributors to total sales for this month.&quot; [ref=e987]
+            - button &quot;Options&quot; [ref=e989]
+          - generic [ref=e994] [cursor=pointer]:
+            - generic &quot;How did gross revenue change during last month compared with the preceding perio&quot; [ref=e995]
+            - button &quot;Options&quot; [ref=e997]
+          - generic [ref=e1002] [cursor=pointer]:
+            - generic &quot;How did gross revenue change during last month compared with the preceding perio&quot; [ref=e1003]
+            - button &quot;Options&quot; [ref=e1005]
+          - generic [ref=e1010] [cursor=pointer]:
+            - generic &quot;Show the trend in gross revenue over last month.&quot; [ref=e1011]
+            - button &quot;Options&quot; [ref=e1013]
+          - generic [ref=e1018] [cursor=pointer]:
+            - generic &quot;Identify the top five contributors to gross revenue for last month.&quot; [ref=e1019]
+            - button &quot;Options&quot; [ref=e1021]
+          - generic [ref=e1026] [cursor=pointer]:
+            - generic &quot;How did gross revenue change during last month compared with the preceding perio&quot; [ref=e1027]
+            - button &quot;Options&quot; [ref=e1029]
+          - generic [ref=e1034] [cursor=pointer]:
+            - generic &quot;Show gross revenue by customer for last month, highest to lowest.&quot; [ref=e1035]
+            - button &quot;Options&quot; [ref=e1037]
+          - generic [ref=e1042] [cursor=pointer]:
+            - generic &quot;Which products or services generated the highest gross revenue in last month?&quot; [ref=e1043]
+            - button &quot;Options&quot; [ref=e1045]
+          - generic [ref=e1050] [cursor=pointer]:
+            - generic &quot;Which customers contributed the most to gross revenue in last month?&quot; [ref=e1051]
+            - button &quot;Options&quot; [ref=e1053]
+          - generic [ref=e1058] [cursor=pointer]:
+            - generic &quot;Show the trend in gross revenue over last month.&quot; [ref=e1059]
+            - button &quot;Options&quot; [ref=e1061]
+          - generic [ref=e1066] [cursor=pointer]:
+            - generic &quot;Compare gross revenue across the months in last month.&quot; [ref=e1067]
+            - button &quot;Options&quot; [ref=e1069]
+          - generic [ref=e1074] [cursor=pointer]:
+            - generic &quot;What was gross revenue during last month?&quot; [ref=e1075]
+            - button &quot;Options&quot; [ref=e1077]
+          - generic [ref=e1082] [cursor=pointer]:
+            - generic &quot;Show the trend in gross revenue over last month.&quot; [ref=e1083]
+            - button &quot;Options&quot; [ref=e1085]
+          - generic [ref=e1090] [cursor=pointer]:
+            - generic &quot;Compare gross revenue across the months in last month.&quot; [ref=e1091]
+            - button &quot;Options&quot; [ref=e1093]
+          - generic [ref=e1098] [cursor=pointer]:
+            - generic &quot;Break down gross revenue by month for last month.&quot; [ref=e1099]
+            - button &quot;Options&quot; [ref=e1101]
+          - generic [ref=e1106] [cursor=pointer]:
+            - generic &quot;What was gross revenue during last month?&quot; [ref=e1107]
+            - button &quot;Options&quot; [ref=e1109]
+          - generic [ref=e1114] [cursor=pointer]:
+            - generic &quot;Show gross revenue for last month.&quot; [ref=e1115]
+            - button &quot;Options&quot; [ref=e1117]
+          - generic [ref=e1122] [cursor=pointer]:
+            - generic &quot;Identify the top five contributors to total sales for this month.&quot; [ref=e1123]
+            - button &quot;Options&quot; [ref=e1125]
+          - generic [ref=e1130] [cursor=pointer]:
+            - generic &quot;How did total sales change during this month compared with the preceding period?&quot; [ref=e1131]
+            - button &quot;Options&quot; [ref=e1133]
+          - generic [ref=e1138] [cursor=pointer]:
+            - generic &quot;Show total sales by customer for this month, highest to lowest.&quot; [ref=e1139]
+            - button &quot;Options&quot; [ref=e1141]
+          - generic [ref=e1146] [cursor=pointer]:
+            - generic &quot;Which products or services generated the highest total sales in this month?&quot; [ref=e1147]
+            - button &quot;Options&quot; [ref=e1149]
+          - generic [ref=e1154] [cursor=pointer]:
+            - generic &quot;Which customers contributed the most to total sales in this month?&quot; [ref=e1155]
+            - button &quot;Options&quot; [ref=e1157]
+          - generic [ref=e1162] [cursor=pointer]:
+            - generic &quot;Show the trend in total sales over this month.&quot; [ref=e1163]
+            - button &quot;Options&quot; [ref=e1165]
+          - generic [ref=e1170] [cursor=pointer]:
+            - generic &quot;Compare total sales across the months in this month.&quot; [ref=e1171]
+            - button &quot;Options&quot; [ref=e1173]
+          - generic [ref=e1178] [cursor=pointer]:
+            - generic &quot;Break down total sales by month for this month.&quot; [ref=e1179]
+            - button &quot;Options&quot; [ref=e1181]
+          - generic [ref=e1186] [cursor=pointer]:
+            - generic &quot;What was total sales during this month?&quot; [ref=e1187]
+            - button &quot;Options&quot; [ref=e1189]
+          - generic [ref=e1194] [cursor=pointer]:
+            - generic &quot;Show total sales for this month.&quot; [ref=e1195]
+            - button &quot;Options&quot; [ref=e1197]
+          - generic [ref=e1202] [cursor=pointer]:
+            - generic &quot;Which products or services generated the highest total sales in this month?&quot; [ref=e1203]
+            - button &quot;Options&quot; [ref=e1205]
+          - generic [ref=e1210] [cursor=pointer]:
+            - generic &quot;Compare total sales across the months in this month.&quot; [ref=e1211]
+            - button &quot;Options&quot; [ref=e1213]
+          - generic [ref=e1218] [cursor=pointer]:
+            - generic &quot;Break down total sales by month for this month.&quot; [ref=e1219]
+            - button &quot;Options&quot; [ref=e1221]
+          - generic [ref=e1226] [cursor=pointer]:
+            - generic &quot;Show total sales by customer for this month, highest to lowest.&quot; [ref=e1227]
+            - button &quot;Options&quot; [ref=e1229]
+          - generic [ref=e1234] [cursor=pointer]:
+            - generic &quot;Which customers contributed the most to total sales in this month?&quot; [ref=e1235]
+            - button &quot;Options&quot; [ref=e1237]
+          - generic [ref=e1242] [cursor=pointer]:
+            - generic &quot;Show the trend in total sales over this month.&quot; [ref=e1243]
+            - button &quot;Options&quot; [ref=e1245]
+          - generic [ref=e1250] [cursor=pointer]:
+            - generic &quot;Break down total sales by month for this month.&quot; [ref=e1251]
+            - button &quot;Options&quot; [ref=e1253]
+          - generic [ref=e1258] [cursor=pointer]:
+            - generic &quot;What was total sales during this month?&quot; [ref=e1259]
+            - button &quot;Options&quot; [ref=e1261]
+          - generic [ref=e1266] [cursor=pointer]:
+            - generic &quot;Identify the top five contributors to total sales for this month.&quot; [ref=e1267]
+            - button &quot;Options&quot; [ref=e1269]
+          - generic [ref=e1274] [cursor=pointer]:
+            - generic &quot;How did total sales change during this month compared with the preceding period?&quot; [ref=e1275]
+            - button &quot;Options&quot; [ref=e1277]
+          - generic [ref=e1282] [cursor=pointer]:
+            - generic &quot;Show total sales for this month.&quot; [ref=e1283]
+            - button &quot;Options&quot; [ref=e1285]
+          - generic [ref=e1290] [cursor=pointer]:
+            - generic &quot;Show total sales by customer for this month, highest to lowest.&quot; [ref=e1291]
+            - button &quot;Options&quot; [ref=e1293]
+          - generic [ref=e1298] [cursor=pointer]:
+            - generic &quot;Which customers contributed the most to total sales in this month?&quot; [ref=e1299]
+            - button &quot;Options&quot; [ref=e1301]
+          - generic [ref=e1306] [cursor=pointer]:
+            - generic &quot;Identify the top five contributors to total sales for this month.&quot; [ref=e1307]
+            - button &quot;Options&quot; [ref=e1309]
+          - generic [ref=e1314] [cursor=pointer]:
+            - generic &quot;How did total sales change during this month compared with the preceding period?&quot; [ref=e1315]
+            - button &quot;Options&quot; [ref=e1317]
+          - generic [ref=e1322] [cursor=pointer]:
+            - generic &quot;Show total sales by customer for this month, highest to lowest.&quot; [ref=e1323]
+            - button &quot;Options&quot; [ref=e1325]
+          - generic [ref=e1330] [cursor=pointer]:
+            - generic &quot;Which products or services generated the highest total sales in this month?&quot; [ref=e1331]
+            - button &quot;Options&quot; [ref=e1333]
+          - generic [ref=e1338] [cursor=pointer]:
+            - generic &quot;Which customers contributed the most to total sales in this month?&quot; [ref=e1339]
+            - button &quot;Options&quot; [ref=e1341]
+          - generic [ref=e1346] [cursor=pointer]:
+            - generic &quot;Show the trend in total sales over this month.&quot; [ref=e1347]
+            - button &quot;Options&quot; [ref=e1349]
+          - generic [ref=e1354] [cursor=pointer]:
+            - generic &quot;Compare total sales across the months in this month.&quot; [ref=e1355]
+            - button &quot;Options&quot; [ref=e1357]
+          - generic [ref=e1362] [cursor=pointer]:
+            - generic &quot;Break down total sales by month for this month.&quot; [ref=e1363]
+            - button &quot;Options&quot; [ref=e1365]
+          - generic [ref=e1370] [cursor=pointer]:
+            - generic &quot;What was total sales during this month?&quot; [ref=e1371]
+            - button &quot;Options&quot; [ref=e1373]
+          - generic [ref=e1378] [cursor=pointer]:
+            - generic &quot;Show total sales for this month.&quot; [ref=e1379]
+            - button &quot;Options&quot; [ref=e1381]
+          - generic [ref=e1386] [cursor=pointer]:
+            - generic &quot;Show total sales for this month.&quot; [ref=e1387]
+            - button &quot;Options&quot; [ref=e1389]
+          - generic [ref=e1394] [cursor=pointer]:
+            - generic &quot;Show total sales for this month.&quot; [ref=e1395]
+            - button &quot;Options&quot; [ref=e1397]
+          - generic [ref=e1402] [cursor=pointer]:
+            - generic &quot;Show total sales for August 2026.&quot; [ref=e1403]
+            - button &quot;Options&quot; [ref=e1405]
+          - generic [ref=e1410] [cursor=pointer]:
+            - generic &quot;Break down total sales by month for this month.&quot; [ref=e1411]
+            - button &quot;Options&quot; [ref=e1413]
+          - generic [ref=e1418] [cursor=pointer]:
+            - generic &quot;What was total sales during this month?&quot; [ref=e1419]
+            - button &quot;Options&quot; [ref=e1421]
+          - generic [ref=e1426] [cursor=pointer]:
+            - generic &quot;Show total sales for this month.&quot; [ref=e1427]
+            - button &quot;Options&quot; [ref=e1429]
+          - generic [ref=e1434] [cursor=pointer]:
+            - generic &quot;Show total sales for this month.&quot; [ref=e1435]
+            - button &quot;Options&quot; [ref=e1437]
+          - generic [ref=e1442] [cursor=pointer]:
+            - generic &quot;Identify the top five contributors to total sales for this month.&quot; [ref=e1443]
+            - button &quot;Options&quot; [ref=e1445]
+          - generic [ref=e1450] [cursor=pointer]:
+            - generic &quot;How did total sales change during this month compared with the preceding period?&quot; [ref=e1451]
+            - button &quot;Options&quot; [ref=e1453]
+          - generic [ref=e1458] [cursor=pointer]:
+            - generic &quot;Show total sales by customer for this month, highest to lowest.&quot; [ref=e1459]
+            - button &quot;Options&quot; [ref=e1461]
+          - generic [ref=e1466] [cursor=pointer]:
+            - generic &quot;Which products or services generated the highest total sales in this month?&quot; [ref=e1467]
+            - button &quot;Options&quot; [ref=e1469]
+          - generic [ref=e1474] [cursor=pointer]:
+            - generic &quot;Which customers contributed the most to total sales in this month?&quot; [ref=e1475]
+            - button &quot;Options&quot; [ref=e1477]
+          - generic [ref=e1482] [cursor=pointer]:
+            - generic &quot;Show the trend in total sales over this month.&quot; [ref=e1483]
+            - button &quot;Options&quot; [ref=e1485]
+          - generic [ref=e1490] [cursor=pointer]:
+            - generic &quot;Compare total sales across the months in this month.&quot; [ref=e1491]
+            - button &quot;Options&quot; [ref=e1493]
+          - generic [ref=e1498] [cursor=pointer]:
+            - generic &quot;Break down total sales by month for this month.&quot; [ref=e1499]
+            - button &quot;Options&quot; [ref=e1501]
+          - generic [ref=e1506] [cursor=pointer]:
+            - generic &quot;What was total sales during this month?&quot; [ref=e1507]
+            - button &quot;Options&quot; [ref=e1509]
+          - generic [ref=e1514] [cursor=pointer]:
+            - generic &quot;Show total sales for this month.&quot; [ref=e1515]
+            - button &quot;Options&quot; [ref=e1517]
+          - generic [ref=e1522] [cursor=pointer]:
+            - generic &quot;Identify the top five contributors to total sales for this month.&quot; [ref=e1523]
+            - button &quot;Options&quot; [ref=e1525]
+          - generic [ref=e1530] [cursor=pointer]:
+            - generic &quot;How did total sales change during this month compared with the preceding period?&quot; [ref=e1531]
+            - button &quot;Options&quot; [ref=e1533]
+          - generic [ref=e1538] [cursor=pointer]:
+            - generic &quot;Show total sales by customer for this month, highest to lowest.&quot; [ref=e1539]
+            - button &quot;Options&quot; [ref=e1541]
+          - generic [ref=e1546] [cursor=pointer]:
+            - generic &quot;Which products or services generated the highest total sales in this month?&quot; [ref=e1547]
+            - button &quot;Options&quot; [ref=e1549]
+          - generic [ref=e1554] [cursor=pointer]:
+            - generic &quot;Which customers contributed the most to total sales in this month?&quot; [ref=e1555]
+            - button &quot;Options&quot; [ref=e1557]
+          - generic [ref=e1562] [cursor=pointer]:
+            - generic &quot;Show the trend in total sales over this month.&quot; [ref=e1563]
+            - button &quot;Options&quot; [ref=e1565]
+          - generic [ref=e1570] [cursor=pointer]:
+            - generic &quot;Compare total sales across the months in this month.&quot; [ref=e1571]
+            - button &quot;Options&quot; [ref=e1573]
+          - generic [ref=e1578] [cursor=pointer]:
+            - generic &quot;Break down total sales by month for this month.&quot; [ref=e1579]
+            - button &quot;Options&quot; [ref=e1581]
+          - generic [ref=e1586] [cursor=pointer]:
+            - generic &quot;What was total sales during this month?&quot; [ref=e1587]
+            - button &quot;Options&quot; [ref=e1589]
+          - generic [ref=e1594] [cursor=pointer]:
+            - generic &quot;Show total sales for this month.&quot; [ref=e1595]
+            - button &quot;Options&quot; [ref=e1597]
+          - generic [ref=e1602] [cursor=pointer]:
+            - generic &quot;Identify the top five contributors to total sales for this month.&quot; [ref=e1603]
+            - button &quot;Options&quot; [ref=e1605]
+          - generic [ref=e1610] [cursor=pointer]:
+            - generic &quot;How did total sales change during this month compared with the preceding period?&quot; [ref=e1611]
+            - button &quot;Options&quot; [ref=e1613]
+          - generic [ref=e1618] [cursor=pointer]:
+            - generic &quot;Which products or services generated the highest total sales in this month?&quot; [ref=e1619]
+            - button &quot;Options&quot; [ref=e1621]
+          - generic [ref=e1626] [cursor=pointer]:
+            - generic &quot;Which customers contributed the most to total sales in this month?&quot; [ref=e1627]
+            - button &quot;Options&quot; [ref=e1629]
+          - generic [ref=e1634] [cursor=pointer]:
+            - generic &quot;Compare total sales across the months in this month.&quot; [ref=e1635]
+            - button &quot;Options&quot; [ref=e1637]
+          - generic [ref=e1642] [cursor=pointer]:
+            - generic &quot;Break down total sales by month for this month.&quot; [ref=e1643]
+            - button &quot;Options&quot; [ref=e1645]
+          - generic [ref=e1650] [cursor=pointer]:
+            - generic &quot;What was total sales during this month?&quot; [ref=e1651]
+            - button &quot;Options&quot; [ref=e1653]
+          - generic [ref=e1658] [cursor=pointer]:
+            - generic &quot;What is my free cash flow this year?&quot; [ref=e1659]
+            - button &quot;Options&quot; [ref=e1661]
+          - generic [ref=e1666] [cursor=pointer]:
+            - generic &quot;Show total sales for this month.&quot; [ref=e1667]
+            - button &quot;Options&quot; [ref=e1669]
+          - generic [ref=e1674] [cursor=pointer]:
+            - generic &quot;Identify the top five contributors to total sales for this month.&quot; [ref=e1675]
+            - button &quot;Options&quot; [ref=e1677]
+          - generic [ref=e1682] [cursor=pointer]:
+            - generic &quot;How did total sales change during this month compared with the preceding period?&quot; [ref=e1683]
+            - button &quot;Options&quot; [ref=e1685]
+          - generic [ref=e1690] [cursor=pointer]:
+            - generic &quot;Show total sales by customer for this month, highest to lowest.&quot; [ref=e1691]
+            - button &quot;Options&quot; [ref=e1693]
+          - generic [ref=e1698] [cursor=pointer]:
+            - generic &quot;Which products or services generated the highest total sales in this month?&quot; [ref=e1699]
+            - button &quot;Options&quot; [ref=e1701]
+          - generic [ref=e1706] [cursor=pointer]:
+            - generic &quot;Which customers contributed the most to total sales in this month?&quot; [ref=e1707]
+            - button &quot;Options&quot; [ref=e1709]
+          - generic [ref=e1714] [cursor=pointer]:
+            - generic &quot;Show the trend in total sales over this month.&quot; [ref=e1715]
+            - button &quot;Options&quot; [ref=e1717]
+          - generic [ref=e1722] [cursor=pointer]:
+            - generic &quot;Compare total sales across the months in this month.&quot; [ref=e1723]
+            - button &quot;Options&quot; [ref=e1725]
+          - generic [ref=e1730] [cursor=pointer]:
+            - generic &quot;Break down total sales by month for this month.&quot; [ref=e1731]
+            - button &quot;Options&quot; [ref=e1733]
+          - generic [ref=e1738] [cursor=pointer]:
+            - generic &quot;What was total sales during this month?&quot; [ref=e1739]
+            - button &quot;Options&quot; [ref=e1741]
+          - generic [ref=e1746] [cursor=pointer]:
+            - generic &quot;Show total sales for this month.&quot; [ref=e1747]
+            - button &quot;Options&quot; [ref=e1749]
+          - generic [ref=e1754] [cursor=pointer]:
+            - generic &quot;Identify the top five contributors to total sales for this month.&quot; [ref=e1755]
+            - button &quot;Options&quot; [ref=e1757]
+          - generic [ref=e1762] [cursor=pointer]:
+            - generic &quot;How did total sales change during this month compared with the preceding period?&quot; [ref=e1763]
+            - button &quot;Options&quot; [ref=e1765]
+          - generic [ref=e1770] [cursor=pointer]:
+            - generic &quot;Show total sales by customer for this month, highest to lowest.&quot; [ref=e1771]
+            - button &quot;Options&quot; [ref=e1773]
+          - generic [ref=e1778] [cursor=pointer]:
+            - generic &quot;Which products or services generated the highest total sales in this month?&quot; [ref=e1779]
+            - button &quot;Options&quot; [ref=e1781]
+          - generic [ref=e1786] [cursor=pointer]:
+            - generic &quot;Which customers contributed the most to total sales in this month?&quot; [ref=e1787]
+            - button &quot;Options&quot; [ref=e1789]
+          - generic [ref=e1794] [cursor=pointer]:
+            - generic &quot;Show the trend in total sales over this month.&quot; [ref=e1795]
+            - button &quot;Options&quot; [ref=e1797]
+          - generic [ref=e1802] [cursor=pointer]:
+            - generic &quot;Break down total sales by month for this month.&quot; [ref=e1803]
+            - button &quot;Options&quot; [ref=e1805]
+          - generic [ref=e1810] [cursor=pointer]:
+            - generic &quot;What was total sales during this month?&quot; [ref=e1811]
+            - button &quot;Options&quot; [ref=e1813]
+          - generic [ref=e1818] [cursor=pointer]:
+            - generic &quot;Show total sales for this month.&quot; [ref=e1819]
+            - button &quot;Options&quot; [ref=e1821]
+          - generic [ref=e1826] [cursor=pointer]:
+            - generic &quot;Identify the top five contributors to total sales for this month.&quot; [ref=e1827]
+            - button &quot;Options&quot; [ref=e1829]
+          - generic [ref=e1834] [cursor=pointer]:
+            - generic &quot;What was invoiced revenue during this quarter?&quot; [ref=e1835]
+            - button &quot;Options&quot; [ref=e1837]
+          - generic [ref=e1842] [cursor=pointer]:
+            - generic &quot;Show invoiced revenue for this quarter.&quot; [ref=e1843]
+            - button &quot;Options&quot; [ref=e1845]
+          - generic [ref=e1850] [cursor=pointer]:
+            - generic &quot;Identify the top five contributors to gross revenue for last month.&quot; [ref=e1851]
+            - button &quot;Options&quot; [ref=e1853]
+          - generic [ref=e1858] [cursor=pointer]:
+            - generic &quot;How did gross revenue change during last month compared with the preceding perio&quot; [ref=e1859]
+            - button &quot;Options&quot; [ref=e1861]
+          - generic [ref=e1866] [cursor=pointer]:
+            - generic &quot;Show gross revenue by customer for last month, highest to lowest.&quot; [ref=e1867]
+            - button &quot;Options&quot; [ref=e1869]
+          - generic [ref=e1874] [cursor=pointer]:
+            - generic &quot;Which products or services generated the highest gross revenue in last month?&quot; [ref=e1875]
+            - button &quot;Options&quot; [ref=e1877]
+          - generic [ref=e1882] [cursor=pointer]:
+            - generic &quot;Show the trend in gross revenue over last month.&quot; [ref=e1883]
+            - button &quot;Options&quot; [ref=e1885]
+          - generic [ref=e1890] [cursor=pointer]:
+            - generic &quot;Break down gross revenue by month for last month.&quot; [ref=e1891]
+            - button &quot;Options&quot; [ref=e1893]
+          - generic [ref=e1898] [cursor=pointer]:
+            - generic &quot;Identify the top five contributors to total sales for this month.&quot; [ref=e1899]
+            - button &quot;Options&quot; [ref=e1901]
+          - generic [ref=e1906] [cursor=pointer]:
+            - generic &quot;How did total sales change during this month compared with the preceding period?&quot; [ref=e1907]
+            - button &quot;Options&quot; [ref=e1909]
+          - generic [ref=e1914] [cursor=pointer]:
+            - generic &quot;Show total sales by customer for this month, highest to lowest.&quot; [ref=e1915]
+            - button &quot;Options&quot; [ref=e1917]
+          - generic [ref=e1922] [cursor=pointer]:
+            - generic &quot;Which products or services generated the highest total sales in this month?&quot; [ref=e1923]
+            - button &quot;Options&quot; [ref=e1925]
+          - generic [ref=e1930] [cursor=pointer]:
+            - generic &quot;Which customers contributed the most to total sales in this month?&quot; [ref=e1931]
+            - button &quot;Options&quot; [ref=e1933]
+          - generic [ref=e1938] [cursor=pointer]:
+            - generic &quot;Show the trend in total sales over this month.&quot; [ref=e1939]
+            - button &quot;Options&quot; [ref=e1941]
+          - generic [ref=e1946] [cursor=pointer]:
+            - generic &quot;Compare total sales across the months in this month.&quot; [ref=e1947]
+            - button &quot;Options&quot; [ref=e1949]
+          - generic [ref=e1954] [cursor=pointer]:
+            - generic &quot;Break down total sales by month for this month.&quot; [ref=e1955]
+            - button &quot;Options&quot; [ref=e1957]
+          - generic [ref=e1962] [cursor=pointer]:
+            - generic &quot;What was total sales during this month?&quot; [ref=e1963]
+            - button &quot;Options&quot; [ref=e1965]
+          - generic [ref=e1970] [cursor=pointer]:
+            - generic &quot;Show total sales for this month.&quot; [ref=e1971]
+            - button &quot;Options&quot; [ref=e1973]
+          - generic [ref=e1978] [cursor=pointer]:
+            - generic &quot;Identify the top five contributors to total sales for this month.&quot; [ref=e1979]
+            - button &quot;Options&quot; [ref=e1981]
+          - generic [ref=e1986] [cursor=pointer]:
+            - generic &quot;Show total sales by customer for this month, highest to lowest.&quot; [ref=e1987]
+            - button &quot;Options&quot; [ref=e1989]
+          - generic [ref=e1994] [cursor=pointer]:
+            - generic &quot;Which customers contributed the most to total sales in this month?&quot; [ref=e1995]
+            - button &quot;Options&quot; [ref=e1997]
+          - generic [ref=e2002] [cursor=pointer]:
+            - generic &quot;Show the trend in total sales over this month.&quot; [ref=e2003]
+            - button &quot;Options&quot; [ref=e2005]
+          - generic [ref=e2010] [cursor=pointer]:
+            - generic &quot;Compare total sales across the months in this month.&quot; [ref=e2011]
+            - button &quot;Options&quot; [ref=e2013]
+          - generic [ref=e2018] [cursor=pointer]:
+            - generic &quot;Break down total sales by month for this month.&quot; [ref=e2019]
+            - button &quot;Options&quot; [ref=e2021]
+          - generic [ref=e2026] [cursor=pointer]:
+            - generic &quot;What was total sales during this month?&quot; [ref=e2027]
+            - button &quot;Options&quot; [ref=e2029]
+          - generic [ref=e2034] [cursor=pointer]:
+            - generic &quot;Show total sales for this month.&quot; [ref=e2035]
+            - button &quot;Options&quot; [ref=e2037]
+          - generic [ref=e2042] [cursor=pointer]:
+            - generic &quot;Identify the top five contributors to total sales for this month.&quot; [ref=e2043]
+            - button &quot;Options&quot; [ref=e2045]
+          - generic [ref=e2050] [cursor=pointer]:
+            - generic &quot;How did total sales change during this month compared with the preceding period?&quot; [ref=e2051]
+            - button &quot;Options&quot; [ref=e2053]
+          - generic [ref=e2058] [cursor=pointer]:
+            - generic &quot;Show total sales by customer for this month, highest to lowest.&quot; [ref=e2059]
+            - button &quot;Options&quot; [ref=e2061]
+          - generic [ref=e2066] [cursor=pointer]:
+            - generic &quot;Which products or services generated the highest total sales in this month?&quot; [ref=e2067]
+            - button &quot;Options&quot; [ref=e2069]
+          - generic [ref=e2074] [cursor=pointer]:
+            - generic &quot;Which customers contributed the most to total sales in this month?&quot; [ref=e2075]
+            - button &quot;Options&quot; [ref=e2077]
+          - generic [ref=e2082] [cursor=pointer]:
+            - generic &quot;Compare total sales across the months in this month.&quot; [ref=e2083]
+            - button &quot;Options&quot; [ref=e2085]
+          - generic [ref=e2090] [cursor=pointer]:
+            - generic &quot;What was total sales during this month?&quot; [ref=e2091]
+            - button &quot;Options&quot; [ref=e2093]
+          - generic [ref=e2098] [cursor=pointer]:
+            - generic &quot;Show total sales for this month.&quot; [ref=e2099]
+            - button &quot;Options&quot; [ref=e2101]
+          - generic [ref=e2106] [cursor=pointer]:
+            - generic &quot;Identify the top five contributors to total sales for this month.&quot; [ref=e2107]
+            - button &quot;Options&quot; [ref=e2109]
+          - generic [ref=e2114] [cursor=pointer]:
+            - generic &quot;How did total sales change during this month compared with the preceding period?&quot; [ref=e2115]
+            - button &quot;Options&quot; [ref=e2117]
+          - generic [ref=e2122] [cursor=pointer]:
+            - generic &quot;Show total sales by customer for this month, highest to lowest.&quot; [ref=e2123]
+            - button &quot;Options&quot; [ref=e2125]
+          - generic [ref=e2130] [cursor=pointer]:
+            - generic &quot;Which products or services generated the highest total sales in this month?&quot; [ref=e2131]
+            - button &quot;Options&quot; [ref=e2133]
+          - generic [ref=e2138] [cursor=pointer]:
+            - generic &quot;Which customers contributed the most to total sales in this month?&quot; [ref=e2139]
+            - button &quot;Options&quot; [ref=e2141]
+          - generic [ref=e2146] [cursor=pointer]:
+            - generic &quot;Show the trend in total sales over this month.&quot; [ref=e2147]
+            - button &quot;Options&quot; [ref=e2149]
+          - generic [ref=e2154] [cursor=pointer]:
+            - generic &quot;Break down total sales by month for this month.&quot; [ref=e2155]
+            - button &quot;Options&quot; [ref=e2157]
+          - generic [ref=e2162] [cursor=pointer]:
+            - generic &quot;What was gross revenue during last month?&quot; [ref=e2163]
+            - button &quot;Options&quot; [ref=e2165]
+          - generic [ref=e2170] [cursor=pointer]:
+            - generic &quot;Show gross revenue for last month.&quot; [ref=e2171]
+            - button &quot;Options&quot; [ref=e2173]
+          - generic [ref=e2178] [cursor=pointer]:
+            - generic &quot;Identify the top five contributors to total sales for this month.&quot; [ref=e2179]
+            - button &quot;Options&quot; [ref=e2181]
+          - generic [ref=e2186] [cursor=pointer]:
+            - generic &quot;How did total sales change during this month compared with the preceding period?&quot; [ref=e2187]
+            - button &quot;Options&quot; [ref=e2189]
+          - generic [ref=e2194] [cursor=pointer]:
+            - generic &quot;Identify the top five contributors to total sales for this month.&quot; [ref=e2195]
+            - button &quot;Options&quot; [ref=e2197]
+          - generic [ref=e2202] [cursor=pointer]:
+            - generic &quot;Show gross revenue for last month.&quot; [ref=e2203]
+            - button &quot;Options&quot; [ref=e2205]
+          - generic [ref=e2210] [cursor=pointer]:
+            - generic &quot;Show total sales by customer for this month, highest to lowest.&quot; [ref=e2211]
+            - button &quot;Options&quot; [ref=e2213]
+          - generic [ref=e2218] [cursor=pointer]:
+            - generic &quot;Which products or services generated the highest total sales in this month?&quot; [ref=e2219]
+            - button &quot;Options&quot; [ref=e2221]
+          - generic [ref=e2226] [cursor=pointer]:
+            - generic &quot;How much do I owe vendors?Which customers contributed the most to total sales in&quot; [ref=e2227]
+            - button &quot;Options&quot; [ref=e2229]
+          - generic [ref=e2234] [cursor=pointer]:
+            - generic &quot;Show total sales for this month.&quot; [ref=e2235]
+            - button &quot;Options&quot; [ref=e2237]
+          - generic [ref=e2242] [cursor=pointer]:
+            - generic &quot;Which customers contributed the most to total sales in this month?&quot; [ref=e2243]
+            - button &quot;Options&quot; [ref=e2245]
+          - generic [ref=e2250] [cursor=pointer]:
+            - generic &quot;Revenue reduce by 10% — operating income&quot; [ref=e2251]
+            - button &quot;Options&quot; [ref=e2253]
+          - generic [ref=e2258] [cursor=pointer]:
+            - generic &quot;Show total sales for this month.&quot; [ref=e2259]
+            - button &quot;Options&quot; [ref=e2261]
+          - generic [ref=e2266] [cursor=pointer]:
+            - generic &quot;Show total sales by customer for this month, highest to lowest.&quot; [ref=e2267]
+            - button &quot;Options&quot; [ref=e2269]
+          - generic [ref=e2274] [cursor=pointer]:
+            - generic &quot;Identify the top five contributors to total sales for this month.&quot; [ref=e2275]
+            - button &quot;Options&quot; [ref=e2277]
+          - generic [ref=e2282] [cursor=pointer]:
+            - generic &quot;How did total sales change during this month compared with the preceding period?&quot; [ref=e2283]
+            - button &quot;Options&quot; [ref=e2285]
+          - generic [ref=e2290] [cursor=pointer]:
+            - generic &quot;Which products or services generated the highest total sales in this month?&quot; [ref=e2291]
+            - button &quot;Options&quot; [ref=e2293]
+          - generic [ref=e2298] [cursor=pointer]:
+            - generic &quot;Which customers contributed the most to total sales in this month?&quot; [ref=e2299]
+            - button &quot;Options&quot; [ref=e2301]
+          - generic [ref=e2306] [cursor=pointer]:
+            - generic &quot;Show the trend in total sales over this month.&quot; [ref=e2307]
+            - button &quot;Options&quot; [ref=e2309]
+          - generic [ref=e2314] [cursor=pointer]:
+            - generic &quot;Compare total sales across the months in this month.&quot; [ref=e2315]
+            - button &quot;Options&quot; [ref=e2317]
+          - generic [ref=e2322] [cursor=pointer]:
+            - generic &quot;Break down total sales by month for this month.&quot; [ref=e2323]
+            - button &quot;Options&quot; [ref=e2325]
+          - generic [ref=e2330] [cursor=pointer]:
+            - generic &quot;What was total sales during this month?&quot; [ref=e2331]
+            - button &quot;Options&quot; [ref=e2333]
+          - generic [ref=e2338] [cursor=pointer]:
+            - generic &quot;Show total sales for this month.&quot; [ref=e2339]
+            - button &quot;Options&quot; [ref=e2341]
+          - generic [ref=e2346] [cursor=pointer]:
+            - generic &quot;Identify the top five contributors to total sales for this month.&quot; [ref=e2347]
+            - button &quot;Options&quot; [ref=e2349]
+          - generic [ref=e2354] [cursor=pointer]:
+            - generic &quot;Identify the top five contributors to total sales for this month.&quot; [ref=e2355]
+            - button &quot;Options&quot; [ref=e2357]
+          - generic [ref=e2362] [cursor=pointer]:
+            - generic &quot;What was total sales during this month?&quot; [ref=e2363]
+            - button &quot;Options&quot; [ref=e2365]
+          - generic [ref=e2370] [cursor=pointer]:
+            - generic &quot;Identify the top five contributors to total sales for this month.&quot; [ref=e2371]
+            - button &quot;Options&quot; [ref=e2373]
+          - generic [ref=e2378] [cursor=pointer]:
+            - generic &quot;How did total sales change during this month compared with the preceding period?&quot; [ref=e2379]
+            - button &quot;Options&quot; [ref=e2381]
+          - generic [ref=e2386] [cursor=pointer]:
+            - generic &quot;Show total sales by customer for this month, highest to lowest.&quot; [ref=e2387]
+            - button &quot;Options&quot; [ref=e2389]
+          - generic [ref=e2394] [cursor=pointer]:
+            - generic &quot;Which products or services generated the highest total sales in this month?&quot; [ref=e2395]
+            - button &quot;Options&quot; [ref=e2397]
+          - generic [ref=e2402] [cursor=pointer]:
+            - generic &quot;Which customers contributed the most to total sales in this month?&quot; [ref=e2403]
+            - button &quot;Options&quot; [ref=e2405]
+          - generic [ref=e2410] [cursor=pointer]:
+            - generic &quot;Show the trend in total sales over this month.&quot; [ref=e2411]
+            - button &quot;Options&quot; [ref=e2413]
+          - generic [ref=e2418] [cursor=pointer]:
+            - generic &quot;Compare total sales across the months in this month.&quot; [ref=e2419]
+            - button &quot;Options&quot; [ref=e2421]
+          - generic [ref=e2426] [cursor=pointer]:
+            - generic &quot;Break down total sales by month for this month.&quot; [ref=e2427]
+            - button &quot;Options&quot; [ref=e2429]
+          - generic [ref=e2434] [cursor=pointer]:
+            - generic &quot;What was total sales during this month?&quot; [ref=e2435]
+            - button &quot;Options&quot; [ref=e2437]
+          - generic [ref=e2442] [cursor=pointer]:
+            - generic &quot;Show total sales for this month.&quot; [ref=e2443]
+            - button &quot;Options&quot; [ref=e2445]
+          - generic [ref=e2450] [cursor=pointer]:
+            - generic &quot;Show total sales for this month.&quot; [ref=e2451]
+            - button &quot;Options&quot; [ref=e2453]
+          - generic [ref=e2458] [cursor=pointer]:
+            - generic &quot;Show total sales for this month.&quot; [ref=e2459]
+            - button &quot;Options&quot; [ref=e2461]
+          - generic [ref=e2466] [cursor=pointer]:
+            - generic &quot;Break down total sales by month for this month&quot; [ref=e2467]
+            - button &quot;Options&quot; [ref=e2469]
+          - generic [ref=e2474] [cursor=pointer]:
+            - generic &quot;What was total sales during this month?&quot; [ref=e2475]
+            - button &quot;Options&quot; [ref=e2477]
+          - generic [ref=e2482] [cursor=pointer]:
+            - generic &quot;Show total sales for this month.&quot; [ref=e2483]
+            - button &quot;Options&quot; [ref=e2485]
+          - generic [ref=e2490] [cursor=pointer]:
+            - generic &quot;Identify the top five contributors to sales before discounts for this year.&quot; [ref=e2491]
+            - button &quot;Options&quot; [ref=e2493]
+          - generic [ref=e2498] [cursor=pointer]:
+            - generic &quot;How did sales before discounts change during this year compared with the precedi&quot; [ref=e2499]
+            - button &quot;Options&quot; [ref=e2501]
+          - generic [ref=e2506] [cursor=pointer]:
+            - generic &quot;Show sales before discounts by customer for this year, highest to lowest.&quot; [ref=e2507]
+            - button &quot;Options&quot; [ref=e2509]
+          - generic [ref=e2514] [cursor=pointer]:
+            - generic &quot;Which products or services generated the highest sales before discounts in this&quot; [ref=e2515]
+            - button &quot;Options&quot; [ref=e2517]
+          - generic [ref=e2522] [cursor=pointer]:
+            - generic &quot;Which customers contributed the most to sales before discounts in this year?&quot; [ref=e2523]
+            - button &quot;Options&quot; [ref=e2525]
+          - generic [ref=e2530] [cursor=pointer]:
+            - generic &quot;Show the trend in sales before discounts over this year.&quot; [ref=e2531]
+            - button &quot;Options&quot; [ref=e2533]
+          - generic [ref=e2538] [cursor=pointer]:
+            - generic &quot;Compare sales before discounts across the months in this year.&quot; [ref=e2539]
+            - button &quot;Options&quot; [ref=e2541]
+          - generic [ref=e2546] [cursor=pointer]:
+            - generic &quot;Break down sales before discounts by month for this year.&quot; [ref=e2547]
+            - button &quot;Options&quot; [ref=e2549]
+          - generic [ref=e2554] [cursor=pointer]:
+            - generic &quot;What was sales before discounts during this year?&quot; [ref=e2555]
+            - button &quot;Options&quot; [ref=e2557]
+          - generic [ref=e2562] [cursor=pointer]:
+            - generic &quot;Show sales before discounts for this year.&quot; [ref=e2563]
+            - button &quot;Options&quot; [ref=e2565]
+          - generic [ref=e2570] [cursor=pointer]:
+            - generic &quot;Identify the top five contributors to recognised sales for last quarter.&quot; [ref=e2571]
+            - button &quot;Options&quot; [ref=e2573]
+          - generic [ref=e2578] [cursor=pointer]:
+            - generic &quot;How did recognised sales change during last quarter compared with the preceding&quot; [ref=e2579]
+            - button &quot;Options&quot; [ref=e2581]
+          - generic [ref=e2586] [cursor=pointer]:
+            - generic &quot;Show recognised sales by customer for last quarter, highest to lowest.&quot; [ref=e2587]
+            - button &quot;Options&quot; [ref=e2589]
+          - generic [ref=e2594] [cursor=pointer]:
+            - generic &quot;Which products or services generated the highest recognised sales in last quarte&quot; [ref=e2595]
+            - button &quot;Options&quot; [ref=e2597]
+          - generic [ref=e2602] [cursor=pointer]:
+            - generic &quot;Which customers contributed the most to recognised sales in last quarter?&quot; [ref=e2603]
+            - button &quot;Options&quot; [ref=e2605]
+          - generic [ref=e2610] [cursor=pointer]:
+            - generic &quot;Show the trend in recognised sales over last quarter.&quot; [ref=e2611]
+            - button &quot;Options&quot; [ref=e2613]
+          - generic [ref=e2618] [cursor=pointer]:
+            - generic &quot;Compare recognised sales across the months in last quarter.&quot; [ref=e2619]
+            - button &quot;Options&quot; [ref=e2621]
+          - generic [ref=e2626] [cursor=pointer]:
+            - generic &quot;Break down recognised sales by month for last quarter.&quot; [ref=e2627]
+            - button &quot;Options&quot; [ref=e2629]
+          - generic [ref=e2634] [cursor=pointer]:
+            - generic &quot;What was recognised sales during last quarter?&quot; [ref=e2635]
+            - button &quot;Options&quot; [ref=e2637]
+          - generic [ref=e2642] [cursor=pointer]:
+            - generic &quot;Show recognised sales for last quarter.&quot; [ref=e2643]
+            - button &quot;Options&quot; [ref=e2645]
+          - generic [ref=e2650] [cursor=pointer]:
+            - generic &quot;Identify the top five contributors to invoiced revenue for this quarter.&quot; [ref=e2651]
+            - button &quot;Options&quot; [ref=e2653]
+          - generic [ref=e2658] [cursor=pointer]:
+            - generic &quot;How did invoiced revenue change during this quarter compared with the preceding&quot; [ref=e2659]
+            - button &quot;Options&quot; [ref=e2661]
+          - generic [ref=e2666] [cursor=pointer]:
+            - generic &quot;Show invoiced revenue by customer for this quarter, highest to lowest.&quot; [ref=e2667]
+            - button &quot;Options&quot; [ref=e2669]
+          - generic [ref=e2674] [cursor=pointer]:
+            - generic &quot;Which products or services generated the highest invoiced revenue in this quarte&quot; [ref=e2675]
+            - button &quot;Options&quot; [ref=e2677]
+          - generic [ref=e2682] [cursor=pointer]:
+            - generic &quot;Which customers contributed the most to invoiced revenue in this quarter?&quot; [ref=e2683]
+            - button &quot;Options&quot; [ref=e2685]
+          - generic [ref=e2690] [cursor=pointer]:
+            - generic &quot;Show the trend in invoiced revenue over this quarter.&quot; [ref=e2691]
+            - button &quot;Options&quot; [ref=e2693]
+          - generic [ref=e2698] [cursor=pointer]:
+            - generic &quot;Compare invoiced revenue across the months in this quarter.&quot; [ref=e2699]
+            - button &quot;Options&quot; [ref=e2701]
+          - generic [ref=e2706] [cursor=pointer]:
+            - generic &quot;Break down invoiced revenue by month for this quarter.&quot; [ref=e2707]
+            - button &quot;Options&quot; [ref=e2709]
+          - generic [ref=e2714] [cursor=pointer]:
+            - generic &quot;What was invoiced revenue during this quarter?&quot; [ref=e2715]
+            - button &quot;Options&quot; [ref=e2717]
+          - generic [ref=e2722] [cursor=pointer]:
+            - generic &quot;Show invoiced revenue for this quarter.&quot; [ref=e2723]
+            - button &quot;Options&quot; [ref=e2725]
+          - generic [ref=e2730] [cursor=pointer]:
+            - generic &quot;Identify the top five contributors to gross revenue for last month.&quot; [ref=e2731]
+            - button &quot;Options&quot; [ref=e2733]
+          - generic [ref=e2738] [cursor=pointer]:
+            - generic &quot;How did gross revenue change during last month compared with the preceding perio&quot; [ref=e2739]
+            - button &quot;Options&quot; [ref=e2741]
+          - generic [ref=e2746] [cursor=pointer]:
+            - generic &quot;Show gross revenue by customer for last month, highest to lowest.&quot; [ref=e2747]
+            - button &quot;Options&quot; [ref=e2749]
+          - generic [ref=e2754] [cursor=pointer]:
+            - generic &quot;Which products or services generated the highest gross revenue in last month?&quot; [ref=e2755]
+            - button &quot;Options&quot; [ref=e2757]
+          - generic [ref=e2762] [cursor=pointer]:
+            - generic &quot;Which customers contributed the most to gross revenue in last month?&quot; [ref=e2763]
+            - button &quot;Options&quot; [ref=e2765]
+          - generic [ref=e2770] [cursor=pointer]:
+            - generic &quot;Show the trend in gross revenue over last month.&quot; [ref=e2771]
+            - button &quot;Options&quot; [ref=e2773]
+          - generic [ref=e2778] [cursor=pointer]:
+            - generic &quot;Compare gross revenue across the months in last month.&quot; [ref=e2779]
+            - button &quot;Options&quot; [ref=e2781]
+          - generic [ref=e2786] [cursor=pointer]:
+            - generic &quot;Break down gross revenue by month for last month.&quot; [ref=e2787]
+            - button &quot;Options&quot; [ref=e2789]
+          - generic [ref=e2794] [cursor=pointer]:
+            - generic &quot;What was gross revenue during last month?&quot; [ref=e2795]
+            - button &quot;Options&quot; [ref=e2797]
+          - generic [ref=e2802] [cursor=pointer]:
+            - generic &quot;Show gross revenue for last month.&quot; [ref=e2803]
+            - button &quot;Options&quot; [ref=e2805]
+          - generic [ref=e2810] [cursor=pointer]:
+            - generic &quot;Identify the top five contributors to total sales for this month.&quot; [ref=e2811]
+            - button &quot;Options&quot; [ref=e2813]
+          - generic [ref=e2818] [cursor=pointer]:
+            - generic &quot;How did total sales change during this month compared with the preceding period?&quot; [ref=e2819]
+            - button &quot;Options&quot; [ref=e2821]
+          - generic [ref=e2826] [cursor=pointer]:
+            - generic &quot;Show total sales by customer for this month, highest to lowest.&quot; [ref=e2827]
+            - button &quot;Options&quot; [ref=e2829]
+          - generic [ref=e2834] [cursor=pointer]:
+            - generic &quot;Which products or services generated the highest total sales in this month?&quot; [ref=e2835]
+            - button &quot;Options&quot; [ref=e2837]
+          - generic [ref=e2842] [cursor=pointer]:
+            - generic &quot;Which customers contributed the most to total sales in this month?&quot; [ref=e2843]
+            - button &quot;Options&quot; [ref=e2845]
+          - generic [ref=e2850] [cursor=pointer]:
+            - generic &quot;Show the trend in total sales over this month.&quot; [ref=e2851]
+            - button &quot;Options&quot; [ref=e2853]
+          - generic [ref=e2858] [cursor=pointer]:
+            - generic &quot;Compare total sales across the months in this month.&quot; [ref=e2859]
+            - button &quot;Options&quot; [ref=e2861]
+          - generic [ref=e2866] [cursor=pointer]:
+            - generic &quot;Break down total sales by month for this month.&quot; [ref=e2867]
+            - button &quot;Options&quot; [ref=e2869]
+          - generic [ref=e2874] [cursor=pointer]:
+            - generic &quot;What was total sales during this month?&quot; [ref=e2875]
+            - button &quot;Options&quot; [ref=e2877]
+          - generic [ref=e2882] [cursor=pointer]:
+            - generic &quot;Show revenue by customer this year&quot; [ref=e2883]
+            - button &quot;Options&quot; [ref=e2885]
+          - generic [ref=e2890] [cursor=pointer]:
+            - generic &quot;Revenue reduce by 10%, total expenses reduce by 10% — net income&quot; [ref=e2891]
+            - button &quot;Options&quot; [ref=e2893]
+          - generic [ref=e2898] [cursor=pointer]:
+            - generic &quot;project sow is $100000 and my total expenses is $90000 can you please suggest is&quot; [ref=e2899]
+            - button &quot;Options&quot; [ref=e2901]
+          - generic [ref=e2906] [cursor=pointer]:
+            - generic &quot;Revenue reduce by 5%, total expenses reduce by 10% — net income&quot; [ref=e2907]
+            - button &quot;Options&quot; [ref=e2909]
+          - generic [ref=e2914] [cursor=pointer]:
+            - generic &quot;how many invoices are pending&quot; [ref=e2915]
+            - button &quot;Options&quot; [ref=e2917]
+          - generic [ref=e2922] [cursor=pointer]:
+            - generic &quot;How is my company&#39;s financial health?&quot; [ref=e2923]
+            - button &quot;Options&quot; [ref=e2925]
+          - generic [ref=e2930] [cursor=pointer]:
+            - generic &quot;What is my working capital by month?&quot; [ref=e2931]
+            - button &quot;Options&quot; [ref=e2933]
+          - generic [ref=e2938] [cursor=pointer]:
+            - generic &quot;How is my company&#39;s financial health?&quot; [ref=e2939]
+            - button &quot;Options&quot; [ref=e2941]
+          - generic [ref=e2946] [cursor=pointer]:
+            - generic &quot;what is DSO&quot; [ref=e2947]
+            - button &quot;Options&quot; [ref=e2949]
+          - generic [ref=e2954] [cursor=pointer]:
+            - generic &quot;show me profit trend&quot; [ref=e2955]
+            - button &quot;Options&quot; [ref=e2957]
+          - generic [ref=e2962] [cursor=pointer]:
+            - generic &quot;Revenue increase by 20% — cash burn&quot; [ref=e2963]
+            - button &quot;Options&quot; [ref=e2965]
+          - generic [ref=e2970] [cursor=pointer]:
+            - generic &quot;What is my cost of goods sold this year?&quot; [ref=e2971]
+            - button &quot;Options&quot; [ref=e2973]
+          - generic [ref=e2978] [cursor=pointer]:
+            - generic &quot;what is a good DSO for a manufacturing company&quot; [ref=e2979]
+            - button &quot;Options&quot; [ref=e2981]
+          - generic [ref=e2986] [cursor=pointer]:
+            - generic &quot;show me opex trend&quot; [ref=e2987]
+            - button &quot;Options&quot; [ref=e2989]
+          - generic [ref=e2994] [cursor=pointer]:
+            - generic &quot;what is EST time now&quot; [ref=e2995]
+            - button &quot;Options&quot; [ref=e2997]
+          - generic [ref=e3002] [cursor=pointer]:
+            - generic &quot;show me opex trend&quot; [ref=e3003]
+            - button &quot;Options&quot; [ref=e3005]
+          - generic [ref=e3010] [cursor=pointer]:
+            - generic &quot;show me opex trend&quot; [ref=e3011]
+            - button &quot;Options&quot; [ref=e3013]
+          - generic [ref=e3018] [cursor=pointer]:
+            - generic &quot;show me opex trend&quot; [ref=e3019]
+            - button &quot;Options&quot; [ref=e3021]
+          - generic [ref=e3026] [cursor=pointer]:
+            - generic &quot;show me opex trend&quot; [ref=e3027]
+            - button &quot;Options&quot; [ref=e3029]
+          - generic [ref=e3034] [cursor=pointer]:
+            - generic &quot;show me opex trend&quot; [ref=e3035]
+            - button &quot;Options&quot; [ref=e3037]
+          - generic [ref=e3042] [cursor=pointer]:
+            - generic &quot;show me opex trend&quot; [ref=e3043]
+            - button &quot;Options&quot; [ref=e3045]
+          - generic [ref=e3050] [cursor=pointer]:
+            - generic &quot;sow net profit trend&quot; [ref=e3051]
+            - button &quot;Options&quot; [ref=e3053]
+          - generic [ref=e3058] [cursor=pointer]:
+            - generic &quot;Why was net income negative in Apr 2026 and Sep 2026?&quot; [ref=e3059]
+            - button &quot;Options&quot; [ref=e3061]
+          - generic [ref=e3066] [cursor=pointer]:
+            - generic &quot;How is my company&#39;s financial health?&quot; [ref=e3067]
+            - button &quot;Options&quot; [ref=e3069]
+          - generic [ref=e3074] [cursor=pointer]:
+            - generic &quot;How is my company&#39;s financial health?&quot; [ref=e3075]
+            - button &quot;Options&quot; [ref=e3077]
+          - generic [ref=e3082] [cursor=pointer]:
+            - generic &quot;How is my company&#39;s financial health?&quot; [ref=e3083]
+            - button &quot;Options&quot; [ref=e3085]
+          - generic [ref=e3090] [cursor=pointer]:
+            - generic &quot;show me net profit trend&quot; [ref=e3091]
+            - button &quot;Options&quot; [ref=e3093]
+          - generic [ref=e3098] [cursor=pointer]:
+            - generic &quot;How is net income doing against budget by class this quarter?&quot; [ref=e3099]
+            - button &quot;Options&quot; [ref=e3101]
+          - generic [ref=e3106] [cursor=pointer]:
+            - generic &quot;Revenue increase by 20% — net income&quot; [ref=e3107]
+            - button &quot;Options&quot; [ref=e3109]
+          - generic [ref=e3114] [cursor=pointer]:
+            - generic &quot;What if revenue fell 62.1% — net income, 2026 to date&quot; [ref=e3115]
+            - button &quot;Options&quot; [ref=e3117]
+          - generic [ref=e3122] [cursor=pointer]:
+            - generic &quot;show me expenses actuals vs budget month on month&quot; [ref=e3123]
+            - button &quot;Options&quot; [ref=e3125]
+          - generic [ref=e3130] [cursor=pointer]:
+            - generic &quot;why was septmebr a loss&quot; [ref=e3131]
+            - button &quot;Options&quot; [ref=e3133]
+          - generic [ref=e3138] [cursor=pointer]:
+            - generic &quot;why was september a loss&quot; [ref=e3139]
+            - button &quot;Options&quot; [ref=e3141]
+          - generic [ref=e3146] [cursor=pointer]:
+            - generic &quot;Why was septmeber loss&quot; [ref=e3147]
+            - button &quot;Options&quot; [ref=e3149]
+          - generic [ref=e3154] [cursor=pointer]:
+            - generic &quot;What would my net income look like if operating expenses were reduced by 10%?&quot; [ref=e3155]
+            - button &quot;Options&quot; [ref=e3157]
+          - generic [ref=e3162] [cursor=pointer]:
+            - generic &quot;What is my cash runway?&quot; [ref=e3163]
+            - button &quot;Options&quot; [ref=e3165]
+          - generic [ref=e3170] [cursor=pointer]:
+            - generic &quot;What is my working capital?&quot; [ref=e3171]
+            - button &quot;Options&quot; [ref=e3173]
+          - generic [ref=e3178] [cursor=pointer]:
+            - generic &quot;show me net profit&quot; [ref=e3179]
+            - button &quot;Options&quot; [ref=e3181]
+          - generic [ref=e3186] [cursor=pointer]:
+            - generic &quot;Which months had the highest and lowest profits this year?&quot; [ref=e3187]
+            - button &quot;Options&quot; [ref=e3189]
+          - generic [ref=e3194] [cursor=pointer]:
+            - generic &quot;Which months had the highest and lowest profits this year?&quot; [ref=e3195]
+            - button &quot;Options&quot; [ref=e3197]
+          - generic [ref=e3202] [cursor=pointer]:
+            - generic &quot;show me actual vs budget&quot; [ref=e3203]
+            - button &quot;Options&quot; [ref=e3205]
+          - generic [ref=e3210] [cursor=pointer]:
+            - generic &quot;show me cost and spend analysis&quot; [ref=e3211]
+            - button &quot;Options&quot; [ref=e3213]
+          - generic [ref=e3218] [cursor=pointer]:
+            - generic &quot;show me company financial health&quot; [ref=e3219]
+            - button &quot;Options&quot; [ref=e3221]
+          - generic [ref=e3226] [cursor=pointer]:
+            - generic &quot;Show me profit trend&quot; [ref=e3227]
+            - button &quot;Options&quot; [ref=e3229]
+          - generic [ref=e3234] [cursor=pointer]:
+            - generic &quot;What were my cash inflows and outflows last month?&quot; [ref=e3235]
+            - button &quot;Options&quot; [ref=e3237]
+          - generic [ref=e3242] [cursor=pointer]:
+            - generic &quot;How much do I owe vendors?&quot; [ref=e3243]
+            - button &quot;Options&quot; [ref=e3245]
+          - generic [ref=e3250] [cursor=pointer]:
+            - generic &quot;generate budget variance report&quot; [ref=e3251]
+            - button &quot;Options&quot; [ref=e3253]
+          - generic [ref=e3258] [cursor=pointer]:
+            - generic &quot;show me profit trend&quot; [ref=e3259]
+            - button &quot;Options&quot; [ref=e3261]
+          - generic [ref=e3266] [cursor=pointer]:
+            - generic &quot;give me budget vs actuals variance analysis&quot; [ref=e3267]
+            - button &quot;Options&quot; [ref=e3269]
+          - generic [ref=e3274] [cursor=pointer]:
+            - generic &quot;how is my profit trend&quot; [ref=e3275]
+            - button &quot;Options&quot; [ref=e3277]
+          - generic [ref=e3282] [cursor=pointer]:
+            - generic &quot;what is the model you trained on&quot; [ref=e3283]
+            - button &quot;Options&quot; [ref=e3285]
+          - generic [ref=e3290] [cursor=pointer]:
+            - generic &quot;show me proft trend&quot; [ref=e3291]
+            - button &quot;Options&quot; [ref=e3293]
+          - generic [ref=e3298] [cursor=pointer]:
+            - generic &quot;show me profit trend&quot; [ref=e3299]
+            - button &quot;Options&quot; [ref=e3301]
+          - generic [ref=e3306] [cursor=pointer]:
+            - generic &quot;show me bills&quot; [ref=e3307]
+            - button &quot;Options&quot; [ref=e3309]
+          - generic [ref=e3314] [cursor=pointer]:
+            - generic &quot;show me bills&quot; [ref=e3315]
+            - button &quot;Options&quot; [ref=e3317]
+          - generic [ref=e3322] [cursor=pointer]:
+            - generic &quot;How can you help me today&quot; [ref=e3323]
+            - button &quot;Options&quot; [ref=e3325]
+          - generic [ref=e3330] [cursor=pointer]:
+            - generic &quot;How is my company financial health&quot; [ref=e3331]
+            - button &quot;Options&quot; [ref=e3333]
+          - generic [ref=e3338] [cursor=pointer]:
+            - generic &quot;show me budget vs actuals&quot; [ref=e3339]
+            - button &quot;Options&quot; [ref=e3341]
+          - generic [ref=e3346] [cursor=pointer]:
+            - generic &quot;how can you help me today&quot; [ref=e3347]
+            - button &quot;Options&quot; [ref=e3349]
+          - generic [ref=e3354] [cursor=pointer]:
+            - generic &quot;How can you help me today&quot; [ref=e3355]
+            - button &quot;Options&quot; [ref=e3357]
+          - generic [ref=e3362] [cursor=pointer]:
+            - generic &quot;how is my profit trend&quot; [ref=e3363]
+            - button &quot;Options&quot; [ref=e3365]
+          - generic [ref=e3370] [cursor=pointer]:
+            - generic &quot;Why did total expenses increase in 2026-Q3 compared with 2026-Q2?&quot; [ref=e3371]
+            - button &quot;Options&quot; [ref=e3373]
+          - generic [ref=e3378] [cursor=pointer]:
+            - generic &quot;Why did revenue increase in 2026-Q3 compared with 2026-Q2?&quot; [ref=e3379]
+            - button &quot;Options&quot; [ref=e3381]
+          - generic [ref=e3386] [cursor=pointer]:
+            - generic &quot;show me profit trend&quot; [ref=e3387]
+            - button &quot;Options&quot; [ref=e3389]
+          - generic [ref=e3394] [cursor=pointer]:
+            - generic &quot;show me profit trend&quot; [ref=e3395]
+            - button &quot;Options&quot; [ref=e3397]
+          - generic [ref=e3402] [cursor=pointer]:
+            - generic &quot;show me profit trend&quot; [ref=e3403]
+            - button &quot;Options&quot; [ref=e3405]
+          - generic [ref=e3410] [cursor=pointer]:
+            - generic &quot;show me profit trend&quot; [ref=e3411]
+            - button &quot;Options&quot; [ref=e3413]
+          - generic [ref=e3418] [cursor=pointer]:
+            - generic &quot;What can I ask?&quot; [ref=e3419]
+            - button &quot;Options&quot; [ref=e3421]
+    - generic &quot;EleviqAI version 1.0.0&quot; [ref=e3426]: EleviqAI v1.0.0
+  - main [ref=e3427]:
+    - generic [ref=e3428]:
+      - button &quot;Dashboards&quot; [ref=e3429] [cursor=pointer]
+      - button &quot;Data Bridge Agent — connected&quot; [ref=e3436] [cursor=pointer]
+      - button &quot;Williams George&quot; [ref=e3442] [cursor=pointer]:
+        - generic [aria-hidden] [ref=e3443]: WG
+    - generic [ref=e3445]:
+      - generic [ref=e3446]: Break down sales before discounts by month for this year.
+      - generic &quot;Drag the chart into a dashboard&quot; [ref=e3459]:
+        - generic [ref=e3460]:
+          - paragraph [ref=e3461]: &quot;Sales before discounts by month for this year:&quot;
+          - generic [ref=e3462]:
+            - generic &quot;Drag this chart into a dashboard&quot; [ref=e3464]: ⠿
+            - generic [ref=e3465]:
+              - button &quot;Bar&quot; [ref=e3466] [cursor=pointer]
+              - button &quot;Line&quot; [ref=e3472] [cursor=pointer]
+              - button &quot;Pie&quot; [ref=e3476] [cursor=pointer]
+              - button &quot;Table&quot; [ref=e3481] [cursor=pointer]
+          - generic [ref=e3489]:
+            - button &quot;Insights&quot; [ref=e3490] [cursor=pointer]
+            - button &quot;Refresh&quot; [ref=e3498] [cursor=pointer]
+            - button &quot;Pin chart&quot; [ref=e3503] [cursor=pointer]
+          - paragraph [ref=e3506]: Click a bar to drill in
+          - generic [ref=e3507]:
+            - button &quot;View SQL&quot; [ref=e3509] [cursor=pointer]
+            - button &quot;Export data&quot; [ref=e3513] [cursor=pointer]
+            - button &quot;Regenerate — re-run this question (reflects the latest schema / config)&quot; [ref=e3517] [cursor=pointer]
+            - button &quot;Schedule — re-run this answer on a schedule and email what changed&quot; [ref=e3521] [cursor=pointer]
+            - generic [ref=e3525]:
+              - button &quot;Good response&quot; [ref=e3526] [cursor=pointer]
+              - button &quot;Bad response&quot; [pressed] [ref=e3529] [cursor=pointer]
+    - generic [ref=e3532]:
+      - generic [ref=e3534]:
+        - button &quot;Attach a spreadsheet or PDF&quot; [ref=e3535] [cursor=pointer]
+        - textbox &quot;Ask about your data…&quot; [ref=e3538]
+        - button &quot;Send message&quot; [disabled] [ref=e3539]
+      - paragraph [ref=e3542]: EleviqAI can make mistakes. Check important info.
+</code></pre>
+<h1>Test source</h1>
+<pre><code class="language-ts">  347 |         detail: `Matches the accepted alternative &quot;${alt.label}&quot; (the primary oracle did not match: ${primary.detail}). Alternative: ${r.detail}`,
+  348 |       };
+  349 |     }
+  350 |   }
+  351 |   const tried = alternatives.length &gt; 0 ? ` No accepted alternative matched either (${alternatives.map((a) =&gt; a.alt.label).join(&#39;; &#39;)}).` : &#39;&#39;;
+  352 |   return { name: CORRECTNESS, status: &#39;FAIL&#39;, detail: `${primary.detail}${tried}` };
+  353 | }
+  354 | 
+  355 | const escapeHtml = (s: string): string =&gt; s.replace(/&amp;/g, &#39;&amp;amp;&#39;).replace(/&lt;/g, &#39;&amp;lt;&#39;).replace(/&gt;/g, &#39;&amp;gt;&#39;);
+  356 | 
+  357 | function annotate(type: string, description: string): void {
+  358 |   test.info().annotations.push({ type, description: escapeHtml(description) });
+  359 | }
+  360 | 
+  361 | /**
+  362 |  * Runs the four oracle checks for one case, records everything in the report, and fails the test
+  363 |  * if any check fails.
+  364 |  */
+  365 | export async function verifyChatAnswerAgainstOracle(page: Page, caseId: string, question: string): Promise&lt;void&gt; {
+  366 |   const { file, oracle, source } = loadOracleCase(caseId);
+  367 |   const draft = !/^approved/i.test(file.reviewStatus);
+  368 |   const checks: CheckResult[] = [];
+  369 | 
+  370 |   const answer = await fetchChatAnswer(page, question);
+  371 |   logger.api.response(`Chat answer for ${caseId}: type=${answer.messageType}, sql=${answer.sql ? &#39;yes&#39; : &#39;no&#39;}`);
+  372 | 
+  373 |   annotate(&#39;Question&#39;, `${caseId}: ${question}`);
+  374 |   annotate(&#39;Chat answer (shown to the user)&#39;, answer.text || &#39;(empty)&#39;);
+  375 |   annotate(&#39;Chat SQL&#39;, answer.sql ?? &#39;(no SQL - the chat did not run a query)&#39;);
+  376 |   annotate(&#39;Chat result&#39;, rowsAsText(answer.result));
+  377 | 
+  378 |   const hasData = answer.messageType !== &#39;error&#39; &amp;&amp; answer.sql !== undefined &amp;&amp; answer.result !== undefined;
+  379 |   checks.push({
+  380 |     name: &#39;Check 1 - Answer (the chat returned a data answer)&#39;,
+  381 |     status: hasData ? &#39;PASS&#39; : &#39;FAIL&#39;,
+  382 |     detail: hasData
+  383 |       ? `Message type &quot;${answer.messageType}&quot; with SQL and ${answer.result!.length} result row(s).`
+  384 |       : `Message type &quot;${answer.messageType}&quot; without SQL/result. Text: ${answer.text || &#39;(empty)&#39;}`,
+  385 |   });
+  386 | 
+  387 |   let oracleRows: Row[] | undefined;
+  388 |   const altNotes: Array&lt;[string, string]&gt; = [];
+  389 |   try {
+  390 |     oracleRows = await runDataExplorerQuery(page, file.connection, oracle.sql);
+  391 |   } catch (e) {
+  392 |     checks.push({ name: &#39;Oracle query&#39;, status: &#39;FAIL&#39;, detail: `Oracle SQL failed: ${(e as Error).message}` });
+  393 |   }
+  394 | 
+  395 |   if (hasData) {
+  396 |     try {
+  397 |       const rerun = await runDataExplorerQuery(page, file.connection, answer.sql!);
+  398 |       checks.push(consistencyCheck(answer.result!, rerun, answer.metricNames));
+  399 |     } catch (e) {
+  400 |       checks.push({
+  401 |         name: &#39;Check 2 - Consistency (chat SQL re-run in Data Explorer gives the chat result)&#39;,
+  402 |         status: &#39;FAIL&#39;,
+  403 |         detail: `Re-running the chat SQL failed: ${(e as Error).message}`,
+  404 |       });
+  405 |     }
+  406 |     checks.push(faithfulnessCheck(answer));
+  407 |     if (oracleRows) {
+  408 |       const alternatives: Array&lt;{ alt: OracleAlternative; rows: Row[] }&gt; = [];
+  409 |       for (const alt of oracle.alternatives ?? []) {
+  410 |         try {
+  411 |           const rows = await runDataExplorerQuery(page, file.connection, alt.sql);
+  412 |           alternatives.push({ alt, rows });
+  413 |           altNotes.push([`Accepted alternative: ${alt.label}`, `${alt.sql}\n\n${rowsAsText(rows)}`]);
+  414 |         } catch (e) {
+  415 |           altNotes.push([`Accepted alternative: ${alt.label}`, `Query failed: ${(e as Error).message}`]);
+  416 |         }
+  417 |       }
+  418 |       checks.push(correctnessCheck(oracle, oracleRows, answer, alternatives));
+  419 |     }
+  420 |   } else {
+  421 |     for (const n of [&#39;Check 2 - Consistency&#39;, &#39;Check 3 - Faithfulness&#39;, &#39;Check 4 - Correctness&#39;]) {
+  422 |       checks.push({ name: n, status: &#39;SKIPPED&#39;, detail: &#39;Skipped: the chat returned no data answer.&#39; });
+  423 |     }
+  424 |   }
+  425 | 
+  426 |   annotate(`Oracle SQL${draft ? &#39; [DRAFT - not yet reviewed]&#39; : &#39;&#39;}`, `${oracle.sql}\n\nSource: ${source} (${file.reviewStatus})${oracle.notes ? `\nNotes: ${oracle.notes}` : &#39;&#39;}`);
+  427 |   annotate(&#39;Oracle result&#39;, rowsAsText(oracleRows));
+  428 |   for (const [type, description] of altNotes) annotate(type, description);
+  429 |   for (const c of checks) annotate(c.name, `${c.status}: ${c.detail}`);
+  430 | 
+  431 |   const failed = checks.filter((c) =&gt; c.status === &#39;FAIL&#39;);
+  432 |   const verdict = failed.length === 0 ? &#39;MATCHED&#39; : &#39;NOT MATCHED&#39;;
+  433 |   test.info().annotations.unshift({
+  434 |     type: &#39;SQL oracle verdict&#39;,
+  435 |     description: escapeHtml(
+  436 |       `${verdict}${draft ? &#39; (oracle is a DRAFT pending human review)&#39; : &#39;&#39;}\n` +
+  437 |         checks.map((c) =&gt; `${c.status.padEnd(7)} ${c.name}`).join(&#39;\n&#39;),
+  438 |     ),
+  439 |   });
+  440 |   await test.info().attach(&#39;sql-oracle-comparison.json&#39;, {
+  441 |     contentType: &#39;application/json&#39;,
+  442 |     body: JSON.stringify({ caseId, question, verdict, draft, answer, oracle, oracleRows, checks }, null, 2),
+  443 |   });
+  444 | 
+  445 |   if (failed.length &gt; 0) {
+  446 |     logger.error.assertion(`${caseId} SQL oracle: ${failed.map((c) =&gt; c.name).join(&#39;; &#39;)}`);
+&gt; 447 |     throw new Error(`SQL oracle ${verdict} for ${caseId}:\n${failed.map((c) =&gt; `- ${c.name}: ${c.detail}`).join(&#39;\n&#39;)}`);
+      |           ^ Error: SQL oracle NOT MATCHED for REV-043:
+  448 |   }
+  449 |   logger.api.response(`${caseId} SQL oracle: MATCHED`);
+  450 | }
+  451 | 
+</code></pre>
