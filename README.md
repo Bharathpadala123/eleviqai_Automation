@@ -18,7 +18,20 @@ Install Playwright browsers:
 npx playwright install
 ```
 
-Configure your target site in `.env` (see `.env.example`).
+`.env` holds the run settings and is committed: the target site (`BASE_URL=https://app.eleviqai.com/`) and the path of the saved sign-in session (`STORAGE_STATE=.auth/app-session.json`). `TEST_USER_EMAIL` and `TEST_USER_PASSWORD` are left blank on purpose: no test reads them, and no test types a password.
+
+### Sign in once (saved session)
+
+The chat tests start already signed in. They load the browser session saved in `.auth/app-session.json` (`STORAGE_STATE` in `.env`, passed to `storageState` in `playwright.config.ts`). That file holds your sign-in cookies, so it is not in the repo (`.gitignore` keeps `.auth/` out). Everyone who clones the repo saves their own:
+
+1. From the project folder, run this. It opens Google Chrome at the app:
+   ```bash
+   npx playwright open --channel chrome --save-storage=.auth/app-session.json https://app.eleviqai.com/
+   ```
+2. Sign in by hand in that window, with an EleviqAI account that has QuickBooks data connected and synced.
+3. Once the app shows its Overview page, close the window. Playwright writes `.auth/app-session.json` as the window closes.
+
+If Google Chrome isn't installed, leave out `--channel chrome` to use Playwright's own Chromium. When the session expires, the app shows its sign-in page instead of the Overview page, so each scenario's first step fails waiting for the Overview button: run the command again to save a fresh session. Never commit `.auth/`.
 
 To re-run `testroid init` non-interactively (e.g. in CI, or to quickly re-scaffold), pass `--yes`/`-y` with `--url`:
 
