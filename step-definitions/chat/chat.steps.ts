@@ -51,10 +51,26 @@ When('the user waits for the response to finish', async ({ page }) => {
   await new ChatPage(page).waitForResponseToFinish();
 });
 
-Then('the response is answered as a revenue analysis', async ({ page }) => {
-  await new ChatPage(page).expectResponseReceived();
-});
+// One step for every category's Expected Intent from the workbook. TBD: the workbook gives no observable
+// criterion for an intent, so this only asserts that a finished response is shown. The group is
+// non-capturing, so the step function takes no argument (playwright-bdd checks the arity).
+Then(
+  /^the response is answered as an? (?:revenue analysis|profitability analysis|expense analysis|cash flow analysis|budget versus actual analysis|multi-step financial diagnosis)$/,
+  async ({ page }) => {
+    await new ChatPage(page).expectResponseReceived();
+  },
+);
 
 Then('the answer matches the database oracle for {string}', async ({ page }, caseId: string) => {
   await new ChatPage(page).expectAnswerMatchesDatabaseOracle(caseId);
+});
+
+// AMB cases (ambiguous questions).
+Then('the app asks for the missing details instead of guessing for {string}', async ({ page }, caseId: string) => {
+  await new ChatPage(page).expectAppAsksForClarification(caseId);
+});
+
+// UNS cases (out-of-scope requests).
+Then('the app declines the out-of-scope request for {string}', async ({ page }, caseId: string) => {
+  await new ChatPage(page).expectAppDeclinesOutOfScope(caseId);
 });

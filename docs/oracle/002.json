@@ -1,0 +1,1213 @@
+{
+  "ticketNo": "002",
+  "generatedBy": "SQL Oracle Generator (Stage 3.5) · 2026-11-19 · AI-generated, human review required (one SQL pattern per question template; every query dry-run on 2026-11-19, 0 errors)",
+  "connection": "QuickBooks - IES Sandbox Company US 6de8 Parent",
+  "reviewStatus": "Draft - pending human review",
+  "definitions": {
+    "grossProfit": "TBD (owner review): Gross profit = GL revenue - COGS (equals vw_pnl_monthly.gross_profit).",
+    "grossMargin": "TBD (owner review): Gross margin = 100 * (revenue - COGS) / revenue, as a percentage; accepted alternative: the same as a ratio (0-1).",
+    "netIncome": "TBD (owner review): Net income = GL revenue + other income - COGS - operating expenses - other expenses (equals vw_pnl_monthly.net_profit).",
+    "operatingIncome": "TBD (owner review): Operating income = GL revenue - COGS - operating expenses (excludes other income and other expenses).",
+    "netProfitMargin": "TBD (owner review): Net profit margin = 100 * net income / revenue, as a percentage; accepted alternative: the same as a ratio (0-1).",
+    "profitByCustomer": "TBD (owner review): Profit = net income from the GL (revenue + other income - COGS - expenses), grouped by named customer; lines without a customer are left out.",
+    "profitByProduct": "TBD (owner review): The GL has no product key on cost lines and invoices carry no item cost, so profit per product cannot be computed from the data.",
+    "profitByServiceLine": "TBD (owner review): Profit = net income from the GL.",
+    "profitByMonth": "TBD (owner review): Profit = net income from the GL by month; accepted alternative: gross profit by month.",
+    "costOfGoodsSold": "TBD (owner review): Cost of goods sold = GL lines with reporting_category 'COGS' (equals vw_pnl_monthly.cogs).",
+    "thisMonth": "Calendar month of current_date on the Data Bridge Agent (DuckDB).",
+    "lastMonth": "Calendar month before the month of current_date on the Data Bridge Agent (DuckDB).",
+    "thisQuarter": "Calendar quarter of current_date, to date (Data Bridge Agent, DuckDB).",
+    "lastQuarter": "The full calendar quarter before the quarter of current_date.",
+    "thisYear": "Calendar year of current_date, to date.",
+    "lastYear": "The previous calendar year.",
+    "currentFiscalYear": "Fiscal year of current_date, to date; dim_company.fiscal_year_start_month = 1, so it equals the calendar year.",
+    "previousFiscalYear": "The fiscal year before the current one (calendar year, start month 1).",
+    "lastSixMonths": "TBD: the six full calendar months before the current month; accepted alternative: the six months including the current month.",
+    "last12Months": "The 12 calendar months up to and including the current month.",
+    "noData": "TBD (D-B): provisionally an empty result, null and 0 all mean 'no data'.",
+    "precedingPeriod": "TBD: the period of the same length immediately before (previous month / quarter / year).",
+    "alternatives": "A case may list 'alternatives': other readings that are also accepted. Check 4 passes if the primary oracle or any alternative matches, and the report names which one.",
+    "customers": "Customer breakdowns count named customers only (inner join to dim_customer).",
+    "modeNone": "mode 'none' (sql null): no fair figure oracle exists for the case; its notes say why. Checks 1-3 still run (data answer, chat SQL re-run, faithful $ amounts) and Check 4 is recorded as SKIPPED.",
+    "verification": "Every primary and alternative query was dry-run on 2026-11-19 through the read-only Data Explorer (current_date 2026-11-19); each case's notes end with what it returned. Periods with no data test the empty-answer path only."
+  },
+  "cases": {
+    "PRO-001": {
+      "question": "Show gross profit for this month.",
+      "sql": "SELECT ROUND(SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount WHEN g.reporting_category = 'COGS' THEN -g.reporting_amount END), 2) AS gross_profit FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'COGS') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) = CAST(strftime(current_date, '%Y%m') AS INTEGER)",
+      "measures": [
+        "gross_profit"
+      ],
+      "mode": "scalar",
+      "notes": "Gross profit = GL revenue - COGS (equals vw_pnl_monthly.gross_profit). TBD: owner review. 'This month' = calendar month of current_date. Verified 2026-11-19: 1 row(s), every figure null or 0 (no data for this period)."
+    },
+    "PRO-002": {
+      "question": "How has gross profit changed over this month?",
+      "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount WHEN g.reporting_category = 'COGS' THEN -g.reporting_amount END), 2) AS gross_profit FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'COGS') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) = CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "gross_profit"
+      ],
+      "mode": "set",
+      "notes": "Gross profit = GL revenue - COGS (equals vw_pnl_monthly.gross_profit). TBD: owner review. 'This month' = calendar month of current_date. Verified 2026-11-19: no rows (no data for this period)."
+    },
+    "PRO-003": {
+      "question": "Compare gross profit with the preceding equivalent period.",
+      "sql": "SELECT 'current period' AS period, ROUND(SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount WHEN g.reporting_category = 'COGS' THEN -g.reporting_amount END), 2) AS gross_profit FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'COGS') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) = CAST(strftime(current_date, '%Y%m') AS INTEGER) UNION ALL SELECT 'preceding period', ROUND(SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount WHEN g.reporting_category = 'COGS' THEN -g.reporting_amount END), 2) FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'COGS') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) = CAST(strftime(current_date - INTERVAL 1 MONTH, '%Y%m') AS INTEGER)",
+      "measures": [
+        "gross_profit"
+      ],
+      "mode": "set",
+      "notes": "Gross profit = GL revenue - COGS (equals vw_pnl_monthly.gross_profit). TBD: owner review. 'This month' = calendar month of current_date. Preceding period = previous calendar month (TBD: the period of the same length immediately before). Verified 2026-11-19: 2 row(s), every figure null or 0 (no data for this period)."
+    },
+    "PRO-004": {
+      "question": "Break down gross profit by month for this month.",
+      "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount WHEN g.reporting_category = 'COGS' THEN -g.reporting_amount END), 2) AS gross_profit FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'COGS') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) = CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "gross_profit"
+      ],
+      "mode": "set",
+      "notes": "Gross profit = GL revenue - COGS (equals vw_pnl_monthly.gross_profit). TBD: owner review. 'This month' = calendar month of current_date. Verified 2026-11-19: no rows (no data for this period)."
+    },
+    "PRO-005": {
+      "question": "Rank customers by gross profit for this month.",
+      "sql": "SELECT c.customer_name AS customer, ROUND(SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount WHEN g.reporting_category = 'COGS' THEN -g.reporting_amount END), 2) AS gross_profit FROM vw_gl_normalized g JOIN dim_customer c ON c.customer_key = g.customer_key AND c.is_current WHERE g.reporting_category IN ('Revenue', 'COGS') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) = CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "gross_profit"
+      ],
+      "mode": "set",
+      "notes": "Gross profit = GL revenue - COGS (equals vw_pnl_monthly.gross_profit). TBD: owner review. 'This month' = calendar month of current_date. Customer breakdowns count named customers only (inner join to dim_customer). Verified 2026-11-19: no rows (no data for this period)."
+    },
+    "PRO-006": {
+      "question": "Which items had the highest gross profit during this month?",
+      "sql": null,
+      "measures": [],
+      "mode": "none",
+      "notes": "Item-level profit needs item costs, which the data does not have (GL cost lines carry no product key). TBD: owner decision."
+    },
+    "PRO-007": {
+      "question": "Show the trend in gross profit for this month.",
+      "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount WHEN g.reporting_category = 'COGS' THEN -g.reporting_amount END), 2) AS gross_profit FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'COGS') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) = CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "gross_profit"
+      ],
+      "mode": "set",
+      "notes": "Gross profit = GL revenue - COGS (equals vw_pnl_monthly.gross_profit). TBD: owner review. 'This month' = calendar month of current_date. Verified 2026-11-19: no rows (no data for this period). Alternative \"daily trend (same measure by day)\": no rows (no data for this period).",
+      "alternatives": [
+        {
+          "label": "daily trend (same measure by day)",
+          "sql": "SELECT g.date_key AS date_key, ROUND(SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount WHEN g.reporting_category = 'COGS' THEN -g.reporting_amount END), 2) AS gross_profit FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'COGS') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) = CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+          "measures": [
+            "gross_profit"
+          ]
+        }
+      ]
+    },
+    "PRO-008": {
+      "question": "What were the highest and lowest values for gross profit in this month?",
+      "sql": "SELECT MAX(gross_profit) AS highest, MIN(gross_profit) AS lowest FROM (SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount WHEN g.reporting_category = 'COGS' THEN -g.reporting_amount END), 2) AS gross_profit FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'COGS') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) = CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1) t",
+      "measures": [
+        "highest",
+        "lowest"
+      ],
+      "mode": "set",
+      "notes": "Gross profit = GL revenue - COGS (equals vw_pnl_monthly.gross_profit). TBD: owner review. 'This month' = calendar month of current_date. Highest and lowest = the largest and smallest monthly figure in the period. TBD. Verified 2026-11-19: 1 row(s), every figure null or 0 (no data for this period)."
+    },
+    "PRO-009": {
+      "question": "Show gross profit by customer for this month.",
+      "sql": "SELECT c.customer_name AS customer, ROUND(SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount WHEN g.reporting_category = 'COGS' THEN -g.reporting_amount END), 2) AS gross_profit FROM vw_gl_normalized g JOIN dim_customer c ON c.customer_key = g.customer_key AND c.is_current WHERE g.reporting_category IN ('Revenue', 'COGS') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) = CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "gross_profit"
+      ],
+      "mode": "set",
+      "notes": "Gross profit = GL revenue - COGS (equals vw_pnl_monthly.gross_profit). TBD: owner review. 'This month' = calendar month of current_date. Customer breakdowns count named customers only (inner join to dim_customer). Verified 2026-11-19: no rows (no data for this period)."
+    },
+    "PRO-010": {
+      "question": "Explain the movement in gross profit during this month using the available income and expense figures.",
+      "sql": null,
+      "measures": [],
+      "mode": "none",
+      "notes": "Explanation question: there is no single figure set to compare. Checks 1-3 still run (data answer, chat SQL re-run, faithful amounts). TBD: human review of the explanation."
+    },
+    "PRO-011": {
+      "question": "Show gross margin for last month.",
+      "sql": "SELECT ROUND(100 * SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount WHEN g.reporting_category = 'COGS' THEN -g.reporting_amount END) / NULLIF(SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount END), 0), 2) AS gross_margin_pct FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'COGS') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) = CAST(strftime(current_date - INTERVAL 1 MONTH, '%Y%m') AS INTEGER)",
+      "measures": [
+        "gross_margin_pct"
+      ],
+      "mode": "scalar",
+      "notes": "Gross margin = 100 * (revenue - COGS) / revenue, as a percentage; accepted alternative: the same as a ratio (0-1). TBD. 'Last month' = calendar month before the month of current_date. Verified 2026-11-19: 1 row(s), every figure null or 0 (no data for this period). Alternative \"the same figure as a ratio (0-1) instead of a percentage\": 1 row(s), every figure null or 0 (no data for this period).",
+      "alternatives": [
+        {
+          "label": "the same figure as a ratio (0-1) instead of a percentage",
+          "sql": "SELECT ROUND(SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount WHEN g.reporting_category = 'COGS' THEN -g.reporting_amount END) / NULLIF(SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount END), 0), 4) AS gross_margin_pct FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'COGS') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) = CAST(strftime(current_date - INTERVAL 1 MONTH, '%Y%m') AS INTEGER)",
+          "measures": [
+            "gross_margin_pct"
+          ]
+        }
+      ]
+    },
+    "PRO-012": {
+      "question": "How has gross margin changed over last month?",
+      "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(100 * SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount WHEN g.reporting_category = 'COGS' THEN -g.reporting_amount END) / NULLIF(SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount END), 0), 2) AS gross_margin_pct FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'COGS') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) = CAST(strftime(current_date - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "gross_margin_pct"
+      ],
+      "mode": "set",
+      "notes": "Gross margin = 100 * (revenue - COGS) / revenue, as a percentage; accepted alternative: the same as a ratio (0-1). TBD. 'Last month' = calendar month before the month of current_date. Verified 2026-11-19: no rows (no data for this period). Alternative \"the same figure as a ratio (0-1) instead of a percentage\": no rows (no data for this period).",
+      "alternatives": [
+        {
+          "label": "the same figure as a ratio (0-1) instead of a percentage",
+          "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount WHEN g.reporting_category = 'COGS' THEN -g.reporting_amount END) / NULLIF(SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount END), 0), 4) AS gross_margin_pct FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'COGS') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) = CAST(strftime(current_date - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+          "measures": [
+            "gross_margin_pct"
+          ]
+        }
+      ]
+    },
+    "PRO-013": {
+      "question": "Compare gross margin with the preceding equivalent period.",
+      "sql": "SELECT 'current period' AS period, ROUND(100 * SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount WHEN g.reporting_category = 'COGS' THEN -g.reporting_amount END) / NULLIF(SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount END), 0), 2) AS gross_margin_pct FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'COGS') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) = CAST(strftime(current_date - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) UNION ALL SELECT 'preceding period', ROUND(100 * SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount WHEN g.reporting_category = 'COGS' THEN -g.reporting_amount END) / NULLIF(SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount END), 0), 2) FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'COGS') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) = CAST(strftime(current_date - INTERVAL 2 MONTH, '%Y%m') AS INTEGER)",
+      "measures": [
+        "gross_margin_pct"
+      ],
+      "mode": "set",
+      "notes": "Gross margin = 100 * (revenue - COGS) / revenue, as a percentage; accepted alternative: the same as a ratio (0-1). TBD. 'Last month' = calendar month before the month of current_date. Preceding period = the month before that (TBD: the period of the same length immediately before). Verified 2026-11-19: 2 row(s), every figure null or 0 (no data for this period). Alternative \"the same figure as a ratio (0-1) instead of a percentage\": 2 row(s), every figure null or 0 (no data for this period).",
+      "alternatives": [
+        {
+          "label": "the same figure as a ratio (0-1) instead of a percentage",
+          "sql": "SELECT 'current period' AS period, ROUND(SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount WHEN g.reporting_category = 'COGS' THEN -g.reporting_amount END) / NULLIF(SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount END), 0), 4) AS gross_margin_pct FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'COGS') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) = CAST(strftime(current_date - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) UNION ALL SELECT 'preceding period', ROUND(SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount WHEN g.reporting_category = 'COGS' THEN -g.reporting_amount END) / NULLIF(SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount END), 0), 4) FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'COGS') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) = CAST(strftime(current_date - INTERVAL 2 MONTH, '%Y%m') AS INTEGER)",
+          "measures": [
+            "gross_margin_pct"
+          ]
+        }
+      ]
+    },
+    "PRO-014": {
+      "question": "Break down gross margin by month for last month.",
+      "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(100 * SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount WHEN g.reporting_category = 'COGS' THEN -g.reporting_amount END) / NULLIF(SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount END), 0), 2) AS gross_margin_pct FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'COGS') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) = CAST(strftime(current_date - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "gross_margin_pct"
+      ],
+      "mode": "set",
+      "notes": "Gross margin = 100 * (revenue - COGS) / revenue, as a percentage; accepted alternative: the same as a ratio (0-1). TBD. 'Last month' = calendar month before the month of current_date. Verified 2026-11-19: no rows (no data for this period). Alternative \"the same figure as a ratio (0-1) instead of a percentage\": no rows (no data for this period).",
+      "alternatives": [
+        {
+          "label": "the same figure as a ratio (0-1) instead of a percentage",
+          "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount WHEN g.reporting_category = 'COGS' THEN -g.reporting_amount END) / NULLIF(SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount END), 0), 4) AS gross_margin_pct FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'COGS') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) = CAST(strftime(current_date - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+          "measures": [
+            "gross_margin_pct"
+          ]
+        }
+      ]
+    },
+    "PRO-015": {
+      "question": "Rank customers by gross margin for last month.",
+      "sql": "SELECT c.customer_name AS customer, ROUND(100 * SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount WHEN g.reporting_category = 'COGS' THEN -g.reporting_amount END) / NULLIF(SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount END), 0), 2) AS gross_margin_pct FROM vw_gl_normalized g JOIN dim_customer c ON c.customer_key = g.customer_key AND c.is_current WHERE g.reporting_category IN ('Revenue', 'COGS') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) = CAST(strftime(current_date - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "gross_margin_pct"
+      ],
+      "mode": "set",
+      "notes": "Gross margin = 100 * (revenue - COGS) / revenue, as a percentage; accepted alternative: the same as a ratio (0-1). TBD. 'Last month' = calendar month before the month of current_date. Customer breakdowns count named customers only (inner join to dim_customer). Verified 2026-11-19: no rows (no data for this period). Alternative \"the same figure as a ratio (0-1) instead of a percentage\": no rows (no data for this period).",
+      "alternatives": [
+        {
+          "label": "the same figure as a ratio (0-1) instead of a percentage",
+          "sql": "SELECT c.customer_name AS customer, ROUND(SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount WHEN g.reporting_category = 'COGS' THEN -g.reporting_amount END) / NULLIF(SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount END), 0), 4) AS gross_margin_pct FROM vw_gl_normalized g JOIN dim_customer c ON c.customer_key = g.customer_key AND c.is_current WHERE g.reporting_category IN ('Revenue', 'COGS') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) = CAST(strftime(current_date - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+          "measures": [
+            "gross_margin_pct"
+          ]
+        }
+      ]
+    },
+    "PRO-016": {
+      "question": "Which items had the highest gross margin during last month?",
+      "sql": null,
+      "measures": [],
+      "mode": "none",
+      "notes": "Item-level profit needs item costs, which the data does not have (GL cost lines carry no product key). TBD: owner decision."
+    },
+    "PRO-017": {
+      "question": "Show the trend in gross margin for last month.",
+      "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(100 * SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount WHEN g.reporting_category = 'COGS' THEN -g.reporting_amount END) / NULLIF(SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount END), 0), 2) AS gross_margin_pct FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'COGS') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) = CAST(strftime(current_date - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "gross_margin_pct"
+      ],
+      "mode": "set",
+      "notes": "Gross margin = 100 * (revenue - COGS) / revenue, as a percentage; accepted alternative: the same as a ratio (0-1). TBD. 'Last month' = calendar month before the month of current_date. Verified 2026-11-19: no rows (no data for this period). Alternative \"the same figure as a ratio (0-1) instead of a percentage\": no rows (no data for this period). Alternative \"daily trend (same measure by day)\": no rows (no data for this period).",
+      "alternatives": [
+        {
+          "label": "the same figure as a ratio (0-1) instead of a percentage",
+          "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount WHEN g.reporting_category = 'COGS' THEN -g.reporting_amount END) / NULLIF(SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount END), 0), 4) AS gross_margin_pct FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'COGS') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) = CAST(strftime(current_date - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+          "measures": [
+            "gross_margin_pct"
+          ]
+        },
+        {
+          "label": "daily trend (same measure by day)",
+          "sql": "SELECT g.date_key AS date_key, ROUND(100 * SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount WHEN g.reporting_category = 'COGS' THEN -g.reporting_amount END) / NULLIF(SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount END), 0), 2) AS gross_margin_pct FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'COGS') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) = CAST(strftime(current_date - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+          "measures": [
+            "gross_margin_pct"
+          ]
+        }
+      ]
+    },
+    "PRO-018": {
+      "question": "What were the highest and lowest values for gross margin in last month?",
+      "sql": "SELECT MAX(gross_margin_pct) AS highest, MIN(gross_margin_pct) AS lowest FROM (SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(100 * SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount WHEN g.reporting_category = 'COGS' THEN -g.reporting_amount END) / NULLIF(SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount END), 0), 2) AS gross_margin_pct FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'COGS') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) = CAST(strftime(current_date - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1) t",
+      "measures": [
+        "highest",
+        "lowest"
+      ],
+      "mode": "set",
+      "notes": "Gross margin = 100 * (revenue - COGS) / revenue, as a percentage; accepted alternative: the same as a ratio (0-1). TBD. 'Last month' = calendar month before the month of current_date. Highest and lowest = the largest and smallest monthly figure in the period. TBD. Verified 2026-11-19: 1 row(s), every figure null or 0 (no data for this period)."
+    },
+    "PRO-019": {
+      "question": "Show gross margin by customer for last month.",
+      "sql": "SELECT c.customer_name AS customer, ROUND(100 * SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount WHEN g.reporting_category = 'COGS' THEN -g.reporting_amount END) / NULLIF(SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount END), 0), 2) AS gross_margin_pct FROM vw_gl_normalized g JOIN dim_customer c ON c.customer_key = g.customer_key AND c.is_current WHERE g.reporting_category IN ('Revenue', 'COGS') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) = CAST(strftime(current_date - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "gross_margin_pct"
+      ],
+      "mode": "set",
+      "notes": "Gross margin = 100 * (revenue - COGS) / revenue, as a percentage; accepted alternative: the same as a ratio (0-1). TBD. 'Last month' = calendar month before the month of current_date. Customer breakdowns count named customers only (inner join to dim_customer). Verified 2026-11-19: no rows (no data for this period). Alternative \"the same figure as a ratio (0-1) instead of a percentage\": no rows (no data for this period).",
+      "alternatives": [
+        {
+          "label": "the same figure as a ratio (0-1) instead of a percentage",
+          "sql": "SELECT c.customer_name AS customer, ROUND(SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount WHEN g.reporting_category = 'COGS' THEN -g.reporting_amount END) / NULLIF(SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount END), 0), 4) AS gross_margin_pct FROM vw_gl_normalized g JOIN dim_customer c ON c.customer_key = g.customer_key AND c.is_current WHERE g.reporting_category IN ('Revenue', 'COGS') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) = CAST(strftime(current_date - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+          "measures": [
+            "gross_margin_pct"
+          ]
+        }
+      ]
+    },
+    "PRO-020": {
+      "question": "Explain the movement in gross margin during last month using the available income and expense figures.",
+      "sql": null,
+      "measures": [],
+      "mode": "none",
+      "notes": "Explanation question: there is no single figure set to compare. Checks 1-3 still run (data answer, chat SQL re-run, faithful amounts). TBD: human review of the explanation."
+    },
+    "PRO-021": {
+      "question": "Show net income for this quarter.",
+      "sql": "SELECT ROUND(SUM(CASE WHEN g.reporting_category IN ('Revenue', 'Other Income') THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense', 'Other Expense') THEN -g.reporting_amount END), 2) AS net_income FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'Other Income', 'COGS', 'Operating Expense', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date), '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER)",
+      "measures": [
+        "net_income"
+      ],
+      "mode": "scalar",
+      "notes": "Net income = GL revenue + other income - COGS - operating expenses - other expenses (equals vw_pnl_monthly.net_profit). TBD: owner review. 'This quarter' = calendar quarter of current_date, to date. Verified 2026-11-19: 1 row(s), every figure null or 0 (no data for this period)."
+    },
+    "PRO-022": {
+      "question": "How has net income changed over this quarter?",
+      "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(CASE WHEN g.reporting_category IN ('Revenue', 'Other Income') THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense', 'Other Expense') THEN -g.reporting_amount END), 2) AS net_income FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'Other Income', 'COGS', 'Operating Expense', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date), '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "net_income"
+      ],
+      "mode": "set",
+      "notes": "Net income = GL revenue + other income - COGS - operating expenses - other expenses (equals vw_pnl_monthly.net_profit). TBD: owner review. 'This quarter' = calendar quarter of current_date, to date. Verified 2026-11-19: no rows (no data for this period)."
+    },
+    "PRO-023": {
+      "question": "Compare net income with the preceding equivalent period.",
+      "sql": "SELECT 'current period' AS period, ROUND(SUM(CASE WHEN g.reporting_category IN ('Revenue', 'Other Income') THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense', 'Other Expense') THEN -g.reporting_amount END), 2) AS net_income FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'Other Income', 'COGS', 'Operating Expense', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date), '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) UNION ALL SELECT 'preceding period', ROUND(SUM(CASE WHEN g.reporting_category IN ('Revenue', 'Other Income') THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense', 'Other Expense') THEN -g.reporting_amount END), 2) FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'Other Income', 'COGS', 'Operating Expense', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 3 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 1 MONTH, '%Y%m') AS INTEGER)",
+      "measures": [
+        "net_income"
+      ],
+      "mode": "set",
+      "notes": "Net income = GL revenue + other income - COGS - operating expenses - other expenses (equals vw_pnl_monthly.net_profit). TBD: owner review. 'This quarter' = calendar quarter of current_date, to date. Preceding period = previous full calendar quarter (TBD: the period of the same length immediately before). Verified 2026-11-19: 2 row(s); first: period=current period, net_income=None."
+    },
+    "PRO-024": {
+      "question": "Break down net income by month for this quarter.",
+      "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(CASE WHEN g.reporting_category IN ('Revenue', 'Other Income') THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense', 'Other Expense') THEN -g.reporting_amount END), 2) AS net_income FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'Other Income', 'COGS', 'Operating Expense', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date), '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "net_income"
+      ],
+      "mode": "set",
+      "notes": "Net income = GL revenue + other income - COGS - operating expenses - other expenses (equals vw_pnl_monthly.net_profit). TBD: owner review. 'This quarter' = calendar quarter of current_date, to date. Verified 2026-11-19: no rows (no data for this period)."
+    },
+    "PRO-025": {
+      "question": "Rank customers by net income for this quarter.",
+      "sql": "SELECT c.customer_name AS customer, ROUND(SUM(CASE WHEN g.reporting_category IN ('Revenue', 'Other Income') THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense', 'Other Expense') THEN -g.reporting_amount END), 2) AS net_income FROM vw_gl_normalized g JOIN dim_customer c ON c.customer_key = g.customer_key AND c.is_current WHERE g.reporting_category IN ('Revenue', 'Other Income', 'COGS', 'Operating Expense', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date), '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "net_income"
+      ],
+      "mode": "set",
+      "notes": "Net income = GL revenue + other income - COGS - operating expenses - other expenses (equals vw_pnl_monthly.net_profit). TBD: owner review. 'This quarter' = calendar quarter of current_date, to date. Customer breakdowns count named customers only (inner join to dim_customer). Verified 2026-11-19: no rows (no data for this period). TBD (Gate O): operating and other expenses carry no customer in the GL (checked 2026-11-19), so per-customer figures only subtract COGS; the owner may prefer the chat to say that expenses are not allocated to customers."
+    },
+    "PRO-026": {
+      "question": "Which items had the highest net income during this quarter?",
+      "sql": null,
+      "measures": [],
+      "mode": "none",
+      "notes": "Item-level profit needs item costs, which the data does not have (GL cost lines carry no product key). TBD: owner decision."
+    },
+    "PRO-027": {
+      "question": "Show the trend in net income for this quarter.",
+      "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(CASE WHEN g.reporting_category IN ('Revenue', 'Other Income') THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense', 'Other Expense') THEN -g.reporting_amount END), 2) AS net_income FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'Other Income', 'COGS', 'Operating Expense', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date), '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "net_income"
+      ],
+      "mode": "set",
+      "notes": "Net income = GL revenue + other income - COGS - operating expenses - other expenses (equals vw_pnl_monthly.net_profit). TBD: owner review. 'This quarter' = calendar quarter of current_date, to date. Verified 2026-11-19: no rows (no data for this period). Alternative \"daily trend (same measure by day)\": no rows (no data for this period).",
+      "alternatives": [
+        {
+          "label": "daily trend (same measure by day)",
+          "sql": "SELECT g.date_key AS date_key, ROUND(SUM(CASE WHEN g.reporting_category IN ('Revenue', 'Other Income') THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense', 'Other Expense') THEN -g.reporting_amount END), 2) AS net_income FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'Other Income', 'COGS', 'Operating Expense', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date), '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+          "measures": [
+            "net_income"
+          ]
+        }
+      ]
+    },
+    "PRO-028": {
+      "question": "What were the highest and lowest values for net income in this quarter?",
+      "sql": "SELECT MAX(net_income) AS highest, MIN(net_income) AS lowest FROM (SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(CASE WHEN g.reporting_category IN ('Revenue', 'Other Income') THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense', 'Other Expense') THEN -g.reporting_amount END), 2) AS net_income FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'Other Income', 'COGS', 'Operating Expense', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date), '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1) t",
+      "measures": [
+        "highest",
+        "lowest"
+      ],
+      "mode": "set",
+      "notes": "Net income = GL revenue + other income - COGS - operating expenses - other expenses (equals vw_pnl_monthly.net_profit). TBD: owner review. 'This quarter' = calendar quarter of current_date, to date. Highest and lowest = the largest and smallest monthly figure in the period. TBD. Verified 2026-11-19: 1 row(s), every figure null or 0 (no data for this period)."
+    },
+    "PRO-029": {
+      "question": "Show net income by customer for this quarter.",
+      "sql": "SELECT c.customer_name AS customer, ROUND(SUM(CASE WHEN g.reporting_category IN ('Revenue', 'Other Income') THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense', 'Other Expense') THEN -g.reporting_amount END), 2) AS net_income FROM vw_gl_normalized g JOIN dim_customer c ON c.customer_key = g.customer_key AND c.is_current WHERE g.reporting_category IN ('Revenue', 'Other Income', 'COGS', 'Operating Expense', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date), '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "net_income"
+      ],
+      "mode": "set",
+      "notes": "Net income = GL revenue + other income - COGS - operating expenses - other expenses (equals vw_pnl_monthly.net_profit). TBD: owner review. 'This quarter' = calendar quarter of current_date, to date. Customer breakdowns count named customers only (inner join to dim_customer). Verified 2026-11-19: no rows (no data for this period). TBD (Gate O): operating and other expenses carry no customer in the GL (checked 2026-11-19), so per-customer figures only subtract COGS; the owner may prefer the chat to say that expenses are not allocated to customers."
+    },
+    "PRO-030": {
+      "question": "Explain the movement in net income during this quarter using the available income and expense figures.",
+      "sql": null,
+      "measures": [],
+      "mode": "none",
+      "notes": "Explanation question: there is no single figure set to compare. Checks 1-3 still run (data answer, chat SQL re-run, faithful amounts). TBD: human review of the explanation."
+    },
+    "PRO-031": {
+      "question": "Show operating income for last quarter.",
+      "sql": "SELECT ROUND(SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense') THEN -g.reporting_amount END), 2) AS operating_income FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'COGS', 'Operating Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 3 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 1 MONTH, '%Y%m') AS INTEGER)",
+      "measures": [
+        "operating_income"
+      ],
+      "mode": "scalar",
+      "notes": "Operating income = GL revenue - COGS - operating expenses (excludes other income and other expenses). TBD. 'Last quarter' = the full calendar quarter before the quarter of current_date. Verified 2026-11-19: 1 row(s); first: operating_income=4354.29."
+    },
+    "PRO-032": {
+      "question": "How has operating income changed over last quarter?",
+      "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense') THEN -g.reporting_amount END), 2) AS operating_income FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'COGS', 'Operating Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 3 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "operating_income"
+      ],
+      "mode": "set",
+      "notes": "Operating income = GL revenue - COGS - operating expenses (excludes other income and other expenses). TBD. 'Last quarter' = the full calendar quarter before the quarter of current_date. Verified 2026-11-19: 3 row(s); first: year_month=202607, operating_income=430.32."
+    },
+    "PRO-033": {
+      "question": "Compare operating income with the preceding equivalent period.",
+      "sql": "SELECT 'current period' AS period, ROUND(SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense') THEN -g.reporting_amount END), 2) AS operating_income FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'COGS', 'Operating Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 3 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) UNION ALL SELECT 'preceding period', ROUND(SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense') THEN -g.reporting_amount END), 2) FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'COGS', 'Operating Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 6 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 4 MONTH, '%Y%m') AS INTEGER)",
+      "measures": [
+        "operating_income"
+      ],
+      "mode": "set",
+      "notes": "Operating income = GL revenue - COGS - operating expenses (excludes other income and other expenses). TBD. 'Last quarter' = the full calendar quarter before the quarter of current_date. Preceding period = the quarter before that (TBD: the period of the same length immediately before). Verified 2026-11-19: 2 row(s); first: period=current period, operating_income=4354.29."
+    },
+    "PRO-034": {
+      "question": "Break down operating income by month for last quarter.",
+      "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense') THEN -g.reporting_amount END), 2) AS operating_income FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'COGS', 'Operating Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 3 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "operating_income"
+      ],
+      "mode": "set",
+      "notes": "Operating income = GL revenue - COGS - operating expenses (excludes other income and other expenses). TBD. 'Last quarter' = the full calendar quarter before the quarter of current_date. Verified 2026-11-19: 3 row(s); first: year_month=202607, operating_income=430.32."
+    },
+    "PRO-035": {
+      "question": "Rank customers by operating income for last quarter.",
+      "sql": "SELECT c.customer_name AS customer, ROUND(SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense') THEN -g.reporting_amount END), 2) AS operating_income FROM vw_gl_normalized g JOIN dim_customer c ON c.customer_key = g.customer_key AND c.is_current WHERE g.reporting_category IN ('Revenue', 'COGS', 'Operating Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 3 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "operating_income"
+      ],
+      "mode": "set",
+      "notes": "Operating income = GL revenue - COGS - operating expenses (excludes other income and other expenses). TBD. 'Last quarter' = the full calendar quarter before the quarter of current_date. Customer breakdowns count named customers only (inner join to dim_customer). Verified 2026-11-19: 23 row(s); first: customer=Cool Cars, operating_income=2194. TBD (Gate O): operating and other expenses carry no customer in the GL (checked 2026-11-19), so per-customer figures only subtract COGS; the owner may prefer the chat to say that expenses are not allocated to customers."
+    },
+    "PRO-036": {
+      "question": "Which items had the highest operating income during last quarter?",
+      "sql": null,
+      "measures": [],
+      "mode": "none",
+      "notes": "Item-level profit needs item costs, which the data does not have (GL cost lines carry no product key). TBD: owner decision."
+    },
+    "PRO-037": {
+      "question": "Show the trend in operating income for last quarter.",
+      "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense') THEN -g.reporting_amount END), 2) AS operating_income FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'COGS', 'Operating Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 3 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "operating_income"
+      ],
+      "mode": "set",
+      "notes": "Operating income = GL revenue - COGS - operating expenses (excludes other income and other expenses). TBD. 'Last quarter' = the full calendar quarter before the quarter of current_date. Verified 2026-11-19: 3 row(s); first: year_month=202607, operating_income=430.32. Alternative \"daily trend (same measure by day)\": 33 row(s); first: date_key=20260707, operating_income=-54.55.",
+      "alternatives": [
+        {
+          "label": "daily trend (same measure by day)",
+          "sql": "SELECT g.date_key AS date_key, ROUND(SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense') THEN -g.reporting_amount END), 2) AS operating_income FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'COGS', 'Operating Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 3 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+          "measures": [
+            "operating_income"
+          ]
+        }
+      ]
+    },
+    "PRO-038": {
+      "question": "What were the highest and lowest values for operating income in last quarter?",
+      "sql": "SELECT MAX(operating_income) AS highest, MIN(operating_income) AS lowest FROM (SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense') THEN -g.reporting_amount END), 2) AS operating_income FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'COGS', 'Operating Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 3 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1) t",
+      "measures": [
+        "highest",
+        "lowest"
+      ],
+      "mode": "set",
+      "notes": "Operating income = GL revenue - COGS - operating expenses (excludes other income and other expenses). TBD. 'Last quarter' = the full calendar quarter before the quarter of current_date. Highest and lowest = the largest and smallest monthly figure in the period. TBD. Verified 2026-11-19: 1 row(s); first: highest=4020.36, lowest=-96.39."
+    },
+    "PRO-039": {
+      "question": "Show operating income by customer for last quarter.",
+      "sql": "SELECT c.customer_name AS customer, ROUND(SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense') THEN -g.reporting_amount END), 2) AS operating_income FROM vw_gl_normalized g JOIN dim_customer c ON c.customer_key = g.customer_key AND c.is_current WHERE g.reporting_category IN ('Revenue', 'COGS', 'Operating Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 3 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "operating_income"
+      ],
+      "mode": "set",
+      "notes": "Operating income = GL revenue - COGS - operating expenses (excludes other income and other expenses). TBD. 'Last quarter' = the full calendar quarter before the quarter of current_date. Customer breakdowns count named customers only (inner join to dim_customer). Verified 2026-11-19: 23 row(s); first: customer=Cool Cars, operating_income=2194. TBD (Gate O): operating and other expenses carry no customer in the GL (checked 2026-11-19), so per-customer figures only subtract COGS; the owner may prefer the chat to say that expenses are not allocated to customers."
+    },
+    "PRO-040": {
+      "question": "Explain the movement in operating income during last quarter using the available income and expense figures.",
+      "sql": null,
+      "measures": [],
+      "mode": "none",
+      "notes": "Explanation question: there is no single figure set to compare. Checks 1-3 still run (data answer, chat SQL re-run, faithful amounts). TBD: human review of the explanation."
+    },
+    "PRO-041": {
+      "question": "Show net profit margin for this year.",
+      "sql": "SELECT ROUND(100 * SUM(CASE WHEN g.reporting_category IN ('Revenue', 'Other Income') THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense', 'Other Expense') THEN -g.reporting_amount END) / NULLIF(SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount END), 0), 2) AS net_profit_margin_pct FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'Other Income', 'COGS', 'Operating Expense', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER)",
+      "measures": [
+        "net_profit_margin_pct"
+      ],
+      "mode": "scalar",
+      "notes": "Net profit margin = 100 * net income / revenue, as a percentage; accepted alternative: the same as a ratio (0-1). TBD. 'This year' = calendar year of current_date, to date. Verified 2026-11-19: 1 row(s); first: net_profit_margin_pct=16.1. Alternative \"the same figure as a ratio (0-1) instead of a percentage\": 1 row(s); first: net_profit_margin_pct=0.161.",
+      "alternatives": [
+        {
+          "label": "the same figure as a ratio (0-1) instead of a percentage",
+          "sql": "SELECT ROUND(SUM(CASE WHEN g.reporting_category IN ('Revenue', 'Other Income') THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense', 'Other Expense') THEN -g.reporting_amount END) / NULLIF(SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount END), 0), 4) AS net_profit_margin_pct FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'Other Income', 'COGS', 'Operating Expense', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER)",
+          "measures": [
+            "net_profit_margin_pct"
+          ]
+        }
+      ]
+    },
+    "PRO-042": {
+      "question": "How has net profit margin changed over this year?",
+      "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(100 * SUM(CASE WHEN g.reporting_category IN ('Revenue', 'Other Income') THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense', 'Other Expense') THEN -g.reporting_amount END) / NULLIF(SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount END), 0), 2) AS net_profit_margin_pct FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'Other Income', 'COGS', 'Operating Expense', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "net_profit_margin_pct"
+      ],
+      "mode": "set",
+      "notes": "Net profit margin = 100 * net income / revenue, as a percentage; accepted alternative: the same as a ratio (0-1). TBD. 'This year' = calendar year of current_date, to date. Verified 2026-11-19: 6 row(s); first: year_month=202604, net_profit_margin_pct=None. Alternative \"the same figure as a ratio (0-1) instead of a percentage\": 6 row(s); first: year_month=202604, net_profit_margin_pct=None.",
+      "alternatives": [
+        {
+          "label": "the same figure as a ratio (0-1) instead of a percentage",
+          "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(CASE WHEN g.reporting_category IN ('Revenue', 'Other Income') THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense', 'Other Expense') THEN -g.reporting_amount END) / NULLIF(SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount END), 0), 4) AS net_profit_margin_pct FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'Other Income', 'COGS', 'Operating Expense', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+          "measures": [
+            "net_profit_margin_pct"
+          ]
+        }
+      ]
+    },
+    "PRO-043": {
+      "question": "Compare net profit margin with the preceding equivalent period.",
+      "sql": "SELECT 'current period' AS period, ROUND(100 * SUM(CASE WHEN g.reporting_category IN ('Revenue', 'Other Income') THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense', 'Other Expense') THEN -g.reporting_amount END) / NULLIF(SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount END), 0), 2) AS net_profit_margin_pct FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'Other Income', 'COGS', 'Operating Expense', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER) UNION ALL SELECT 'preceding period', ROUND(100 * SUM(CASE WHEN g.reporting_category IN ('Revenue', 'Other Income') THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense', 'Other Expense') THEN -g.reporting_amount END) / NULLIF(SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount END), 0), 2) FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'Other Income', 'COGS', 'Operating Expense', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12",
+      "measures": [
+        "net_profit_margin_pct"
+      ],
+      "mode": "set",
+      "notes": "Net profit margin = 100 * net income / revenue, as a percentage; accepted alternative: the same as a ratio (0-1). TBD. 'This year' = calendar year of current_date, to date. Preceding period = previous calendar year (TBD: the period of the same length immediately before). Verified 2026-11-19: 2 row(s); first: period=current period, net_profit_margin_pct=16.1. Alternative \"the same figure as a ratio (0-1) instead of a percentage\": 2 row(s); first: period=current period, net_profit_margin_pct=0.161.",
+      "alternatives": [
+        {
+          "label": "the same figure as a ratio (0-1) instead of a percentage",
+          "sql": "SELECT 'current period' AS period, ROUND(SUM(CASE WHEN g.reporting_category IN ('Revenue', 'Other Income') THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense', 'Other Expense') THEN -g.reporting_amount END) / NULLIF(SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount END), 0), 4) AS net_profit_margin_pct FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'Other Income', 'COGS', 'Operating Expense', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER) UNION ALL SELECT 'preceding period', ROUND(SUM(CASE WHEN g.reporting_category IN ('Revenue', 'Other Income') THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense', 'Other Expense') THEN -g.reporting_amount END) / NULLIF(SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount END), 0), 4) FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'Other Income', 'COGS', 'Operating Expense', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12",
+          "measures": [
+            "net_profit_margin_pct"
+          ]
+        }
+      ]
+    },
+    "PRO-044": {
+      "question": "Break down net profit margin by month for this year.",
+      "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(100 * SUM(CASE WHEN g.reporting_category IN ('Revenue', 'Other Income') THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense', 'Other Expense') THEN -g.reporting_amount END) / NULLIF(SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount END), 0), 2) AS net_profit_margin_pct FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'Other Income', 'COGS', 'Operating Expense', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "net_profit_margin_pct"
+      ],
+      "mode": "set",
+      "notes": "Net profit margin = 100 * net income / revenue, as a percentage; accepted alternative: the same as a ratio (0-1). TBD. 'This year' = calendar year of current_date, to date. Verified 2026-11-19: 6 row(s); first: year_month=202604, net_profit_margin_pct=None. Alternative \"the same figure as a ratio (0-1) instead of a percentage\": 6 row(s); first: year_month=202604, net_profit_margin_pct=None.",
+      "alternatives": [
+        {
+          "label": "the same figure as a ratio (0-1) instead of a percentage",
+          "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(CASE WHEN g.reporting_category IN ('Revenue', 'Other Income') THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense', 'Other Expense') THEN -g.reporting_amount END) / NULLIF(SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount END), 0), 4) AS net_profit_margin_pct FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'Other Income', 'COGS', 'Operating Expense', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+          "measures": [
+            "net_profit_margin_pct"
+          ]
+        }
+      ]
+    },
+    "PRO-045": {
+      "question": "Rank customers by net profit margin for this year.",
+      "sql": "SELECT c.customer_name AS customer, ROUND(100 * SUM(CASE WHEN g.reporting_category IN ('Revenue', 'Other Income') THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense', 'Other Expense') THEN -g.reporting_amount END) / NULLIF(SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount END), 0), 2) AS net_profit_margin_pct FROM vw_gl_normalized g JOIN dim_customer c ON c.customer_key = g.customer_key AND c.is_current WHERE g.reporting_category IN ('Revenue', 'Other Income', 'COGS', 'Operating Expense', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "net_profit_margin_pct"
+      ],
+      "mode": "set",
+      "notes": "Net profit margin = 100 * net income / revenue, as a percentage; accepted alternative: the same as a ratio (0-1). TBD. 'This year' = calendar year of current_date, to date. Customer breakdowns count named customers only (inner join to dim_customer). Verified 2026-11-19: 23 row(s); first: customer=Cool Cars, net_profit_margin_pct=100. Alternative \"the same figure as a ratio (0-1) instead of a percentage\": 23 row(s); first: customer=Barnett Design, net_profit_margin_pct=1. TBD (Gate O): operating and other expenses carry no customer in the GL (checked 2026-11-19), so per-customer figures only subtract COGS; the owner may prefer the chat to say that expenses are not allocated to customers.",
+      "alternatives": [
+        {
+          "label": "the same figure as a ratio (0-1) instead of a percentage",
+          "sql": "SELECT c.customer_name AS customer, ROUND(SUM(CASE WHEN g.reporting_category IN ('Revenue', 'Other Income') THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense', 'Other Expense') THEN -g.reporting_amount END) / NULLIF(SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount END), 0), 4) AS net_profit_margin_pct FROM vw_gl_normalized g JOIN dim_customer c ON c.customer_key = g.customer_key AND c.is_current WHERE g.reporting_category IN ('Revenue', 'Other Income', 'COGS', 'Operating Expense', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+          "measures": [
+            "net_profit_margin_pct"
+          ]
+        }
+      ]
+    },
+    "PRO-046": {
+      "question": "Which items had the highest net profit margin during this year?",
+      "sql": null,
+      "measures": [],
+      "mode": "none",
+      "notes": "Item-level profit needs item costs, which the data does not have (GL cost lines carry no product key). TBD: owner decision."
+    },
+    "PRO-047": {
+      "question": "Show the trend in net profit margin for this year.",
+      "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(100 * SUM(CASE WHEN g.reporting_category IN ('Revenue', 'Other Income') THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense', 'Other Expense') THEN -g.reporting_amount END) / NULLIF(SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount END), 0), 2) AS net_profit_margin_pct FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'Other Income', 'COGS', 'Operating Expense', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "net_profit_margin_pct"
+      ],
+      "mode": "set",
+      "notes": "Net profit margin = 100 * net income / revenue, as a percentage; accepted alternative: the same as a ratio (0-1). TBD. 'This year' = calendar year of current_date, to date. Verified 2026-11-19: 6 row(s); first: year_month=202604, net_profit_margin_pct=None. Alternative \"the same figure as a ratio (0-1) instead of a percentage\": 6 row(s); first: year_month=202604, net_profit_margin_pct=None. Alternative \"daily trend (same measure by day)\": 40 row(s); first: date_key=20260424, net_profit_margin_pct=None.",
+      "alternatives": [
+        {
+          "label": "the same figure as a ratio (0-1) instead of a percentage",
+          "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(CASE WHEN g.reporting_category IN ('Revenue', 'Other Income') THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense', 'Other Expense') THEN -g.reporting_amount END) / NULLIF(SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount END), 0), 4) AS net_profit_margin_pct FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'Other Income', 'COGS', 'Operating Expense', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+          "measures": [
+            "net_profit_margin_pct"
+          ]
+        },
+        {
+          "label": "daily trend (same measure by day)",
+          "sql": "SELECT g.date_key AS date_key, ROUND(100 * SUM(CASE WHEN g.reporting_category IN ('Revenue', 'Other Income') THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense', 'Other Expense') THEN -g.reporting_amount END) / NULLIF(SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount END), 0), 2) AS net_profit_margin_pct FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'Other Income', 'COGS', 'Operating Expense', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+          "measures": [
+            "net_profit_margin_pct"
+          ]
+        }
+      ]
+    },
+    "PRO-048": {
+      "question": "What were the highest and lowest values for net profit margin in this year?",
+      "sql": "SELECT MAX(net_profit_margin_pct) AS highest, MIN(net_profit_margin_pct) AS lowest FROM (SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(100 * SUM(CASE WHEN g.reporting_category IN ('Revenue', 'Other Income') THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense', 'Other Expense') THEN -g.reporting_amount END) / NULLIF(SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount END), 0), 2) AS net_profit_margin_pct FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'Other Income', 'COGS', 'Operating Expense', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1) t",
+      "measures": [
+        "highest",
+        "lowest"
+      ],
+      "mode": "set",
+      "notes": "Net profit margin = 100 * net income / revenue, as a percentage; accepted alternative: the same as a ratio (0-1). TBD. 'This year' = calendar year of current_date, to date. Highest and lowest = the largest and smallest monthly figure in the period. TBD. Verified 2026-11-19: 1 row(s); first: highest=100, lowest=16.23."
+    },
+    "PRO-049": {
+      "question": "Show net profit margin by customer for this year.",
+      "sql": "SELECT c.customer_name AS customer, ROUND(100 * SUM(CASE WHEN g.reporting_category IN ('Revenue', 'Other Income') THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense', 'Other Expense') THEN -g.reporting_amount END) / NULLIF(SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount END), 0), 2) AS net_profit_margin_pct FROM vw_gl_normalized g JOIN dim_customer c ON c.customer_key = g.customer_key AND c.is_current WHERE g.reporting_category IN ('Revenue', 'Other Income', 'COGS', 'Operating Expense', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "net_profit_margin_pct"
+      ],
+      "mode": "set",
+      "notes": "Net profit margin = 100 * net income / revenue, as a percentage; accepted alternative: the same as a ratio (0-1). TBD. 'This year' = calendar year of current_date, to date. Customer breakdowns count named customers only (inner join to dim_customer). Verified 2026-11-19: 23 row(s); first: customer=Cool Cars, net_profit_margin_pct=100. Alternative \"the same figure as a ratio (0-1) instead of a percentage\": 23 row(s); first: customer=Barnett Design, net_profit_margin_pct=1. TBD (Gate O): operating and other expenses carry no customer in the GL (checked 2026-11-19), so per-customer figures only subtract COGS; the owner may prefer the chat to say that expenses are not allocated to customers.",
+      "alternatives": [
+        {
+          "label": "the same figure as a ratio (0-1) instead of a percentage",
+          "sql": "SELECT c.customer_name AS customer, ROUND(SUM(CASE WHEN g.reporting_category IN ('Revenue', 'Other Income') THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense', 'Other Expense') THEN -g.reporting_amount END) / NULLIF(SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount END), 0), 4) AS net_profit_margin_pct FROM vw_gl_normalized g JOIN dim_customer c ON c.customer_key = g.customer_key AND c.is_current WHERE g.reporting_category IN ('Revenue', 'Other Income', 'COGS', 'Operating Expense', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+          "measures": [
+            "net_profit_margin_pct"
+          ]
+        }
+      ]
+    },
+    "PRO-050": {
+      "question": "Explain the movement in net profit margin during this year using the available income and expense figures.",
+      "sql": null,
+      "measures": [],
+      "mode": "none",
+      "notes": "Explanation question: there is no single figure set to compare. Checks 1-3 still run (data answer, chat SQL re-run, faithful amounts). TBD: human review of the explanation."
+    },
+    "PRO-051": {
+      "question": "Show profit by customer for last year.",
+      "sql": "SELECT c.customer_name AS customer, ROUND(SUM(CASE WHEN g.reporting_category IN ('Revenue', 'Other Income') THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense', 'Other Expense') THEN -g.reporting_amount END), 2) AS profit FROM vw_gl_normalized g JOIN dim_customer c ON c.customer_key = g.customer_key AND c.is_current WHERE g.reporting_category IN ('Revenue', 'Other Income', 'COGS', 'Operating Expense', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "profit"
+      ],
+      "mode": "set",
+      "notes": "Profit = net income from the GL (revenue + other income - COGS - expenses), grouped by named customer; lines without a customer are left out. TBD: 'profit' could also mean gross profit. 'Last year' = the previous calendar year. Customer breakdowns count named customers only (inner join to dim_customer). Verified 2026-11-19: no rows (no data for this period). TBD (Gate O): operating and other expenses carry no customer in the GL (checked 2026-11-19), so per-customer figures only subtract COGS; the owner may prefer the chat to say that expenses are not allocated to customers."
+    },
+    "PRO-052": {
+      "question": "How has profit by customer changed over last year?",
+      "sql": "SELECT c.customer_name AS customer, CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(CASE WHEN g.reporting_category IN ('Revenue', 'Other Income') THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense', 'Other Expense') THEN -g.reporting_amount END), 2) AS profit FROM vw_gl_normalized g JOIN dim_customer c ON c.customer_key = g.customer_key AND c.is_current WHERE g.reporting_category IN ('Revenue', 'Other Income', 'COGS', 'Operating Expense', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 GROUP BY 1, 2 ORDER BY 1, 2",
+      "measures": [
+        "profit"
+      ],
+      "mode": "set",
+      "notes": "Profit = net income from the GL (revenue + other income - COGS - expenses), grouped by named customer; lines without a customer are left out. TBD: 'profit' could also mean gross profit. 'Last year' = the previous calendar year. Verified 2026-11-19: no rows (no data for this period). Alternative \"customer totals for the period (no monthly split)\": no rows (no data for this period). TBD (Gate O): operating and other expenses carry no customer in the GL (checked 2026-11-19), so per-customer figures only subtract COGS; the owner may prefer the chat to say that expenses are not allocated to customers.",
+      "alternatives": [
+        {
+          "label": "customer totals for the period (no monthly split)",
+          "sql": "SELECT c.customer_name AS customer, ROUND(SUM(CASE WHEN g.reporting_category IN ('Revenue', 'Other Income') THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense', 'Other Expense') THEN -g.reporting_amount END), 2) AS profit FROM vw_gl_normalized g JOIN dim_customer c ON c.customer_key = g.customer_key AND c.is_current WHERE g.reporting_category IN ('Revenue', 'Other Income', 'COGS', 'Operating Expense', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 GROUP BY 1 ORDER BY 2 DESC",
+          "measures": [
+            "profit"
+          ]
+        }
+      ]
+    },
+    "PRO-053": {
+      "question": "Compare profit by customer with the preceding equivalent period.",
+      "sql": "SELECT 'current period' AS period, ROUND(SUM(CASE WHEN g.reporting_category IN ('Revenue', 'Other Income') THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense', 'Other Expense') THEN -g.reporting_amount END), 2) AS profit FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'Other Income', 'COGS', 'Operating Expense', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 UNION ALL SELECT 'preceding period', ROUND(SUM(CASE WHEN g.reporting_category IN ('Revenue', 'Other Income') THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense', 'Other Expense') THEN -g.reporting_amount END), 2) FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'Other Income', 'COGS', 'Operating Expense', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 2) * 100 + 1 AND (year(current_date) - 2) * 100 + 12",
+      "measures": [
+        "profit"
+      ],
+      "mode": "set",
+      "notes": "Profit = net income from the GL (revenue + other income - COGS - expenses), grouped by named customer; lines without a customer are left out. TBD: 'profit' could also mean gross profit. 'Last year' = the previous calendar year. Preceding period = the year before that (TBD: the period of the same length immediately before). Verified 2026-11-19: 2 row(s), every figure null or 0 (no data for this period)."
+    },
+    "PRO-054": {
+      "question": "Break down profit by customer by month for last year.",
+      "sql": "SELECT c.customer_name AS customer, CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(CASE WHEN g.reporting_category IN ('Revenue', 'Other Income') THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense', 'Other Expense') THEN -g.reporting_amount END), 2) AS profit FROM vw_gl_normalized g JOIN dim_customer c ON c.customer_key = g.customer_key AND c.is_current WHERE g.reporting_category IN ('Revenue', 'Other Income', 'COGS', 'Operating Expense', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 GROUP BY 1, 2 ORDER BY 1, 2",
+      "measures": [
+        "profit"
+      ],
+      "mode": "set",
+      "notes": "Profit = net income from the GL (revenue + other income - COGS - expenses), grouped by named customer; lines without a customer are left out. TBD: 'profit' could also mean gross profit. 'Last year' = the previous calendar year. Verified 2026-11-19: no rows (no data for this period). Alternative \"customer totals for the period (no monthly split)\": no rows (no data for this period). TBD (Gate O): operating and other expenses carry no customer in the GL (checked 2026-11-19), so per-customer figures only subtract COGS; the owner may prefer the chat to say that expenses are not allocated to customers.",
+      "alternatives": [
+        {
+          "label": "customer totals for the period (no monthly split)",
+          "sql": "SELECT c.customer_name AS customer, ROUND(SUM(CASE WHEN g.reporting_category IN ('Revenue', 'Other Income') THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense', 'Other Expense') THEN -g.reporting_amount END), 2) AS profit FROM vw_gl_normalized g JOIN dim_customer c ON c.customer_key = g.customer_key AND c.is_current WHERE g.reporting_category IN ('Revenue', 'Other Income', 'COGS', 'Operating Expense', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 GROUP BY 1 ORDER BY 2 DESC",
+          "measures": [
+            "profit"
+          ]
+        }
+      ]
+    },
+    "PRO-055": {
+      "question": "Rank customers by profit by customer for last year.",
+      "sql": "SELECT c.customer_name AS customer, ROUND(SUM(CASE WHEN g.reporting_category IN ('Revenue', 'Other Income') THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense', 'Other Expense') THEN -g.reporting_amount END), 2) AS profit FROM vw_gl_normalized g JOIN dim_customer c ON c.customer_key = g.customer_key AND c.is_current WHERE g.reporting_category IN ('Revenue', 'Other Income', 'COGS', 'Operating Expense', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "profit"
+      ],
+      "mode": "set",
+      "notes": "Profit = net income from the GL (revenue + other income - COGS - expenses), grouped by named customer; lines without a customer are left out. TBD: 'profit' could also mean gross profit. 'Last year' = the previous calendar year. Customer breakdowns count named customers only (inner join to dim_customer). Verified 2026-11-19: no rows (no data for this period). TBD (Gate O): operating and other expenses carry no customer in the GL (checked 2026-11-19), so per-customer figures only subtract COGS; the owner may prefer the chat to say that expenses are not allocated to customers."
+    },
+    "PRO-056": {
+      "question": "Which items had the highest profit by customer during last year?",
+      "sql": null,
+      "measures": [],
+      "mode": "none",
+      "notes": "Item-level profit needs item costs, which the data does not have (GL cost lines carry no product key). TBD: owner decision."
+    },
+    "PRO-057": {
+      "question": "Show the trend in profit by customer for last year.",
+      "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(CASE WHEN g.reporting_category IN ('Revenue', 'Other Income') THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense', 'Other Expense') THEN -g.reporting_amount END), 2) AS profit FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'Other Income', 'COGS', 'Operating Expense', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "profit"
+      ],
+      "mode": "set",
+      "notes": "Profit = net income from the GL (revenue + other income - COGS - expenses), grouped by named customer; lines without a customer are left out. TBD: 'profit' could also mean gross profit. 'Last year' = the previous calendar year. Verified 2026-11-19: no rows (no data for this period). Alternative \"daily trend (same measure by day)\": no rows (no data for this period).",
+      "alternatives": [
+        {
+          "label": "daily trend (same measure by day)",
+          "sql": "SELECT g.date_key AS date_key, ROUND(SUM(CASE WHEN g.reporting_category IN ('Revenue', 'Other Income') THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense', 'Other Expense') THEN -g.reporting_amount END), 2) AS profit FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'Other Income', 'COGS', 'Operating Expense', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 GROUP BY 1 ORDER BY 1",
+          "measures": [
+            "profit"
+          ]
+        }
+      ]
+    },
+    "PRO-058": {
+      "question": "What were the highest and lowest values for profit by customer in last year?",
+      "sql": "SELECT MAX(profit) AS highest, MIN(profit) AS lowest FROM (SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(CASE WHEN g.reporting_category IN ('Revenue', 'Other Income') THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense', 'Other Expense') THEN -g.reporting_amount END), 2) AS profit FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'Other Income', 'COGS', 'Operating Expense', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 GROUP BY 1 ORDER BY 1) t",
+      "measures": [
+        "highest",
+        "lowest"
+      ],
+      "mode": "set",
+      "notes": "Profit = net income from the GL (revenue + other income - COGS - expenses), grouped by named customer; lines without a customer are left out. TBD: 'profit' could also mean gross profit. 'Last year' = the previous calendar year. Highest and lowest = the largest and smallest monthly figure in the period. TBD. Verified 2026-11-19: 1 row(s), every figure null or 0 (no data for this period)."
+    },
+    "PRO-059": {
+      "question": "Show profit by customer by customer for last year.",
+      "sql": "SELECT c.customer_name AS customer, ROUND(SUM(CASE WHEN g.reporting_category IN ('Revenue', 'Other Income') THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense', 'Other Expense') THEN -g.reporting_amount END), 2) AS profit FROM vw_gl_normalized g JOIN dim_customer c ON c.customer_key = g.customer_key AND c.is_current WHERE g.reporting_category IN ('Revenue', 'Other Income', 'COGS', 'Operating Expense', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "profit"
+      ],
+      "mode": "set",
+      "notes": "Profit = net income from the GL (revenue + other income - COGS - expenses), grouped by named customer; lines without a customer are left out. TBD: 'profit' could also mean gross profit. 'Last year' = the previous calendar year. Customer breakdowns count named customers only (inner join to dim_customer). Verified 2026-11-19: no rows (no data for this period). TBD (Gate O): operating and other expenses carry no customer in the GL (checked 2026-11-19), so per-customer figures only subtract COGS; the owner may prefer the chat to say that expenses are not allocated to customers."
+    },
+    "PRO-060": {
+      "question": "Explain the movement in profit by customer during last year using the available income and expense figures.",
+      "sql": null,
+      "measures": [],
+      "mode": "none",
+      "notes": "Explanation question: there is no single figure set to compare. Checks 1-3 still run (data answer, chat SQL re-run, faithful amounts). TBD: human review of the explanation."
+    },
+    "PRO-061": {
+      "question": "Show profit by product for the current fiscal year.",
+      "sql": null,
+      "measures": [],
+      "mode": "none",
+      "notes": "The GL has no product key on cost lines and invoices carry no item cost, so profit per product cannot be computed from the data. TBD: owner decision on item-level costing."
+    },
+    "PRO-062": {
+      "question": "How has profit by product changed over the current fiscal year?",
+      "sql": null,
+      "measures": [],
+      "mode": "none",
+      "notes": "The GL has no product key on cost lines and invoices carry no item cost, so profit per product cannot be computed from the data. TBD: owner decision on item-level costing."
+    },
+    "PRO-063": {
+      "question": "Compare profit by product with the preceding equivalent period.",
+      "sql": null,
+      "measures": [],
+      "mode": "none",
+      "notes": "The GL has no product key on cost lines and invoices carry no item cost, so profit per product cannot be computed from the data. TBD: owner decision on item-level costing."
+    },
+    "PRO-064": {
+      "question": "Break down profit by product by month for the current fiscal year.",
+      "sql": null,
+      "measures": [],
+      "mode": "none",
+      "notes": "The GL has no product key on cost lines and invoices carry no item cost, so profit per product cannot be computed from the data. TBD: owner decision on item-level costing."
+    },
+    "PRO-065": {
+      "question": "Rank customers by profit by product for the current fiscal year.",
+      "sql": null,
+      "measures": [],
+      "mode": "none",
+      "notes": "The GL has no product key on cost lines and invoices carry no item cost, so profit per product cannot be computed from the data. TBD: owner decision on item-level costing."
+    },
+    "PRO-066": {
+      "question": "Which items had the highest profit by product during the current fiscal year?",
+      "sql": null,
+      "measures": [],
+      "mode": "none",
+      "notes": "The GL has no product key on cost lines and invoices carry no item cost, so profit per product cannot be computed from the data. TBD: owner decision on item-level costing."
+    },
+    "PRO-067": {
+      "question": "Show the trend in profit by product for the current fiscal year.",
+      "sql": null,
+      "measures": [],
+      "mode": "none",
+      "notes": "The GL has no product key on cost lines and invoices carry no item cost, so profit per product cannot be computed from the data. TBD: owner decision on item-level costing."
+    },
+    "PRO-068": {
+      "question": "What were the highest and lowest values for profit by product in the current fiscal year?",
+      "sql": null,
+      "measures": [],
+      "mode": "none",
+      "notes": "The GL has no product key on cost lines and invoices carry no item cost, so profit per product cannot be computed from the data. TBD: owner decision on item-level costing."
+    },
+    "PRO-069": {
+      "question": "Show profit by product by customer for the current fiscal year.",
+      "sql": null,
+      "measures": [],
+      "mode": "none",
+      "notes": "The GL has no product key on cost lines and invoices carry no item cost, so profit per product cannot be computed from the data. TBD: owner decision on item-level costing."
+    },
+    "PRO-070": {
+      "question": "Explain the movement in profit by product during the current fiscal year using the available income and expense figures.",
+      "sql": null,
+      "measures": [],
+      "mode": "none",
+      "notes": "The GL has no product key on cost lines and invoices carry no item cost, so profit per product cannot be computed from the data. TBD: owner decision on item-level costing."
+    },
+    "PRO-071": {
+      "question": "Show profit by service line for the previous fiscal year.",
+      "sql": "SELECT ROUND(SUM(CASE WHEN g.reporting_category IN ('Revenue', 'Other Income') THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense', 'Other Expense') THEN -g.reporting_amount END), 2) AS profit FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'Other Income', 'COGS', 'Operating Expense', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12",
+      "measures": [
+        "profit"
+      ],
+      "mode": "scalar",
+      "notes": "Profit = net income from the GL. TBD: 'service line' has no field in the data; the previous fiscal year has no data in any table, so the expected answer is no data whatever the definition. 'Previous fiscal year' = the fiscal year before the current one (calendar year, start month 1). Verified 2026-11-19: 1 row(s), every figure null or 0 (no data for this period)."
+    },
+    "PRO-072": {
+      "question": "How has profit by service line changed over the previous fiscal year?",
+      "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(CASE WHEN g.reporting_category IN ('Revenue', 'Other Income') THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense', 'Other Expense') THEN -g.reporting_amount END), 2) AS profit FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'Other Income', 'COGS', 'Operating Expense', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "profit"
+      ],
+      "mode": "set",
+      "notes": "Profit = net income from the GL. TBD: 'service line' has no field in the data; the previous fiscal year has no data in any table, so the expected answer is no data whatever the definition. 'Previous fiscal year' = the fiscal year before the current one (calendar year, start month 1). Verified 2026-11-19: no rows (no data for this period)."
+    },
+    "PRO-073": {
+      "question": "Compare profit by service line with the preceding equivalent period.",
+      "sql": "SELECT 'current period' AS period, ROUND(SUM(CASE WHEN g.reporting_category IN ('Revenue', 'Other Income') THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense', 'Other Expense') THEN -g.reporting_amount END), 2) AS profit FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'Other Income', 'COGS', 'Operating Expense', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 UNION ALL SELECT 'preceding period', ROUND(SUM(CASE WHEN g.reporting_category IN ('Revenue', 'Other Income') THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense', 'Other Expense') THEN -g.reporting_amount END), 2) FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'Other Income', 'COGS', 'Operating Expense', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 2) * 100 + 1 AND (year(current_date) - 2) * 100 + 12",
+      "measures": [
+        "profit"
+      ],
+      "mode": "set",
+      "notes": "Profit = net income from the GL. TBD: 'service line' has no field in the data; the previous fiscal year has no data in any table, so the expected answer is no data whatever the definition. 'Previous fiscal year' = the fiscal year before the current one (calendar year, start month 1). Preceding period = the fiscal year before that (TBD: the period of the same length immediately before). Verified 2026-11-19: 2 row(s), every figure null or 0 (no data for this period)."
+    },
+    "PRO-074": {
+      "question": "Break down profit by service line by month for the previous fiscal year.",
+      "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(CASE WHEN g.reporting_category IN ('Revenue', 'Other Income') THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense', 'Other Expense') THEN -g.reporting_amount END), 2) AS profit FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'Other Income', 'COGS', 'Operating Expense', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "profit"
+      ],
+      "mode": "set",
+      "notes": "Profit = net income from the GL. TBD: 'service line' has no field in the data; the previous fiscal year has no data in any table, so the expected answer is no data whatever the definition. 'Previous fiscal year' = the fiscal year before the current one (calendar year, start month 1). Verified 2026-11-19: no rows (no data for this period)."
+    },
+    "PRO-075": {
+      "question": "Rank customers by profit by service line for the previous fiscal year.",
+      "sql": "SELECT c.customer_name AS customer, ROUND(SUM(CASE WHEN g.reporting_category IN ('Revenue', 'Other Income') THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense', 'Other Expense') THEN -g.reporting_amount END), 2) AS profit FROM vw_gl_normalized g JOIN dim_customer c ON c.customer_key = g.customer_key AND c.is_current WHERE g.reporting_category IN ('Revenue', 'Other Income', 'COGS', 'Operating Expense', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "profit"
+      ],
+      "mode": "set",
+      "notes": "Profit = net income from the GL. TBD: 'service line' has no field in the data; the previous fiscal year has no data in any table, so the expected answer is no data whatever the definition. 'Previous fiscal year' = the fiscal year before the current one (calendar year, start month 1). Customer breakdowns count named customers only (inner join to dim_customer). Verified 2026-11-19: no rows (no data for this period). TBD (Gate O): operating and other expenses carry no customer in the GL (checked 2026-11-19), so per-customer figures only subtract COGS; the owner may prefer the chat to say that expenses are not allocated to customers."
+    },
+    "PRO-076": {
+      "question": "Which items had the highest profit by service line during the previous fiscal year?",
+      "sql": null,
+      "measures": [],
+      "mode": "none",
+      "notes": "Item-level profit needs item costs, which the data does not have (GL cost lines carry no product key). TBD: owner decision."
+    },
+    "PRO-077": {
+      "question": "Show the trend in profit by service line for the previous fiscal year.",
+      "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(CASE WHEN g.reporting_category IN ('Revenue', 'Other Income') THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense', 'Other Expense') THEN -g.reporting_amount END), 2) AS profit FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'Other Income', 'COGS', 'Operating Expense', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "profit"
+      ],
+      "mode": "set",
+      "notes": "Profit = net income from the GL. TBD: 'service line' has no field in the data; the previous fiscal year has no data in any table, so the expected answer is no data whatever the definition. 'Previous fiscal year' = the fiscal year before the current one (calendar year, start month 1). Verified 2026-11-19: no rows (no data for this period). Alternative \"daily trend (same measure by day)\": no rows (no data for this period).",
+      "alternatives": [
+        {
+          "label": "daily trend (same measure by day)",
+          "sql": "SELECT g.date_key AS date_key, ROUND(SUM(CASE WHEN g.reporting_category IN ('Revenue', 'Other Income') THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense', 'Other Expense') THEN -g.reporting_amount END), 2) AS profit FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'Other Income', 'COGS', 'Operating Expense', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 GROUP BY 1 ORDER BY 1",
+          "measures": [
+            "profit"
+          ]
+        }
+      ]
+    },
+    "PRO-078": {
+      "question": "What were the highest and lowest values for profit by service line in the previous fiscal year?",
+      "sql": "SELECT MAX(profit) AS highest, MIN(profit) AS lowest FROM (SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(CASE WHEN g.reporting_category IN ('Revenue', 'Other Income') THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense', 'Other Expense') THEN -g.reporting_amount END), 2) AS profit FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'Other Income', 'COGS', 'Operating Expense', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 GROUP BY 1 ORDER BY 1) t",
+      "measures": [
+        "highest",
+        "lowest"
+      ],
+      "mode": "set",
+      "notes": "Profit = net income from the GL. TBD: 'service line' has no field in the data; the previous fiscal year has no data in any table, so the expected answer is no data whatever the definition. 'Previous fiscal year' = the fiscal year before the current one (calendar year, start month 1). Highest and lowest = the largest and smallest monthly figure in the period. TBD. Verified 2026-11-19: 1 row(s), every figure null or 0 (no data for this period)."
+    },
+    "PRO-079": {
+      "question": "Show profit by service line by customer for the previous fiscal year.",
+      "sql": "SELECT c.customer_name AS customer, ROUND(SUM(CASE WHEN g.reporting_category IN ('Revenue', 'Other Income') THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense', 'Other Expense') THEN -g.reporting_amount END), 2) AS profit FROM vw_gl_normalized g JOIN dim_customer c ON c.customer_key = g.customer_key AND c.is_current WHERE g.reporting_category IN ('Revenue', 'Other Income', 'COGS', 'Operating Expense', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "profit"
+      ],
+      "mode": "set",
+      "notes": "Profit = net income from the GL. TBD: 'service line' has no field in the data; the previous fiscal year has no data in any table, so the expected answer is no data whatever the definition. 'Previous fiscal year' = the fiscal year before the current one (calendar year, start month 1). Customer breakdowns count named customers only (inner join to dim_customer). Verified 2026-11-19: no rows (no data for this period). TBD (Gate O): operating and other expenses carry no customer in the GL (checked 2026-11-19), so per-customer figures only subtract COGS; the owner may prefer the chat to say that expenses are not allocated to customers."
+    },
+    "PRO-080": {
+      "question": "Explain the movement in profit by service line during the previous fiscal year using the available income and expense figures.",
+      "sql": null,
+      "measures": [],
+      "mode": "none",
+      "notes": "Explanation question: there is no single figure set to compare. Checks 1-3 still run (data answer, chat SQL re-run, faithful amounts). TBD: human review of the explanation."
+    },
+    "PRO-081": {
+      "question": "Show profit by month for the last six months.",
+      "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(CASE WHEN g.reporting_category IN ('Revenue', 'Other Income') THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense', 'Other Expense') THEN -g.reporting_amount END), 2) AS profit FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'Other Income', 'COGS', 'Operating Expense', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 6 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "profit"
+      ],
+      "mode": "set",
+      "notes": "Profit = net income from the GL by month; accepted alternative: gross profit by month. TBD. 'Last six months' = the six full calendar months before the current month (TBD; accepted alternative: the six months including the current month). Verified 2026-11-19: 5 row(s); first: year_month=202605, profit=391.25. Alternative \"gross profit instead of net income\": 4 row(s); first: year_month=202605, profit=391.25. Alternative \"the six months including the current month\": 4 row(s); first: year_month=202606, profit=112.92.",
+      "alternatives": [
+        {
+          "label": "gross profit instead of net income",
+          "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount WHEN g.reporting_category = 'COGS' THEN -g.reporting_amount END), 2) AS profit FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'COGS') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 6 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+          "measures": [
+            "profit"
+          ]
+        },
+        {
+          "label": "the six months including the current month",
+          "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(CASE WHEN g.reporting_category IN ('Revenue', 'Other Income') THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense', 'Other Expense') THEN -g.reporting_amount END), 2) AS profit FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'Other Income', 'COGS', 'Operating Expense', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 5 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+          "measures": [
+            "profit"
+          ]
+        }
+      ]
+    },
+    "PRO-082": {
+      "question": "How has profit by month changed over the last six months?",
+      "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(CASE WHEN g.reporting_category IN ('Revenue', 'Other Income') THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense', 'Other Expense') THEN -g.reporting_amount END), 2) AS profit FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'Other Income', 'COGS', 'Operating Expense', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 6 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "profit"
+      ],
+      "mode": "set",
+      "notes": "Profit = net income from the GL by month; accepted alternative: gross profit by month. TBD. 'Last six months' = the six full calendar months before the current month (TBD; accepted alternative: the six months including the current month). Verified 2026-11-19: 5 row(s); first: year_month=202605, profit=391.25. Alternative \"gross profit instead of net income\": 4 row(s); first: year_month=202605, profit=391.25. Alternative \"the six months including the current month\": 4 row(s); first: year_month=202606, profit=112.92.",
+      "alternatives": [
+        {
+          "label": "gross profit instead of net income",
+          "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount WHEN g.reporting_category = 'COGS' THEN -g.reporting_amount END), 2) AS profit FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'COGS') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 6 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+          "measures": [
+            "profit"
+          ]
+        },
+        {
+          "label": "the six months including the current month",
+          "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(CASE WHEN g.reporting_category IN ('Revenue', 'Other Income') THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense', 'Other Expense') THEN -g.reporting_amount END), 2) AS profit FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'Other Income', 'COGS', 'Operating Expense', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 5 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+          "measures": [
+            "profit"
+          ]
+        }
+      ]
+    },
+    "PRO-083": {
+      "question": "Compare profit by month with the preceding equivalent period.",
+      "sql": "SELECT 'current period' AS period, ROUND(SUM(CASE WHEN g.reporting_category IN ('Revenue', 'Other Income') THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense', 'Other Expense') THEN -g.reporting_amount END), 2) AS profit FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'Other Income', 'COGS', 'Operating Expense', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 6 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) UNION ALL SELECT 'preceding period', ROUND(SUM(CASE WHEN g.reporting_category IN ('Revenue', 'Other Income') THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense', 'Other Expense') THEN -g.reporting_amount END), 2) FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'Other Income', 'COGS', 'Operating Expense', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 12 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date - INTERVAL 7 MONTH, '%Y%m') AS INTEGER)",
+      "measures": [
+        "profit"
+      ],
+      "mode": "set",
+      "notes": "Profit = net income from the GL by month; accepted alternative: gross profit by month. TBD. 'Last six months' = the six full calendar months before the current month (TBD; accepted alternative: the six months including the current month). Preceding period = the six months before that (TBD: the period of the same length immediately before). Verified 2026-11-19: 2 row(s); first: period=current period, profit=1942.46. Alternative \"gross profit instead of net income\": 2 row(s); first: period=current period, profit=9795.77. Alternative \"the six months including the current month\": 2 row(s); first: period=current period, profit=1551.21.",
+      "alternatives": [
+        {
+          "label": "gross profit instead of net income",
+          "sql": "SELECT 'current period' AS period, ROUND(SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount WHEN g.reporting_category = 'COGS' THEN -g.reporting_amount END), 2) AS profit FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'COGS') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 6 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) UNION ALL SELECT 'preceding period', ROUND(SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount WHEN g.reporting_category = 'COGS' THEN -g.reporting_amount END), 2) FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'COGS') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 12 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date - INTERVAL 7 MONTH, '%Y%m') AS INTEGER)",
+          "measures": [
+            "profit"
+          ]
+        },
+        {
+          "label": "the six months including the current month",
+          "sql": "SELECT 'current period' AS period, ROUND(SUM(CASE WHEN g.reporting_category IN ('Revenue', 'Other Income') THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense', 'Other Expense') THEN -g.reporting_amount END), 2) AS profit FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'Other Income', 'COGS', 'Operating Expense', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 5 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) UNION ALL SELECT 'preceding period', ROUND(SUM(CASE WHEN g.reporting_category IN ('Revenue', 'Other Income') THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense', 'Other Expense') THEN -g.reporting_amount END), 2) FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'Other Income', 'COGS', 'Operating Expense', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 12 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date - INTERVAL 7 MONTH, '%Y%m') AS INTEGER)",
+          "measures": [
+            "profit"
+          ]
+        }
+      ]
+    },
+    "PRO-084": {
+      "question": "Break down profit by month by month for the last six months.",
+      "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(CASE WHEN g.reporting_category IN ('Revenue', 'Other Income') THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense', 'Other Expense') THEN -g.reporting_amount END), 2) AS profit FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'Other Income', 'COGS', 'Operating Expense', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 6 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "profit"
+      ],
+      "mode": "set",
+      "notes": "Profit = net income from the GL by month; accepted alternative: gross profit by month. TBD. 'Last six months' = the six full calendar months before the current month (TBD; accepted alternative: the six months including the current month). Verified 2026-11-19: 5 row(s); first: year_month=202605, profit=391.25. Alternative \"gross profit instead of net income\": 4 row(s); first: year_month=202605, profit=391.25. Alternative \"the six months including the current month\": 4 row(s); first: year_month=202606, profit=112.92.",
+      "alternatives": [
+        {
+          "label": "gross profit instead of net income",
+          "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount WHEN g.reporting_category = 'COGS' THEN -g.reporting_amount END), 2) AS profit FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'COGS') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 6 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+          "measures": [
+            "profit"
+          ]
+        },
+        {
+          "label": "the six months including the current month",
+          "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(CASE WHEN g.reporting_category IN ('Revenue', 'Other Income') THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense', 'Other Expense') THEN -g.reporting_amount END), 2) AS profit FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'Other Income', 'COGS', 'Operating Expense', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 5 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+          "measures": [
+            "profit"
+          ]
+        }
+      ]
+    },
+    "PRO-085": {
+      "question": "Rank customers by profit by month for the last six months.",
+      "sql": "SELECT c.customer_name AS customer, ROUND(SUM(CASE WHEN g.reporting_category IN ('Revenue', 'Other Income') THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense', 'Other Expense') THEN -g.reporting_amount END), 2) AS profit FROM vw_gl_normalized g JOIN dim_customer c ON c.customer_key = g.customer_key AND c.is_current WHERE g.reporting_category IN ('Revenue', 'Other Income', 'COGS', 'Operating Expense', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 6 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "profit"
+      ],
+      "mode": "set",
+      "notes": "Profit = net income from the GL by month; accepted alternative: gross profit by month. TBD. 'Last six months' = the six full calendar months before the current month (TBD; accepted alternative: the six months including the current month). Customer breakdowns count named customers only (inner join to dim_customer). Verified 2026-11-19: 23 row(s); first: customer=Cool Cars, profit=2194. Alternative \"gross profit instead of net income\": 23 row(s); first: customer=Cool Cars, profit=2194. Alternative \"the six months including the current month\": 23 row(s); first: customer=Cool Cars, profit=2194. TBD (Gate O): operating and other expenses carry no customer in the GL (checked 2026-11-19), so per-customer figures only subtract COGS; the owner may prefer the chat to say that expenses are not allocated to customers.",
+      "alternatives": [
+        {
+          "label": "gross profit instead of net income",
+          "sql": "SELECT c.customer_name AS customer, ROUND(SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount WHEN g.reporting_category = 'COGS' THEN -g.reporting_amount END), 2) AS profit FROM vw_gl_normalized g JOIN dim_customer c ON c.customer_key = g.customer_key AND c.is_current WHERE g.reporting_category IN ('Revenue', 'COGS') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 6 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+          "measures": [
+            "profit"
+          ]
+        },
+        {
+          "label": "the six months including the current month",
+          "sql": "SELECT c.customer_name AS customer, ROUND(SUM(CASE WHEN g.reporting_category IN ('Revenue', 'Other Income') THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense', 'Other Expense') THEN -g.reporting_amount END), 2) AS profit FROM vw_gl_normalized g JOIN dim_customer c ON c.customer_key = g.customer_key AND c.is_current WHERE g.reporting_category IN ('Revenue', 'Other Income', 'COGS', 'Operating Expense', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 5 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+          "measures": [
+            "profit"
+          ]
+        }
+      ]
+    },
+    "PRO-086": {
+      "question": "Which items had the highest profit by month during the last six months?",
+      "sql": null,
+      "measures": [],
+      "mode": "none",
+      "notes": "Item-level profit needs item costs, which the data does not have (GL cost lines carry no product key). TBD: owner decision."
+    },
+    "PRO-087": {
+      "question": "Show the trend in profit by month for the last six months.",
+      "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(CASE WHEN g.reporting_category IN ('Revenue', 'Other Income') THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense', 'Other Expense') THEN -g.reporting_amount END), 2) AS profit FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'Other Income', 'COGS', 'Operating Expense', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 6 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "profit"
+      ],
+      "mode": "set",
+      "notes": "Profit = net income from the GL by month; accepted alternative: gross profit by month. TBD. 'Last six months' = the six full calendar months before the current month (TBD; accepted alternative: the six months including the current month). Verified 2026-11-19: 5 row(s); first: year_month=202605, profit=391.25. Alternative \"gross profit instead of net income\": 4 row(s); first: year_month=202605, profit=391.25. Alternative \"the six months including the current month\": 4 row(s); first: year_month=202606, profit=112.92. Alternative \"daily trend (same measure by day)\": 39 row(s); first: date_key=20260511, profit=391.25.",
+      "alternatives": [
+        {
+          "label": "gross profit instead of net income",
+          "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(CASE WHEN g.reporting_category = 'Revenue' THEN g.reporting_amount WHEN g.reporting_category = 'COGS' THEN -g.reporting_amount END), 2) AS profit FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'COGS') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 6 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+          "measures": [
+            "profit"
+          ]
+        },
+        {
+          "label": "the six months including the current month",
+          "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(CASE WHEN g.reporting_category IN ('Revenue', 'Other Income') THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense', 'Other Expense') THEN -g.reporting_amount END), 2) AS profit FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'Other Income', 'COGS', 'Operating Expense', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 5 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+          "measures": [
+            "profit"
+          ]
+        },
+        {
+          "label": "daily trend (same measure by day)",
+          "sql": "SELECT g.date_key AS date_key, ROUND(SUM(CASE WHEN g.reporting_category IN ('Revenue', 'Other Income') THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense', 'Other Expense') THEN -g.reporting_amount END), 2) AS profit FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'Other Income', 'COGS', 'Operating Expense', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 6 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+          "measures": [
+            "profit"
+          ]
+        }
+      ]
+    },
+    "PRO-088": {
+      "question": "What were the highest and lowest values for profit by month in the last six months?",
+      "sql": "SELECT MAX(profit) AS highest, MIN(profit) AS lowest FROM (SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(CASE WHEN g.reporting_category IN ('Revenue', 'Other Income') THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense', 'Other Expense') THEN -g.reporting_amount END), 2) AS profit FROM vw_gl_normalized g WHERE g.reporting_category IN ('Revenue', 'Other Income', 'COGS', 'Operating Expense', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 6 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1) t",
+      "measures": [
+        "highest",
+        "lowest"
+      ],
+      "mode": "set",
+      "notes": "Profit = net income from the GL by month; accepted alternative: gross profit by month. TBD. 'Last six months' = the six full calendar months before the current month (TBD; accepted alternative: the six months including the current month). Highest and lowest = the largest and smallest monthly figure in the period. TBD. Verified 2026-11-19: 1 row(s); first: highest=1354.36, lowest=-96.39."
+    },
+    "PRO-089": {
+      "question": "Show profit by month by customer for the last six months.",
+      "sql": "SELECT c.customer_name AS customer, CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(CASE WHEN g.reporting_category IN ('Revenue', 'Other Income') THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense', 'Other Expense') THEN -g.reporting_amount END), 2) AS profit FROM vw_gl_normalized g JOIN dim_customer c ON c.customer_key = g.customer_key AND c.is_current WHERE g.reporting_category IN ('Revenue', 'Other Income', 'COGS', 'Operating Expense', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 6 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) GROUP BY 1, 2 ORDER BY 1, 2",
+      "measures": [
+        "profit"
+      ],
+      "mode": "set",
+      "notes": "Profit = net income from the GL by month; accepted alternative: gross profit by month. TBD. 'Last six months' = the six full calendar months before the current month (TBD; accepted alternative: the six months including the current month). Verified 2026-11-19: 29 row(s); first: customer=0969 Ocean View Road, year_month=202605, profit=216.25. Alternative \"customer totals for the period (no monthly split)\": 23 row(s); first: customer=Cool Cars, profit=2194. TBD (Gate O): operating and other expenses carry no customer in the GL (checked 2026-11-19), so per-customer figures only subtract COGS; the owner may prefer the chat to say that expenses are not allocated to customers.",
+      "alternatives": [
+        {
+          "label": "customer totals for the period (no monthly split)",
+          "sql": "SELECT c.customer_name AS customer, ROUND(SUM(CASE WHEN g.reporting_category IN ('Revenue', 'Other Income') THEN g.reporting_amount WHEN g.reporting_category IN ('COGS', 'Operating Expense', 'Other Expense') THEN -g.reporting_amount END), 2) AS profit FROM vw_gl_normalized g JOIN dim_customer c ON c.customer_key = g.customer_key AND c.is_current WHERE g.reporting_category IN ('Revenue', 'Other Income', 'COGS', 'Operating Expense', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 6 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+          "measures": [
+            "profit"
+          ]
+        }
+      ]
+    },
+    "PRO-090": {
+      "question": "Explain the movement in profit by month during the last six months using the available income and expense figures.",
+      "sql": null,
+      "measures": [],
+      "mode": "none",
+      "notes": "Explanation question: there is no single figure set to compare. Checks 1-3 still run (data answer, chat SQL re-run, faithful amounts). TBD: human review of the explanation."
+    },
+    "PRO-091": {
+      "question": "Show cost of goods sold for the last 12 months.",
+      "sql": "SELECT ROUND(SUM(g.reporting_amount), 2) AS cogs FROM vw_gl_normalized g WHERE g.reporting_category = 'COGS' AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 11 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER)",
+      "measures": [
+        "cogs"
+      ],
+      "mode": "scalar",
+      "notes": "Cost of goods sold = GL lines with reporting_category 'COGS' (equals vw_pnl_monthly.cogs). TBD: owner review. 'Last 12 months' = the 12 calendar months up to and including the current month. Verified 2026-11-19: 1 row(s); first: cogs=405."
+    },
+    "PRO-092": {
+      "question": "How has cost of goods sold changed over the last 12 months?",
+      "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.reporting_amount), 2) AS cogs FROM vw_gl_normalized g WHERE g.reporting_category = 'COGS' AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 11 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "cogs"
+      ],
+      "mode": "set",
+      "notes": "Cost of goods sold = GL lines with reporting_category 'COGS' (equals vw_pnl_monthly.cogs). TBD: owner review. 'Last 12 months' = the 12 calendar months up to and including the current month. Verified 2026-11-19: 1 row(s); first: year_month=202608, cogs=405."
+    },
+    "PRO-093": {
+      "question": "Compare cost of goods sold with the preceding equivalent period.",
+      "sql": "SELECT 'current period' AS period, ROUND(SUM(g.reporting_amount), 2) AS cogs FROM vw_gl_normalized g WHERE g.reporting_category = 'COGS' AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 11 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) UNION ALL SELECT 'preceding period', ROUND(SUM(g.reporting_amount), 2) FROM vw_gl_normalized g WHERE g.reporting_category = 'COGS' AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 23 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date - INTERVAL 12 MONTH, '%Y%m') AS INTEGER)",
+      "measures": [
+        "cogs"
+      ],
+      "mode": "set",
+      "notes": "Cost of goods sold = GL lines with reporting_category 'COGS' (equals vw_pnl_monthly.cogs). TBD: owner review. 'Last 12 months' = the 12 calendar months up to and including the current month. Preceding period = the 12 months before that (TBD: the period of the same length immediately before). Verified 2026-11-19: 2 row(s); first: period=current period, cogs=405."
+    },
+    "PRO-094": {
+      "question": "Break down cost of goods sold by month for the last 12 months.",
+      "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.reporting_amount), 2) AS cogs FROM vw_gl_normalized g WHERE g.reporting_category = 'COGS' AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 11 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "cogs"
+      ],
+      "mode": "set",
+      "notes": "Cost of goods sold = GL lines with reporting_category 'COGS' (equals vw_pnl_monthly.cogs). TBD: owner review. 'Last 12 months' = the 12 calendar months up to and including the current month. Verified 2026-11-19: 1 row(s); first: year_month=202608, cogs=405."
+    },
+    "PRO-095": {
+      "question": "Rank customers by cost of goods sold for the last 12 months.",
+      "sql": "SELECT c.customer_name AS customer, ROUND(SUM(g.reporting_amount), 2) AS cogs FROM vw_gl_normalized g JOIN dim_customer c ON c.customer_key = g.customer_key AND c.is_current WHERE g.reporting_category = 'COGS' AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 11 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "cogs"
+      ],
+      "mode": "set",
+      "notes": "Cost of goods sold = GL lines with reporting_category 'COGS' (equals vw_pnl_monthly.cogs). TBD: owner review. 'Last 12 months' = the 12 calendar months up to and including the current month. Customer breakdowns count named customers only (inner join to dim_customer). Verified 2026-11-19: 3 row(s); first: customer=Mark Cho, cogs=135."
+    },
+    "PRO-096": {
+      "question": "Which items had the highest cost of goods sold during the last 12 months?",
+      "sql": null,
+      "measures": [],
+      "mode": "none",
+      "notes": "Item-level profit needs item costs, which the data does not have (GL cost lines carry no product key). TBD: owner decision."
+    },
+    "PRO-097": {
+      "question": "Show the trend in cost of goods sold for the last 12 months.",
+      "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.reporting_amount), 2) AS cogs FROM vw_gl_normalized g WHERE g.reporting_category = 'COGS' AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 11 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "cogs"
+      ],
+      "mode": "set",
+      "notes": "Cost of goods sold = GL lines with reporting_category 'COGS' (equals vw_pnl_monthly.cogs). TBD: owner review. 'Last 12 months' = the 12 calendar months up to and including the current month. Verified 2026-11-19: 1 row(s); first: year_month=202608, cogs=405. Alternative \"daily trend (same measure by day)\": 1 row(s); first: date_key=20260826, cogs=405.",
+      "alternatives": [
+        {
+          "label": "daily trend (same measure by day)",
+          "sql": "SELECT g.date_key AS date_key, ROUND(SUM(g.reporting_amount), 2) AS cogs FROM vw_gl_normalized g WHERE g.reporting_category = 'COGS' AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 11 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+          "measures": [
+            "cogs"
+          ]
+        }
+      ]
+    },
+    "PRO-098": {
+      "question": "What were the highest and lowest values for cost of goods sold in the last 12 months?",
+      "sql": "SELECT MAX(cogs) AS highest, MIN(cogs) AS lowest FROM (SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.reporting_amount), 2) AS cogs FROM vw_gl_normalized g WHERE g.reporting_category = 'COGS' AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 11 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1) t",
+      "measures": [
+        "highest",
+        "lowest"
+      ],
+      "mode": "set",
+      "notes": "Cost of goods sold = GL lines with reporting_category 'COGS' (equals vw_pnl_monthly.cogs). TBD: owner review. 'Last 12 months' = the 12 calendar months up to and including the current month. Highest and lowest = the largest and smallest monthly figure in the period. TBD. Verified 2026-11-19: 1 row(s); first: highest=405, lowest=405."
+    },
+    "PRO-099": {
+      "question": "Show cost of goods sold by customer for the last 12 months.",
+      "sql": "SELECT c.customer_name AS customer, ROUND(SUM(g.reporting_amount), 2) AS cogs FROM vw_gl_normalized g JOIN dim_customer c ON c.customer_key = g.customer_key AND c.is_current WHERE g.reporting_category = 'COGS' AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 11 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "cogs"
+      ],
+      "mode": "set",
+      "notes": "Cost of goods sold = GL lines with reporting_category 'COGS' (equals vw_pnl_monthly.cogs). TBD: owner review. 'Last 12 months' = the 12 calendar months up to and including the current month. Customer breakdowns count named customers only (inner join to dim_customer). Verified 2026-11-19: 3 row(s); first: customer=Mark Cho, cogs=135."
+    },
+    "PRO-100": {
+      "question": "Explain the movement in cost of goods sold during the last 12 months using the available income and expense figures.",
+      "sql": null,
+      "measures": [],
+      "mode": "none",
+      "notes": "Explanation question: there is no single figure set to compare. Checks 1-3 still run (data answer, chat SQL re-run, faithful amounts). TBD: human review of the explanation."
+    }
+  }
+}

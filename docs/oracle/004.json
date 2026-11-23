@@ -1,0 +1,1888 @@
+{
+  "ticketNo": "004",
+  "generatedBy": "SQL Oracle Generator (Stage 3.5) · 2026-11-19 · AI-generated, human review required (one SQL pattern per question template; every query dry-run on 2026-11-19, 0 errors)",
+  "connection": "QuickBooks - IES Sandbox Company US 6de8 Parent",
+  "reviewStatus": "Draft - pending human review",
+  "definitions": {
+    "cashInflowsAndOutflows": "TBD (owner review): Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment.",
+    "thisMonth": "Calendar month of current_date on the Data Bridge Agent (DuckDB).",
+    "lastMonth": "Calendar month before the month of current_date on the Data Bridge Agent (DuckDB).",
+    "thisQuarter": "Calendar quarter of current_date, to date (Data Bridge Agent, DuckDB).",
+    "lastQuarter": "The full calendar quarter before the quarter of current_date.",
+    "thisYear": "Calendar year of current_date, to date.",
+    "lastYear": "The previous calendar year.",
+    "currentFiscalYear": "Fiscal year of current_date, to date; dim_company.fiscal_year_start_month = 1, so it equals the calendar year.",
+    "previousFiscalYear": "The fiscal year before the current one (calendar year, start month 1).",
+    "last90Days": "current_date - 90 days to current_date, inclusive (TBD: boundary day).",
+    "last12Months": "The 12 calendar months up to and including the current month.",
+    "noData": "TBD (D-B): provisionally an empty result, null and 0 all mean 'no data'.",
+    "precedingPeriod": "TBD: the period of the same length immediately before (previous month / quarter / year).",
+    "alternatives": "A case may list 'alternatives': other readings that are also accepted. Check 4 passes if the primary oracle or any alternative matches, and the report names which one.",
+    "customers": "Customer breakdowns count named customers only (inner join to dim_customer).",
+    "modeNone": "mode 'none' (sql null): no fair figure oracle exists for the case; its notes say why. Checks 1-3 still run (data answer, chat SQL re-run, faithful $ amounts) and Check 4 is recorded as SKIPPED.",
+    "verification": "Every primary and alternative query was dry-run on 2026-11-19 through the read-only Data Explorer (current_date 2026-11-19); each case's notes end with what it returned. Periods with no data test the empty-answer path only.",
+    "absolute": "absolute: true compares figures by size, because the sign convention for outflows and variances is TBD."
+  },
+  "cases": {
+    "CAS-001": {
+      "question": "Show cash inflows and outflows for this month.",
+      "sql": "SELECT ROUND(SUM(g.debit_amount), 2) AS cash_in, ROUND(SUM(g.credit_amount), 2) AS cash_out FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) = CAST(strftime(current_date, '%Y%m') AS INTEGER)",
+      "measures": [
+        "cash_in",
+        "cash_out"
+      ],
+      "mode": "set",
+      "absolute": true,
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'This month' = calendar month of current_date. Verified 2026-11-19: 1 row(s), every figure null or 0 (no data for this period). Alternative \"bank + Undeposited Funds\": 1 row(s), every figure null or 0 (no data for this period). Alternative \"customer receipts and vendor payments\": 1 row(s), every figure null or 0 (no data for this period).",
+      "alternatives": [
+        {
+          "label": "bank + Undeposited Funds",
+          "sql": "SELECT ROUND(SUM(g.debit_amount), 2) AS cash_in, ROUND(SUM(g.credit_amount), 2) AS cash_out FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank' OR account_subtype = 'UndepositedFunds') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) = CAST(strftime(current_date, '%Y%m') AS INTEGER)",
+          "measures": [
+            "cash_in",
+            "cash_out"
+          ]
+        },
+        {
+          "label": "customer receipts and vendor payments",
+          "sql": "SELECT (SELECT ROUND(SUM(payment_amount), 2) FROM fact_invoice_payment WHERE CAST(FLOOR(payment_date_key / 100) AS INTEGER) = CAST(strftime(current_date, '%Y%m') AS INTEGER)) AS cash_in, (SELECT ROUND(SUM(payment_amount), 2) FROM fact_bill_payment WHERE CAST(FLOOR(payment_date_key / 100) AS INTEGER) = CAST(strftime(current_date, '%Y%m') AS INTEGER)) AS cash_out",
+          "measures": [
+            "cash_in",
+            "cash_out"
+          ]
+        }
+      ]
+    },
+    "CAS-002": {
+      "question": "What was the net change in cash during this month?",
+      "sql": "SELECT ROUND(SUM(f.amount), 2) AS net_cash_change FROM fact_cash_flow f WHERE f.line_group = 'CashIncrease' AND f.is_total AND CAST(FLOOR(f.period_date_key / 100) AS INTEGER) = CAST(strftime(current_date, '%Y%m') AS INTEGER)",
+      "measures": [
+        "net_cash_change"
+      ],
+      "mode": "scalar",
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'This month' = calendar month of current_date. fact_cash_flow has monthly periods; a period counts when its start date is in the window. TBD. Verified 2026-11-19: 1 row(s), every figure null or 0 (no data for this period). Alternative \"bank accounts: debits - credits\": 1 row(s), every figure null or 0 (no data for this period). Alternative \"bank + Undeposited Funds: debits - credits\": 1 row(s), every figure null or 0 (no data for this period).",
+      "alternatives": [
+        {
+          "label": "bank accounts: debits - credits",
+          "sql": "SELECT ROUND(SUM(g.debit_amount) - SUM(g.credit_amount), 2) AS net_cash_change FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) = CAST(strftime(current_date, '%Y%m') AS INTEGER)",
+          "measures": [
+            "net_cash_change"
+          ]
+        },
+        {
+          "label": "bank + Undeposited Funds: debits - credits",
+          "sql": "SELECT ROUND(SUM(g.debit_amount) - SUM(g.credit_amount), 2) AS net_cash_change FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank' OR account_subtype = 'UndepositedFunds') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) = CAST(strftime(current_date, '%Y%m') AS INTEGER)",
+          "measures": [
+            "net_cash_change"
+          ]
+        }
+      ]
+    },
+    "CAS-003": {
+      "question": "Show the monthly cash movement for this month.",
+      "sql": "SELECT CAST(FLOOR(f.period_date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(f.amount), 2) AS net_cash_change FROM fact_cash_flow f WHERE f.line_group = 'CashIncrease' AND f.is_total AND CAST(FLOOR(f.period_date_key / 100) AS INTEGER) = CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "net_cash_change"
+      ],
+      "mode": "set",
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'This month' = calendar month of current_date. Verified 2026-11-19: 1 row(s); first: year_month=202611, net_cash_change=0. Alternative \"bank accounts: debits - credits by month\": no rows (no data for this period).",
+      "alternatives": [
+        {
+          "label": "bank accounts: debits - credits by month",
+          "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.debit_amount) - SUM(g.credit_amount), 2) AS net_cash_change FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) = CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+          "measures": [
+            "net_cash_change"
+          ]
+        }
+      ]
+    },
+    "CAS-004": {
+      "question": "Break down customer receipts for this month.",
+      "sql": "SELECT c.customer_name AS customer, ROUND(SUM(p.payment_amount), 2) AS receipts FROM fact_invoice_payment p JOIN dim_customer c ON c.customer_key = p.customer_key AND c.is_current WHERE CAST(FLOOR(p.payment_date_key / 100) AS INTEGER) = CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "receipts"
+      ],
+      "mode": "set",
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'This month' = calendar month of current_date. Verified 2026-11-19: no rows (no data for this period). Alternative \"total receipts only\": 1 row(s), every figure null or 0 (no data for this period).",
+      "alternatives": [
+        {
+          "label": "total receipts only",
+          "sql": "SELECT ROUND(SUM(payment_amount), 2) AS receipts FROM fact_invoice_payment WHERE CAST(FLOOR(payment_date_key / 100) AS INTEGER) = CAST(strftime(current_date, '%Y%m') AS INTEGER)",
+          "measures": [
+            "receipts"
+          ]
+        }
+      ]
+    },
+    "CAS-005": {
+      "question": "Show payments made to vendors during this month.",
+      "sql": "SELECT v.vendor_name AS vendor, ROUND(SUM(p.payment_amount), 2) AS payments FROM fact_bill_payment p JOIN dim_vendor v ON v.vendor_key = p.vendor_key AND v.is_current WHERE CAST(FLOOR(p.payment_date_key / 100) AS INTEGER) = CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "payments"
+      ],
+      "mode": "set",
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'This month' = calendar month of current_date. Verified 2026-11-19: no rows (no data for this period). Alternative \"total payments only\": 1 row(s), every figure null or 0 (no data for this period).",
+      "alternatives": [
+        {
+          "label": "total payments only",
+          "sql": "SELECT ROUND(SUM(payment_amount), 2) AS payments FROM fact_bill_payment WHERE CAST(FLOOR(payment_date_key / 100) AS INTEGER) = CAST(strftime(current_date, '%Y%m') AS INTEGER)",
+          "measures": [
+            "payments"
+          ]
+        }
+      ]
+    },
+    "CAS-006": {
+      "question": "Compare cash received with cash paid during this month.",
+      "sql": "SELECT (SELECT ROUND(SUM(payment_amount), 2) FROM fact_invoice_payment WHERE CAST(FLOOR(payment_date_key / 100) AS INTEGER) = CAST(strftime(current_date, '%Y%m') AS INTEGER)) AS cash_received, (SELECT ROUND(SUM(payment_amount), 2) FROM fact_bill_payment WHERE CAST(FLOOR(payment_date_key / 100) AS INTEGER) = CAST(strftime(current_date, '%Y%m') AS INTEGER)) AS cash_paid",
+      "measures": [
+        "cash_received",
+        "cash_paid"
+      ],
+      "mode": "set",
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'This month' = calendar month of current_date. Verified 2026-11-19: 1 row(s), every figure null or 0 (no data for this period). Alternative \"bank accounts: debits and credits\": 1 row(s), every figure null or 0 (no data for this period).",
+      "alternatives": [
+        {
+          "label": "bank accounts: debits and credits",
+          "sql": "SELECT ROUND(SUM(g.debit_amount), 2) AS cash_received, ROUND(SUM(g.credit_amount), 2) AS cash_paid FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) = CAST(strftime(current_date, '%Y%m') AS INTEGER)",
+          "measures": [
+            "cash_received",
+            "cash_paid"
+          ]
+        }
+      ]
+    },
+    "CAS-007": {
+      "question": "Which months had the largest net cash outflow in this month?",
+      "sql": "SELECT CAST(FLOOR(f.period_date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(f.amount), 2) AS net_cash_change FROM fact_cash_flow f WHERE f.line_group = 'CashIncrease' AND f.is_total AND CAST(FLOOR(f.period_date_key / 100) AS INTEGER) = CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 HAVING SUM(f.amount) < 0 ORDER BY 2",
+      "measures": [
+        "net_cash_change"
+      ],
+      "mode": "set",
+      "absolute": true,
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'This month' = calendar month of current_date. Only months with a net outflow are listed; outflows are compared by size (sign-insensitive). TBD. Verified 2026-11-19: no rows (no data for this period). Alternative \"bank accounts: months with net outflow\": no rows (no data for this period).",
+      "alternatives": [
+        {
+          "label": "bank accounts: months with net outflow",
+          "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.debit_amount) - SUM(g.credit_amount), 2) AS net_cash_change FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) = CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 HAVING SUM(g.debit_amount) - SUM(g.credit_amount) < 0 ORDER BY 2",
+          "measures": [
+            "net_cash_change"
+          ]
+        }
+      ]
+    },
+    "CAS-008": {
+      "question": "Show deposits and withdrawals by month for this month.",
+      "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.debit_amount), 2) AS deposits, ROUND(SUM(g.credit_amount), 2) AS withdrawals FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) = CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "deposits",
+        "withdrawals"
+      ],
+      "mode": "set",
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'This month' = calendar month of current_date. Verified 2026-11-19: no rows (no data for this period). Alternative \"bank + Undeposited Funds\": no rows (no data for this period).",
+      "alternatives": [
+        {
+          "label": "bank + Undeposited Funds",
+          "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.debit_amount), 2) AS deposits, ROUND(SUM(g.credit_amount), 2) AS withdrawals FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank' OR account_subtype = 'UndepositedFunds') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) = CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+          "measures": [
+            "deposits",
+            "withdrawals"
+          ]
+        }
+      ]
+    },
+    "CAS-009": {
+      "question": "How did operating cash movement change compared with the preceding period for this month?",
+      "sql": "SELECT 'current period' AS period, ROUND(SUM(f.amount), 2) AS operating_cash FROM fact_cash_flow f WHERE f.line_group = 'OperatingActivities' AND f.is_total AND CAST(FLOOR(f.period_date_key / 100) AS INTEGER) = CAST(strftime(current_date, '%Y%m') AS INTEGER) UNION ALL SELECT 'preceding period', ROUND(SUM(f.amount), 2) FROM fact_cash_flow f WHERE f.line_group = 'OperatingActivities' AND f.is_total AND CAST(FLOOR(f.period_date_key / 100) AS INTEGER) = CAST(strftime(current_date - INTERVAL 1 MONTH, '%Y%m') AS INTEGER)",
+      "measures": [
+        "operating_cash"
+      ],
+      "mode": "set",
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'This month' = calendar month of current_date. Operating cash movement = 'Net cash provided by operating activities' (fact_cash_flow). Preceding period = previous calendar month. TBD. Verified 2026-11-19: 2 row(s), every figure null or 0 (no data for this period)."
+    },
+    "CAS-010": {
+      "question": "List the largest cash receipts and payments during this month.",
+      "sql": "SELECT 'receipt' AS kind, payment_date_key AS date_key, ROUND(payment_amount, 2) AS amount FROM fact_invoice_payment WHERE CAST(FLOOR(payment_date_key / 100) AS INTEGER) = CAST(strftime(current_date, '%Y%m') AS INTEGER) UNION ALL SELECT 'payment', payment_date_key, ROUND(payment_amount, 2) FROM fact_bill_payment WHERE CAST(FLOOR(payment_date_key / 100) AS INTEGER) = CAST(strftime(current_date, '%Y%m') AS INTEGER) ORDER BY 3 DESC",
+      "measures": [
+        "amount"
+      ],
+      "mode": "set",
+      "absolute": true,
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'This month' = calendar month of current_date. All receipts and payments in the period are listed; TBD: how many the chat should show as 'largest'. Verified 2026-11-19: no rows (no data for this period)."
+    },
+    "CAS-011": {
+      "question": "Show cash inflows and outflows for last month.",
+      "sql": "SELECT ROUND(SUM(g.debit_amount), 2) AS cash_in, ROUND(SUM(g.credit_amount), 2) AS cash_out FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) = CAST(strftime(current_date - INTERVAL 1 MONTH, '%Y%m') AS INTEGER)",
+      "measures": [
+        "cash_in",
+        "cash_out"
+      ],
+      "mode": "set",
+      "absolute": true,
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'Last month' = calendar month before the month of current_date. Verified 2026-11-19: 1 row(s), every figure null or 0 (no data for this period). Alternative \"bank + Undeposited Funds\": 1 row(s), every figure null or 0 (no data for this period). Alternative \"customer receipts and vendor payments\": 1 row(s), every figure null or 0 (no data for this period).",
+      "alternatives": [
+        {
+          "label": "bank + Undeposited Funds",
+          "sql": "SELECT ROUND(SUM(g.debit_amount), 2) AS cash_in, ROUND(SUM(g.credit_amount), 2) AS cash_out FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank' OR account_subtype = 'UndepositedFunds') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) = CAST(strftime(current_date - INTERVAL 1 MONTH, '%Y%m') AS INTEGER)",
+          "measures": [
+            "cash_in",
+            "cash_out"
+          ]
+        },
+        {
+          "label": "customer receipts and vendor payments",
+          "sql": "SELECT (SELECT ROUND(SUM(payment_amount), 2) FROM fact_invoice_payment WHERE CAST(FLOOR(payment_date_key / 100) AS INTEGER) = CAST(strftime(current_date - INTERVAL 1 MONTH, '%Y%m') AS INTEGER)) AS cash_in, (SELECT ROUND(SUM(payment_amount), 2) FROM fact_bill_payment WHERE CAST(FLOOR(payment_date_key / 100) AS INTEGER) = CAST(strftime(current_date - INTERVAL 1 MONTH, '%Y%m') AS INTEGER)) AS cash_out",
+          "measures": [
+            "cash_in",
+            "cash_out"
+          ]
+        }
+      ]
+    },
+    "CAS-012": {
+      "question": "What was the net change in cash during last month?",
+      "sql": "SELECT ROUND(SUM(f.amount), 2) AS net_cash_change FROM fact_cash_flow f WHERE f.line_group = 'CashIncrease' AND f.is_total AND CAST(FLOOR(f.period_date_key / 100) AS INTEGER) = CAST(strftime(current_date - INTERVAL 1 MONTH, '%Y%m') AS INTEGER)",
+      "measures": [
+        "net_cash_change"
+      ],
+      "mode": "scalar",
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'Last month' = calendar month before the month of current_date. fact_cash_flow has monthly periods; a period counts when its start date is in the window. TBD. Verified 2026-11-19: 1 row(s), every figure null or 0 (no data for this period). Alternative \"bank accounts: debits - credits\": 1 row(s), every figure null or 0 (no data for this period). Alternative \"bank + Undeposited Funds: debits - credits\": 1 row(s), every figure null or 0 (no data for this period).",
+      "alternatives": [
+        {
+          "label": "bank accounts: debits - credits",
+          "sql": "SELECT ROUND(SUM(g.debit_amount) - SUM(g.credit_amount), 2) AS net_cash_change FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) = CAST(strftime(current_date - INTERVAL 1 MONTH, '%Y%m') AS INTEGER)",
+          "measures": [
+            "net_cash_change"
+          ]
+        },
+        {
+          "label": "bank + Undeposited Funds: debits - credits",
+          "sql": "SELECT ROUND(SUM(g.debit_amount) - SUM(g.credit_amount), 2) AS net_cash_change FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank' OR account_subtype = 'UndepositedFunds') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) = CAST(strftime(current_date - INTERVAL 1 MONTH, '%Y%m') AS INTEGER)",
+          "measures": [
+            "net_cash_change"
+          ]
+        }
+      ]
+    },
+    "CAS-013": {
+      "question": "Show the monthly cash movement for last month.",
+      "sql": "SELECT CAST(FLOOR(f.period_date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(f.amount), 2) AS net_cash_change FROM fact_cash_flow f WHERE f.line_group = 'CashIncrease' AND f.is_total AND CAST(FLOOR(f.period_date_key / 100) AS INTEGER) = CAST(strftime(current_date - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "net_cash_change"
+      ],
+      "mode": "set",
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'Last month' = calendar month before the month of current_date. Verified 2026-11-19: 1 row(s); first: year_month=202610, net_cash_change=0. Alternative \"bank accounts: debits - credits by month\": no rows (no data for this period).",
+      "alternatives": [
+        {
+          "label": "bank accounts: debits - credits by month",
+          "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.debit_amount) - SUM(g.credit_amount), 2) AS net_cash_change FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) = CAST(strftime(current_date - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+          "measures": [
+            "net_cash_change"
+          ]
+        }
+      ]
+    },
+    "CAS-014": {
+      "question": "Break down customer receipts for last month.",
+      "sql": "SELECT c.customer_name AS customer, ROUND(SUM(p.payment_amount), 2) AS receipts FROM fact_invoice_payment p JOIN dim_customer c ON c.customer_key = p.customer_key AND c.is_current WHERE CAST(FLOOR(p.payment_date_key / 100) AS INTEGER) = CAST(strftime(current_date - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "receipts"
+      ],
+      "mode": "set",
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'Last month' = calendar month before the month of current_date. Verified 2026-11-19: no rows (no data for this period). Alternative \"total receipts only\": 1 row(s), every figure null or 0 (no data for this period).",
+      "alternatives": [
+        {
+          "label": "total receipts only",
+          "sql": "SELECT ROUND(SUM(payment_amount), 2) AS receipts FROM fact_invoice_payment WHERE CAST(FLOOR(payment_date_key / 100) AS INTEGER) = CAST(strftime(current_date - INTERVAL 1 MONTH, '%Y%m') AS INTEGER)",
+          "measures": [
+            "receipts"
+          ]
+        }
+      ]
+    },
+    "CAS-015": {
+      "question": "Show payments made to vendors during last month.",
+      "sql": "SELECT v.vendor_name AS vendor, ROUND(SUM(p.payment_amount), 2) AS payments FROM fact_bill_payment p JOIN dim_vendor v ON v.vendor_key = p.vendor_key AND v.is_current WHERE CAST(FLOOR(p.payment_date_key / 100) AS INTEGER) = CAST(strftime(current_date - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "payments"
+      ],
+      "mode": "set",
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'Last month' = calendar month before the month of current_date. Verified 2026-11-19: no rows (no data for this period). Alternative \"total payments only\": 1 row(s), every figure null or 0 (no data for this period).",
+      "alternatives": [
+        {
+          "label": "total payments only",
+          "sql": "SELECT ROUND(SUM(payment_amount), 2) AS payments FROM fact_bill_payment WHERE CAST(FLOOR(payment_date_key / 100) AS INTEGER) = CAST(strftime(current_date - INTERVAL 1 MONTH, '%Y%m') AS INTEGER)",
+          "measures": [
+            "payments"
+          ]
+        }
+      ]
+    },
+    "CAS-016": {
+      "question": "Compare cash received with cash paid during last month.",
+      "sql": "SELECT (SELECT ROUND(SUM(payment_amount), 2) FROM fact_invoice_payment WHERE CAST(FLOOR(payment_date_key / 100) AS INTEGER) = CAST(strftime(current_date - INTERVAL 1 MONTH, '%Y%m') AS INTEGER)) AS cash_received, (SELECT ROUND(SUM(payment_amount), 2) FROM fact_bill_payment WHERE CAST(FLOOR(payment_date_key / 100) AS INTEGER) = CAST(strftime(current_date - INTERVAL 1 MONTH, '%Y%m') AS INTEGER)) AS cash_paid",
+      "measures": [
+        "cash_received",
+        "cash_paid"
+      ],
+      "mode": "set",
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'Last month' = calendar month before the month of current_date. Verified 2026-11-19: 1 row(s), every figure null or 0 (no data for this period). Alternative \"bank accounts: debits and credits\": 1 row(s), every figure null or 0 (no data for this period).",
+      "alternatives": [
+        {
+          "label": "bank accounts: debits and credits",
+          "sql": "SELECT ROUND(SUM(g.debit_amount), 2) AS cash_received, ROUND(SUM(g.credit_amount), 2) AS cash_paid FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) = CAST(strftime(current_date - INTERVAL 1 MONTH, '%Y%m') AS INTEGER)",
+          "measures": [
+            "cash_received",
+            "cash_paid"
+          ]
+        }
+      ]
+    },
+    "CAS-017": {
+      "question": "Which months had the largest net cash outflow in last month?",
+      "sql": "SELECT CAST(FLOOR(f.period_date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(f.amount), 2) AS net_cash_change FROM fact_cash_flow f WHERE f.line_group = 'CashIncrease' AND f.is_total AND CAST(FLOOR(f.period_date_key / 100) AS INTEGER) = CAST(strftime(current_date - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) GROUP BY 1 HAVING SUM(f.amount) < 0 ORDER BY 2",
+      "measures": [
+        "net_cash_change"
+      ],
+      "mode": "set",
+      "absolute": true,
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'Last month' = calendar month before the month of current_date. Only months with a net outflow are listed; outflows are compared by size (sign-insensitive). TBD. Verified 2026-11-19: no rows (no data for this period). Alternative \"bank accounts: months with net outflow\": no rows (no data for this period).",
+      "alternatives": [
+        {
+          "label": "bank accounts: months with net outflow",
+          "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.debit_amount) - SUM(g.credit_amount), 2) AS net_cash_change FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) = CAST(strftime(current_date - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) GROUP BY 1 HAVING SUM(g.debit_amount) - SUM(g.credit_amount) < 0 ORDER BY 2",
+          "measures": [
+            "net_cash_change"
+          ]
+        }
+      ]
+    },
+    "CAS-018": {
+      "question": "Show deposits and withdrawals by month for last month.",
+      "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.debit_amount), 2) AS deposits, ROUND(SUM(g.credit_amount), 2) AS withdrawals FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) = CAST(strftime(current_date - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "deposits",
+        "withdrawals"
+      ],
+      "mode": "set",
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'Last month' = calendar month before the month of current_date. Verified 2026-11-19: no rows (no data for this period). Alternative \"bank + Undeposited Funds\": no rows (no data for this period).",
+      "alternatives": [
+        {
+          "label": "bank + Undeposited Funds",
+          "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.debit_amount), 2) AS deposits, ROUND(SUM(g.credit_amount), 2) AS withdrawals FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank' OR account_subtype = 'UndepositedFunds') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) = CAST(strftime(current_date - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+          "measures": [
+            "deposits",
+            "withdrawals"
+          ]
+        }
+      ]
+    },
+    "CAS-019": {
+      "question": "How did operating cash movement change compared with the preceding period for last month?",
+      "sql": "SELECT 'current period' AS period, ROUND(SUM(f.amount), 2) AS operating_cash FROM fact_cash_flow f WHERE f.line_group = 'OperatingActivities' AND f.is_total AND CAST(FLOOR(f.period_date_key / 100) AS INTEGER) = CAST(strftime(current_date - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) UNION ALL SELECT 'preceding period', ROUND(SUM(f.amount), 2) FROM fact_cash_flow f WHERE f.line_group = 'OperatingActivities' AND f.is_total AND CAST(FLOOR(f.period_date_key / 100) AS INTEGER) = CAST(strftime(current_date - INTERVAL 2 MONTH, '%Y%m') AS INTEGER)",
+      "measures": [
+        "operating_cash"
+      ],
+      "mode": "set",
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'Last month' = calendar month before the month of current_date. Operating cash movement = 'Net cash provided by operating activities' (fact_cash_flow). Preceding period = the month before that. TBD. Verified 2026-11-19: 2 row(s); first: period=current period, operating_cash=0."
+    },
+    "CAS-020": {
+      "question": "List the largest cash receipts and payments during last month.",
+      "sql": "SELECT 'receipt' AS kind, payment_date_key AS date_key, ROUND(payment_amount, 2) AS amount FROM fact_invoice_payment WHERE CAST(FLOOR(payment_date_key / 100) AS INTEGER) = CAST(strftime(current_date - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) UNION ALL SELECT 'payment', payment_date_key, ROUND(payment_amount, 2) FROM fact_bill_payment WHERE CAST(FLOOR(payment_date_key / 100) AS INTEGER) = CAST(strftime(current_date - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) ORDER BY 3 DESC",
+      "measures": [
+        "amount"
+      ],
+      "mode": "set",
+      "absolute": true,
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'Last month' = calendar month before the month of current_date. All receipts and payments in the period are listed; TBD: how many the chat should show as 'largest'. Verified 2026-11-19: no rows (no data for this period)."
+    },
+    "CAS-021": {
+      "question": "Show cash inflows and outflows for this quarter.",
+      "sql": "SELECT ROUND(SUM(g.debit_amount), 2) AS cash_in, ROUND(SUM(g.credit_amount), 2) AS cash_out FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date), '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER)",
+      "measures": [
+        "cash_in",
+        "cash_out"
+      ],
+      "mode": "set",
+      "absolute": true,
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'This quarter' = calendar quarter of current_date, to date. Verified 2026-11-19: 1 row(s), every figure null or 0 (no data for this period). Alternative \"bank + Undeposited Funds\": 1 row(s), every figure null or 0 (no data for this period). Alternative \"customer receipts and vendor payments\": 1 row(s), every figure null or 0 (no data for this period).",
+      "alternatives": [
+        {
+          "label": "bank + Undeposited Funds",
+          "sql": "SELECT ROUND(SUM(g.debit_amount), 2) AS cash_in, ROUND(SUM(g.credit_amount), 2) AS cash_out FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank' OR account_subtype = 'UndepositedFunds') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date), '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER)",
+          "measures": [
+            "cash_in",
+            "cash_out"
+          ]
+        },
+        {
+          "label": "customer receipts and vendor payments",
+          "sql": "SELECT (SELECT ROUND(SUM(payment_amount), 2) FROM fact_invoice_payment WHERE CAST(FLOOR(payment_date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date), '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER)) AS cash_in, (SELECT ROUND(SUM(payment_amount), 2) FROM fact_bill_payment WHERE CAST(FLOOR(payment_date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date), '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER)) AS cash_out",
+          "measures": [
+            "cash_in",
+            "cash_out"
+          ]
+        }
+      ]
+    },
+    "CAS-022": {
+      "question": "What was the net change in cash during this quarter?",
+      "sql": "SELECT ROUND(SUM(f.amount), 2) AS net_cash_change FROM fact_cash_flow f WHERE f.line_group = 'CashIncrease' AND f.is_total AND CAST(FLOOR(f.period_date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date), '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER)",
+      "measures": [
+        "net_cash_change"
+      ],
+      "mode": "scalar",
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'This quarter' = calendar quarter of current_date, to date. fact_cash_flow has monthly periods; a period counts when its start date is in the window. TBD. Verified 2026-11-19: 1 row(s), every figure null or 0 (no data for this period). Alternative \"bank accounts: debits - credits\": 1 row(s), every figure null or 0 (no data for this period). Alternative \"bank + Undeposited Funds: debits - credits\": 1 row(s), every figure null or 0 (no data for this period).",
+      "alternatives": [
+        {
+          "label": "bank accounts: debits - credits",
+          "sql": "SELECT ROUND(SUM(g.debit_amount) - SUM(g.credit_amount), 2) AS net_cash_change FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date), '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER)",
+          "measures": [
+            "net_cash_change"
+          ]
+        },
+        {
+          "label": "bank + Undeposited Funds: debits - credits",
+          "sql": "SELECT ROUND(SUM(g.debit_amount) - SUM(g.credit_amount), 2) AS net_cash_change FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank' OR account_subtype = 'UndepositedFunds') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date), '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER)",
+          "measures": [
+            "net_cash_change"
+          ]
+        }
+      ]
+    },
+    "CAS-023": {
+      "question": "Show the monthly cash movement for this quarter.",
+      "sql": "SELECT CAST(FLOOR(f.period_date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(f.amount), 2) AS net_cash_change FROM fact_cash_flow f WHERE f.line_group = 'CashIncrease' AND f.is_total AND CAST(FLOOR(f.period_date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date), '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "net_cash_change"
+      ],
+      "mode": "set",
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'This quarter' = calendar quarter of current_date, to date. Verified 2026-11-19: 2 row(s); first: year_month=202610, net_cash_change=0. Alternative \"bank accounts: debits - credits by month\": no rows (no data for this period).",
+      "alternatives": [
+        {
+          "label": "bank accounts: debits - credits by month",
+          "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.debit_amount) - SUM(g.credit_amount), 2) AS net_cash_change FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date), '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+          "measures": [
+            "net_cash_change"
+          ]
+        }
+      ]
+    },
+    "CAS-024": {
+      "question": "Break down customer receipts for this quarter.",
+      "sql": "SELECT c.customer_name AS customer, ROUND(SUM(p.payment_amount), 2) AS receipts FROM fact_invoice_payment p JOIN dim_customer c ON c.customer_key = p.customer_key AND c.is_current WHERE CAST(FLOOR(p.payment_date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date), '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "receipts"
+      ],
+      "mode": "set",
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'This quarter' = calendar quarter of current_date, to date. Verified 2026-11-19: no rows (no data for this period). Alternative \"total receipts only\": 1 row(s), every figure null or 0 (no data for this period).",
+      "alternatives": [
+        {
+          "label": "total receipts only",
+          "sql": "SELECT ROUND(SUM(payment_amount), 2) AS receipts FROM fact_invoice_payment WHERE CAST(FLOOR(payment_date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date), '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER)",
+          "measures": [
+            "receipts"
+          ]
+        }
+      ]
+    },
+    "CAS-025": {
+      "question": "Show payments made to vendors during this quarter.",
+      "sql": "SELECT v.vendor_name AS vendor, ROUND(SUM(p.payment_amount), 2) AS payments FROM fact_bill_payment p JOIN dim_vendor v ON v.vendor_key = p.vendor_key AND v.is_current WHERE CAST(FLOOR(p.payment_date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date), '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "payments"
+      ],
+      "mode": "set",
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'This quarter' = calendar quarter of current_date, to date. Verified 2026-11-19: no rows (no data for this period). Alternative \"total payments only\": 1 row(s), every figure null or 0 (no data for this period).",
+      "alternatives": [
+        {
+          "label": "total payments only",
+          "sql": "SELECT ROUND(SUM(payment_amount), 2) AS payments FROM fact_bill_payment WHERE CAST(FLOOR(payment_date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date), '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER)",
+          "measures": [
+            "payments"
+          ]
+        }
+      ]
+    },
+    "CAS-026": {
+      "question": "Compare cash received with cash paid during this quarter.",
+      "sql": "SELECT (SELECT ROUND(SUM(payment_amount), 2) FROM fact_invoice_payment WHERE CAST(FLOOR(payment_date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date), '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER)) AS cash_received, (SELECT ROUND(SUM(payment_amount), 2) FROM fact_bill_payment WHERE CAST(FLOOR(payment_date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date), '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER)) AS cash_paid",
+      "measures": [
+        "cash_received",
+        "cash_paid"
+      ],
+      "mode": "set",
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'This quarter' = calendar quarter of current_date, to date. Verified 2026-11-19: 1 row(s), every figure null or 0 (no data for this period). Alternative \"bank accounts: debits and credits\": 1 row(s), every figure null or 0 (no data for this period).",
+      "alternatives": [
+        {
+          "label": "bank accounts: debits and credits",
+          "sql": "SELECT ROUND(SUM(g.debit_amount), 2) AS cash_received, ROUND(SUM(g.credit_amount), 2) AS cash_paid FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date), '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER)",
+          "measures": [
+            "cash_received",
+            "cash_paid"
+          ]
+        }
+      ]
+    },
+    "CAS-027": {
+      "question": "Which months had the largest net cash outflow in this quarter?",
+      "sql": "SELECT CAST(FLOOR(f.period_date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(f.amount), 2) AS net_cash_change FROM fact_cash_flow f WHERE f.line_group = 'CashIncrease' AND f.is_total AND CAST(FLOOR(f.period_date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date), '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 HAVING SUM(f.amount) < 0 ORDER BY 2",
+      "measures": [
+        "net_cash_change"
+      ],
+      "mode": "set",
+      "absolute": true,
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'This quarter' = calendar quarter of current_date, to date. Only months with a net outflow are listed; outflows are compared by size (sign-insensitive). TBD. Verified 2026-11-19: no rows (no data for this period). Alternative \"bank accounts: months with net outflow\": no rows (no data for this period).",
+      "alternatives": [
+        {
+          "label": "bank accounts: months with net outflow",
+          "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.debit_amount) - SUM(g.credit_amount), 2) AS net_cash_change FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date), '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 HAVING SUM(g.debit_amount) - SUM(g.credit_amount) < 0 ORDER BY 2",
+          "measures": [
+            "net_cash_change"
+          ]
+        }
+      ]
+    },
+    "CAS-028": {
+      "question": "Show deposits and withdrawals by month for this quarter.",
+      "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.debit_amount), 2) AS deposits, ROUND(SUM(g.credit_amount), 2) AS withdrawals FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date), '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "deposits",
+        "withdrawals"
+      ],
+      "mode": "set",
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'This quarter' = calendar quarter of current_date, to date. Verified 2026-11-19: no rows (no data for this period). Alternative \"bank + Undeposited Funds\": no rows (no data for this period).",
+      "alternatives": [
+        {
+          "label": "bank + Undeposited Funds",
+          "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.debit_amount), 2) AS deposits, ROUND(SUM(g.credit_amount), 2) AS withdrawals FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank' OR account_subtype = 'UndepositedFunds') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date), '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+          "measures": [
+            "deposits",
+            "withdrawals"
+          ]
+        }
+      ]
+    },
+    "CAS-029": {
+      "question": "How did operating cash movement change compared with the preceding period for this quarter?",
+      "sql": "SELECT 'current period' AS period, ROUND(SUM(f.amount), 2) AS operating_cash FROM fact_cash_flow f WHERE f.line_group = 'OperatingActivities' AND f.is_total AND CAST(FLOOR(f.period_date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date), '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) UNION ALL SELECT 'preceding period', ROUND(SUM(f.amount), 2) FROM fact_cash_flow f WHERE f.line_group = 'OperatingActivities' AND f.is_total AND CAST(FLOOR(f.period_date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 3 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 1 MONTH, '%Y%m') AS INTEGER)",
+      "measures": [
+        "operating_cash"
+      ],
+      "mode": "set",
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'This quarter' = calendar quarter of current_date, to date. Operating cash movement = 'Net cash provided by operating activities' (fact_cash_flow). Preceding period = previous full calendar quarter. TBD. Verified 2026-11-19: 2 row(s); first: period=current period, operating_cash=0."
+    },
+    "CAS-030": {
+      "question": "List the largest cash receipts and payments during this quarter.",
+      "sql": "SELECT 'receipt' AS kind, payment_date_key AS date_key, ROUND(payment_amount, 2) AS amount FROM fact_invoice_payment WHERE CAST(FLOOR(payment_date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date), '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) UNION ALL SELECT 'payment', payment_date_key, ROUND(payment_amount, 2) FROM fact_bill_payment WHERE CAST(FLOOR(payment_date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date), '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) ORDER BY 3 DESC",
+      "measures": [
+        "amount"
+      ],
+      "mode": "set",
+      "absolute": true,
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'This quarter' = calendar quarter of current_date, to date. All receipts and payments in the period are listed; TBD: how many the chat should show as 'largest'. Verified 2026-11-19: no rows (no data for this period)."
+    },
+    "CAS-031": {
+      "question": "Show cash inflows and outflows for last quarter.",
+      "sql": "SELECT ROUND(SUM(g.debit_amount), 2) AS cash_in, ROUND(SUM(g.credit_amount), 2) AS cash_out FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 3 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 1 MONTH, '%Y%m') AS INTEGER)",
+      "measures": [
+        "cash_in",
+        "cash_out"
+      ],
+      "mode": "set",
+      "absolute": true,
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'Last quarter' = the full calendar quarter before the quarter of current_date. Verified 2026-11-19: 1 row(s); first: cash_in=3896.35, cash_out=6520.35. Alternative \"bank + Undeposited Funds\": 1 row(s); first: cash_in=7427.02, cash_out=8215.25. Alternative \"customer receipts and vendor payments\": 1 row(s); first: cash_in=4450.87, cash_out=4239.5.",
+      "alternatives": [
+        {
+          "label": "bank + Undeposited Funds",
+          "sql": "SELECT ROUND(SUM(g.debit_amount), 2) AS cash_in, ROUND(SUM(g.credit_amount), 2) AS cash_out FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank' OR account_subtype = 'UndepositedFunds') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 3 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 1 MONTH, '%Y%m') AS INTEGER)",
+          "measures": [
+            "cash_in",
+            "cash_out"
+          ]
+        },
+        {
+          "label": "customer receipts and vendor payments",
+          "sql": "SELECT (SELECT ROUND(SUM(payment_amount), 2) FROM fact_invoice_payment WHERE CAST(FLOOR(payment_date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 3 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 1 MONTH, '%Y%m') AS INTEGER)) AS cash_in, (SELECT ROUND(SUM(payment_amount), 2) FROM fact_bill_payment WHERE CAST(FLOOR(payment_date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 3 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 1 MONTH, '%Y%m') AS INTEGER)) AS cash_out",
+          "measures": [
+            "cash_in",
+            "cash_out"
+          ]
+        }
+      ]
+    },
+    "CAS-032": {
+      "question": "What was the net change in cash during last quarter?",
+      "sql": "SELECT ROUND(SUM(f.amount), 2) AS net_cash_change FROM fact_cash_flow f WHERE f.line_group = 'CashIncrease' AND f.is_total AND CAST(FLOOR(f.period_date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 3 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 1 MONTH, '%Y%m') AS INTEGER)",
+      "measures": [
+        "net_cash_change"
+      ],
+      "mode": "scalar",
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'Last quarter' = the full calendar quarter before the quarter of current_date. fact_cash_flow has monthly periods; a period counts when its start date is in the window. TBD. Verified 2026-11-19: 1 row(s); first: net_cash_change=-788.23. Alternative \"bank accounts: debits - credits\": 1 row(s); first: net_cash_change=-2624. Alternative \"bank + Undeposited Funds: debits - credits\": 1 row(s); first: net_cash_change=-788.23.",
+      "alternatives": [
+        {
+          "label": "bank accounts: debits - credits",
+          "sql": "SELECT ROUND(SUM(g.debit_amount) - SUM(g.credit_amount), 2) AS net_cash_change FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 3 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 1 MONTH, '%Y%m') AS INTEGER)",
+          "measures": [
+            "net_cash_change"
+          ]
+        },
+        {
+          "label": "bank + Undeposited Funds: debits - credits",
+          "sql": "SELECT ROUND(SUM(g.debit_amount) - SUM(g.credit_amount), 2) AS net_cash_change FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank' OR account_subtype = 'UndepositedFunds') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 3 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 1 MONTH, '%Y%m') AS INTEGER)",
+          "measures": [
+            "net_cash_change"
+          ]
+        }
+      ]
+    },
+    "CAS-033": {
+      "question": "Show the monthly cash movement for last quarter.",
+      "sql": "SELECT CAST(FLOOR(f.period_date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(f.amount), 2) AS net_cash_change FROM fact_cash_flow f WHERE f.line_group = 'CashIncrease' AND f.is_total AND CAST(FLOOR(f.period_date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 3 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "net_cash_change"
+      ],
+      "mode": "set",
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'Last quarter' = the full calendar quarter before the quarter of current_date. Verified 2026-11-19: 3 row(s); first: year_month=202607, net_cash_change=14.76. Alternative \"bank accounts: debits - credits by month\": 3 row(s); first: year_month=202607, net_cash_change=-445.64.",
+      "alternatives": [
+        {
+          "label": "bank accounts: debits - credits by month",
+          "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.debit_amount) - SUM(g.credit_amount), 2) AS net_cash_change FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 3 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+          "measures": [
+            "net_cash_change"
+          ]
+        }
+      ]
+    },
+    "CAS-034": {
+      "question": "Break down customer receipts for last quarter.",
+      "sql": "SELECT c.customer_name AS customer, ROUND(SUM(p.payment_amount), 2) AS receipts FROM fact_invoice_payment p JOIN dim_customer c ON c.customer_key = p.customer_key AND c.is_current WHERE CAST(FLOOR(p.payment_date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 3 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "receipts"
+      ],
+      "mode": "set",
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'Last quarter' = the full calendar quarter before the quarter of current_date. Verified 2026-11-19: 8 row(s); first: customer=Cool Cars, receipts=2369.52. Alternative \"total receipts only\": 1 row(s); first: receipts=4450.87.",
+      "alternatives": [
+        {
+          "label": "total receipts only",
+          "sql": "SELECT ROUND(SUM(payment_amount), 2) AS receipts FROM fact_invoice_payment WHERE CAST(FLOOR(payment_date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 3 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 1 MONTH, '%Y%m') AS INTEGER)",
+          "measures": [
+            "receipts"
+          ]
+        }
+      ]
+    },
+    "CAS-035": {
+      "question": "Show payments made to vendors during last quarter.",
+      "sql": "SELECT v.vendor_name AS vendor, ROUND(SUM(p.payment_amount), 2) AS payments FROM fact_bill_payment p JOIN dim_vendor v ON v.vendor_key = p.vendor_key AND v.is_current WHERE CAST(FLOOR(p.payment_date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 3 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "payments"
+      ],
+      "mode": "set",
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'Last quarter' = the full calendar quarter before the quarter of current_date. Verified 2026-11-19: 8 row(s); first: vendor=Brosnahan Insurance Agency, payments=2000. Alternative \"total payments only\": 1 row(s); first: payments=4239.5.",
+      "alternatives": [
+        {
+          "label": "total payments only",
+          "sql": "SELECT ROUND(SUM(payment_amount), 2) AS payments FROM fact_bill_payment WHERE CAST(FLOOR(payment_date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 3 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 1 MONTH, '%Y%m') AS INTEGER)",
+          "measures": [
+            "payments"
+          ]
+        }
+      ]
+    },
+    "CAS-036": {
+      "question": "Compare cash received with cash paid during last quarter.",
+      "sql": "SELECT (SELECT ROUND(SUM(payment_amount), 2) FROM fact_invoice_payment WHERE CAST(FLOOR(payment_date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 3 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 1 MONTH, '%Y%m') AS INTEGER)) AS cash_received, (SELECT ROUND(SUM(payment_amount), 2) FROM fact_bill_payment WHERE CAST(FLOOR(payment_date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 3 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 1 MONTH, '%Y%m') AS INTEGER)) AS cash_paid",
+      "measures": [
+        "cash_received",
+        "cash_paid"
+      ],
+      "mode": "set",
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'Last quarter' = the full calendar quarter before the quarter of current_date. Verified 2026-11-19: 1 row(s); first: cash_received=4450.87, cash_paid=4239.5. Alternative \"bank accounts: debits and credits\": 1 row(s); first: cash_received=3896.35, cash_paid=6520.35.",
+      "alternatives": [
+        {
+          "label": "bank accounts: debits and credits",
+          "sql": "SELECT ROUND(SUM(g.debit_amount), 2) AS cash_received, ROUND(SUM(g.credit_amount), 2) AS cash_paid FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 3 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 1 MONTH, '%Y%m') AS INTEGER)",
+          "measures": [
+            "cash_received",
+            "cash_paid"
+          ]
+        }
+      ]
+    },
+    "CAS-037": {
+      "question": "Which months had the largest net cash outflow in last quarter?",
+      "sql": "SELECT CAST(FLOOR(f.period_date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(f.amount), 2) AS net_cash_change FROM fact_cash_flow f WHERE f.line_group = 'CashIncrease' AND f.is_total AND CAST(FLOOR(f.period_date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 3 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) GROUP BY 1 HAVING SUM(f.amount) < 0 ORDER BY 2",
+      "measures": [
+        "net_cash_change"
+      ],
+      "mode": "set",
+      "absolute": true,
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'Last quarter' = the full calendar quarter before the quarter of current_date. Only months with a net outflow are listed; outflows are compared by size (sign-insensitive). TBD. Verified 2026-11-19: 1 row(s); first: year_month=202609, net_cash_change=-900. Alternative \"bank accounts: months with net outflow\": 3 row(s); first: year_month=202608, net_cash_change=-1278.36.",
+      "alternatives": [
+        {
+          "label": "bank accounts: months with net outflow",
+          "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.debit_amount) - SUM(g.credit_amount), 2) AS net_cash_change FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 3 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) GROUP BY 1 HAVING SUM(g.debit_amount) - SUM(g.credit_amount) < 0 ORDER BY 2",
+          "measures": [
+            "net_cash_change"
+          ]
+        }
+      ]
+    },
+    "CAS-038": {
+      "question": "Show deposits and withdrawals by month for last quarter.",
+      "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.debit_amount), 2) AS deposits, ROUND(SUM(g.credit_amount), 2) AS withdrawals FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 3 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "deposits",
+        "withdrawals"
+      ],
+      "mode": "set",
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'Last quarter' = the full calendar quarter before the quarter of current_date. Verified 2026-11-19: 3 row(s); first: year_month=202607, deposits=0, withdrawals=445.64. Alternative \"bank + Undeposited Funds\": 3 row(s); first: year_month=202607, deposits=460.4, withdrawals=445.64.",
+      "alternatives": [
+        {
+          "label": "bank + Undeposited Funds",
+          "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.debit_amount), 2) AS deposits, ROUND(SUM(g.credit_amount), 2) AS withdrawals FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank' OR account_subtype = 'UndepositedFunds') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 3 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+          "measures": [
+            "deposits",
+            "withdrawals"
+          ]
+        }
+      ]
+    },
+    "CAS-039": {
+      "question": "How did operating cash movement change compared with the preceding period for last quarter?",
+      "sql": "SELECT 'current period' AS period, ROUND(SUM(f.amount), 2) AS operating_cash FROM fact_cash_flow f WHERE f.line_group = 'OperatingActivities' AND f.is_total AND CAST(FLOOR(f.period_date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 3 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) UNION ALL SELECT 'preceding period', ROUND(SUM(f.amount), 2) FROM fact_cash_flow f WHERE f.line_group = 'OperatingActivities' AND f.is_total AND CAST(FLOOR(f.period_date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 6 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 4 MONTH, '%Y%m') AS INTEGER)",
+      "measures": [
+        "operating_cash"
+      ],
+      "mode": "set",
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'Last quarter' = the full calendar quarter before the quarter of current_date. Operating cash movement = 'Net cash provided by operating activities' (fact_cash_flow). Preceding period = the quarter before that. TBD. Verified 2026-11-19: 2 row(s); first: period=current period, operating_cash=2044.27."
+    },
+    "CAS-040": {
+      "question": "List the largest cash receipts and payments during last quarter.",
+      "sql": "SELECT 'receipt' AS kind, payment_date_key AS date_key, ROUND(payment_amount, 2) AS amount FROM fact_invoice_payment WHERE CAST(FLOOR(payment_date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 3 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) UNION ALL SELECT 'payment', payment_date_key, ROUND(payment_amount, 2) FROM fact_bill_payment WHERE CAST(FLOOR(payment_date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 3 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) ORDER BY 3 DESC",
+      "measures": [
+        "amount"
+      ],
+      "mode": "set",
+      "absolute": true,
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'Last quarter' = the full calendar quarter before the quarter of current_date. All receipts and payments in the period are listed; TBD: how many the chat should show as 'largest'. Verified 2026-11-19: 23 row(s); first: kind=payment, date_key=20260823, amount=2000."
+    },
+    "CAS-041": {
+      "question": "Show cash inflows and outflows for this year.",
+      "sql": "SELECT ROUND(SUM(g.debit_amount), 2) AS cash_in, ROUND(SUM(g.credit_amount), 2) AS cash_out FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER)",
+      "measures": [
+        "cash_in",
+        "cash_out"
+      ],
+      "mode": "set",
+      "absolute": true,
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'This year' = calendar year of current_date, to date. Verified 2026-11-19: 1 row(s); first: cash_in=9071.35, cash_out=7070.35. Alternative \"bank + Undeposited Funds\": 1 row(s); first: cash_in=12828.77, cash_out=8765.25. Alternative \"customer receipts and vendor payments\": 1 row(s); first: cash_in=4852.62, cash_out=4539.5.",
+      "alternatives": [
+        {
+          "label": "bank + Undeposited Funds",
+          "sql": "SELECT ROUND(SUM(g.debit_amount), 2) AS cash_in, ROUND(SUM(g.credit_amount), 2) AS cash_out FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank' OR account_subtype = 'UndepositedFunds') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER)",
+          "measures": [
+            "cash_in",
+            "cash_out"
+          ]
+        },
+        {
+          "label": "customer receipts and vendor payments",
+          "sql": "SELECT (SELECT ROUND(SUM(payment_amount), 2) FROM fact_invoice_payment WHERE CAST(FLOOR(payment_date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER)) AS cash_in, (SELECT ROUND(SUM(payment_amount), 2) FROM fact_bill_payment WHERE CAST(FLOOR(payment_date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER)) AS cash_out",
+          "measures": [
+            "cash_in",
+            "cash_out"
+          ]
+        }
+      ]
+    },
+    "CAS-042": {
+      "question": "What was the net change in cash during this year?",
+      "sql": "SELECT ROUND(SUM(f.amount), 2) AS net_cash_change FROM fact_cash_flow f WHERE f.line_group = 'CashIncrease' AND f.is_total AND CAST(FLOOR(f.period_date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER)",
+      "measures": [
+        "net_cash_change"
+      ],
+      "mode": "scalar",
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'This year' = calendar year of current_date, to date. fact_cash_flow has monthly periods; a period counts when its start date is in the window. TBD. Verified 2026-11-19: 1 row(s); first: net_cash_change=4063.52. Alternative \"bank accounts: debits - credits\": 1 row(s); first: net_cash_change=2001. Alternative \"bank + Undeposited Funds: debits - credits\": 1 row(s); first: net_cash_change=4063.52.",
+      "alternatives": [
+        {
+          "label": "bank accounts: debits - credits",
+          "sql": "SELECT ROUND(SUM(g.debit_amount) - SUM(g.credit_amount), 2) AS net_cash_change FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER)",
+          "measures": [
+            "net_cash_change"
+          ]
+        },
+        {
+          "label": "bank + Undeposited Funds: debits - credits",
+          "sql": "SELECT ROUND(SUM(g.debit_amount) - SUM(g.credit_amount), 2) AS net_cash_change FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank' OR account_subtype = 'UndepositedFunds') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER)",
+          "measures": [
+            "net_cash_change"
+          ]
+        }
+      ]
+    },
+    "CAS-043": {
+      "question": "Show the monthly cash movement for this year.",
+      "sql": "SELECT CAST(FLOOR(f.period_date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(f.amount), 2) AS net_cash_change FROM fact_cash_flow f WHERE f.line_group = 'CashIncrease' AND f.is_total AND CAST(FLOOR(f.period_date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "net_cash_change"
+      ],
+      "mode": "set",
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'This year' = calendar year of current_date, to date. Verified 2026-11-19: 8 row(s); first: year_month=202604, net_cash_change=5000. Alternative \"bank accounts: debits - credits by month\": 6 row(s); first: year_month=202604, net_cash_change=5000.",
+      "alternatives": [
+        {
+          "label": "bank accounts: debits - credits by month",
+          "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.debit_amount) - SUM(g.credit_amount), 2) AS net_cash_change FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+          "measures": [
+            "net_cash_change"
+          ]
+        }
+      ]
+    },
+    "CAS-044": {
+      "question": "Break down customer receipts for this year.",
+      "sql": "SELECT c.customer_name AS customer, ROUND(SUM(p.payment_amount), 2) AS receipts FROM fact_invoice_payment p JOIN dim_customer c ON c.customer_key = p.customer_key AND c.is_current WHERE CAST(FLOOR(p.payment_date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "receipts"
+      ],
+      "mode": "set",
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'This year' = calendar year of current_date, to date. Verified 2026-11-19: 9 row(s); first: customer=Cool Cars, receipts=2369.52. Alternative \"total receipts only\": 1 row(s); first: receipts=4852.62.",
+      "alternatives": [
+        {
+          "label": "total receipts only",
+          "sql": "SELECT ROUND(SUM(payment_amount), 2) AS receipts FROM fact_invoice_payment WHERE CAST(FLOOR(payment_date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER)",
+          "measures": [
+            "receipts"
+          ]
+        }
+      ]
+    },
+    "CAS-045": {
+      "question": "Show payments made to vendors during this year.",
+      "sql": "SELECT v.vendor_name AS vendor, ROUND(SUM(p.payment_amount), 2) AS payments FROM fact_bill_payment p JOIN dim_vendor v ON v.vendor_key = p.vendor_key AND v.is_current WHERE CAST(FLOOR(p.payment_date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "payments"
+      ],
+      "mode": "set",
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'This year' = calendar year of current_date, to date. Verified 2026-11-19: 9 row(s); first: vendor=Brosnahan Insurance Agency, payments=2000. Alternative \"total payments only\": 1 row(s); first: payments=4539.5.",
+      "alternatives": [
+        {
+          "label": "total payments only",
+          "sql": "SELECT ROUND(SUM(payment_amount), 2) AS payments FROM fact_bill_payment WHERE CAST(FLOOR(payment_date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER)",
+          "measures": [
+            "payments"
+          ]
+        }
+      ]
+    },
+    "CAS-046": {
+      "question": "Compare cash received with cash paid during this year.",
+      "sql": "SELECT (SELECT ROUND(SUM(payment_amount), 2) FROM fact_invoice_payment WHERE CAST(FLOOR(payment_date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER)) AS cash_received, (SELECT ROUND(SUM(payment_amount), 2) FROM fact_bill_payment WHERE CAST(FLOOR(payment_date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER)) AS cash_paid",
+      "measures": [
+        "cash_received",
+        "cash_paid"
+      ],
+      "mode": "set",
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'This year' = calendar year of current_date, to date. Verified 2026-11-19: 1 row(s); first: cash_received=4852.62, cash_paid=4539.5. Alternative \"bank accounts: debits and credits\": 1 row(s); first: cash_received=9071.35, cash_paid=7070.35.",
+      "alternatives": [
+        {
+          "label": "bank accounts: debits and credits",
+          "sql": "SELECT ROUND(SUM(g.debit_amount), 2) AS cash_received, ROUND(SUM(g.credit_amount), 2) AS cash_paid FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER)",
+          "measures": [
+            "cash_received",
+            "cash_paid"
+          ]
+        }
+      ]
+    },
+    "CAS-047": {
+      "question": "Which months had the largest net cash outflow in this year?",
+      "sql": "SELECT CAST(FLOOR(f.period_date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(f.amount), 2) AS net_cash_change FROM fact_cash_flow f WHERE f.line_group = 'CashIncrease' AND f.is_total AND CAST(FLOOR(f.period_date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 HAVING SUM(f.amount) < 0 ORDER BY 2",
+      "measures": [
+        "net_cash_change"
+      ],
+      "mode": "set",
+      "absolute": true,
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'This year' = calendar year of current_date, to date. Only months with a net outflow are listed; outflows are compared by size (sign-insensitive). TBD. Verified 2026-11-19: 2 row(s); first: year_month=202609, net_cash_change=-900. Alternative \"bank accounts: months with net outflow\": 5 row(s); first: year_month=202608, net_cash_change=-1278.36.",
+      "alternatives": [
+        {
+          "label": "bank accounts: months with net outflow",
+          "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.debit_amount) - SUM(g.credit_amount), 2) AS net_cash_change FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 HAVING SUM(g.debit_amount) - SUM(g.credit_amount) < 0 ORDER BY 2",
+          "measures": [
+            "net_cash_change"
+          ]
+        }
+      ]
+    },
+    "CAS-048": {
+      "question": "Show deposits and withdrawals by month for this year.",
+      "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.debit_amount), 2) AS deposits, ROUND(SUM(g.credit_amount), 2) AS withdrawals FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "deposits",
+        "withdrawals"
+      ],
+      "mode": "set",
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'This year' = calendar year of current_date, to date. Verified 2026-11-19: 6 row(s); first: year_month=202604, deposits=5000, withdrawals=0. Alternative \"bank + Undeposited Funds\": 6 row(s); first: year_month=202604, deposits=5000, withdrawals=0.",
+      "alternatives": [
+        {
+          "label": "bank + Undeposited Funds",
+          "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.debit_amount), 2) AS deposits, ROUND(SUM(g.credit_amount), 2) AS withdrawals FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank' OR account_subtype = 'UndepositedFunds') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+          "measures": [
+            "deposits",
+            "withdrawals"
+          ]
+        }
+      ]
+    },
+    "CAS-049": {
+      "question": "How did operating cash movement change compared with the preceding period for this year?",
+      "sql": "SELECT 'current period' AS period, ROUND(SUM(f.amount), 2) AS operating_cash FROM fact_cash_flow f WHERE f.line_group = 'OperatingActivities' AND f.is_total AND CAST(FLOOR(f.period_date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER) UNION ALL SELECT 'preceding period', ROUND(SUM(f.amount), 2) FROM fact_cash_flow f WHERE f.line_group = 'OperatingActivities' AND f.is_total AND CAST(FLOOR(f.period_date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12",
+      "measures": [
+        "operating_cash"
+      ],
+      "mode": "set",
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'This year' = calendar year of current_date, to date. Operating cash movement = 'Net cash provided by operating activities' (fact_cash_flow). Preceding period = previous calendar year. TBD. Verified 2026-11-19: 2 row(s); first: period=current period, operating_cash=1896.02."
+    },
+    "CAS-050": {
+      "question": "List the largest cash receipts and payments during this year.",
+      "sql": "SELECT 'receipt' AS kind, payment_date_key AS date_key, ROUND(payment_amount, 2) AS amount FROM fact_invoice_payment WHERE CAST(FLOOR(payment_date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER) UNION ALL SELECT 'payment', payment_date_key, ROUND(payment_amount, 2) FROM fact_bill_payment WHERE CAST(FLOOR(payment_date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER) ORDER BY 3 DESC",
+      "measures": [
+        "amount"
+      ],
+      "mode": "set",
+      "absolute": true,
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'This year' = calendar year of current_date, to date. All receipts and payments in the period are listed; TBD: how many the chat should show as 'largest'. Verified 2026-11-19: 26 row(s); first: kind=payment, date_key=20260823, amount=2000."
+    },
+    "CAS-051": {
+      "question": "Show cash inflows and outflows for last year.",
+      "sql": "SELECT ROUND(SUM(g.debit_amount), 2) AS cash_in, ROUND(SUM(g.credit_amount), 2) AS cash_out FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12",
+      "measures": [
+        "cash_in",
+        "cash_out"
+      ],
+      "mode": "set",
+      "absolute": true,
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'Last year' = the previous calendar year. Verified 2026-11-19: 1 row(s), every figure null or 0 (no data for this period). Alternative \"bank + Undeposited Funds\": 1 row(s), every figure null or 0 (no data for this period). Alternative \"customer receipts and vendor payments\": 1 row(s), every figure null or 0 (no data for this period).",
+      "alternatives": [
+        {
+          "label": "bank + Undeposited Funds",
+          "sql": "SELECT ROUND(SUM(g.debit_amount), 2) AS cash_in, ROUND(SUM(g.credit_amount), 2) AS cash_out FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank' OR account_subtype = 'UndepositedFunds') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12",
+          "measures": [
+            "cash_in",
+            "cash_out"
+          ]
+        },
+        {
+          "label": "customer receipts and vendor payments",
+          "sql": "SELECT (SELECT ROUND(SUM(payment_amount), 2) FROM fact_invoice_payment WHERE CAST(FLOOR(payment_date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12) AS cash_in, (SELECT ROUND(SUM(payment_amount), 2) FROM fact_bill_payment WHERE CAST(FLOOR(payment_date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12) AS cash_out",
+          "measures": [
+            "cash_in",
+            "cash_out"
+          ]
+        }
+      ]
+    },
+    "CAS-052": {
+      "question": "What was the net change in cash during last year?",
+      "sql": "SELECT ROUND(SUM(f.amount), 2) AS net_cash_change FROM fact_cash_flow f WHERE f.line_group = 'CashIncrease' AND f.is_total AND CAST(FLOOR(f.period_date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12",
+      "measures": [
+        "net_cash_change"
+      ],
+      "mode": "scalar",
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'Last year' = the previous calendar year. fact_cash_flow has monthly periods; a period counts when its start date is in the window. TBD. Verified 2026-11-19: 1 row(s), every figure null or 0 (no data for this period). Alternative \"bank accounts: debits - credits\": 1 row(s), every figure null or 0 (no data for this period). Alternative \"bank + Undeposited Funds: debits - credits\": 1 row(s), every figure null or 0 (no data for this period).",
+      "alternatives": [
+        {
+          "label": "bank accounts: debits - credits",
+          "sql": "SELECT ROUND(SUM(g.debit_amount) - SUM(g.credit_amount), 2) AS net_cash_change FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12",
+          "measures": [
+            "net_cash_change"
+          ]
+        },
+        {
+          "label": "bank + Undeposited Funds: debits - credits",
+          "sql": "SELECT ROUND(SUM(g.debit_amount) - SUM(g.credit_amount), 2) AS net_cash_change FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank' OR account_subtype = 'UndepositedFunds') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12",
+          "measures": [
+            "net_cash_change"
+          ]
+        }
+      ]
+    },
+    "CAS-053": {
+      "question": "Show the monthly cash movement for last year.",
+      "sql": "SELECT CAST(FLOOR(f.period_date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(f.amount), 2) AS net_cash_change FROM fact_cash_flow f WHERE f.line_group = 'CashIncrease' AND f.is_total AND CAST(FLOOR(f.period_date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "net_cash_change"
+      ],
+      "mode": "set",
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'Last year' = the previous calendar year. Verified 2026-11-19: no rows (no data for this period). Alternative \"bank accounts: debits - credits by month\": no rows (no data for this period).",
+      "alternatives": [
+        {
+          "label": "bank accounts: debits - credits by month",
+          "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.debit_amount) - SUM(g.credit_amount), 2) AS net_cash_change FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 GROUP BY 1 ORDER BY 1",
+          "measures": [
+            "net_cash_change"
+          ]
+        }
+      ]
+    },
+    "CAS-054": {
+      "question": "Break down customer receipts for last year.",
+      "sql": "SELECT c.customer_name AS customer, ROUND(SUM(p.payment_amount), 2) AS receipts FROM fact_invoice_payment p JOIN dim_customer c ON c.customer_key = p.customer_key AND c.is_current WHERE CAST(FLOOR(p.payment_date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "receipts"
+      ],
+      "mode": "set",
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'Last year' = the previous calendar year. Verified 2026-11-19: no rows (no data for this period). Alternative \"total receipts only\": 1 row(s), every figure null or 0 (no data for this period).",
+      "alternatives": [
+        {
+          "label": "total receipts only",
+          "sql": "SELECT ROUND(SUM(payment_amount), 2) AS receipts FROM fact_invoice_payment WHERE CAST(FLOOR(payment_date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12",
+          "measures": [
+            "receipts"
+          ]
+        }
+      ]
+    },
+    "CAS-055": {
+      "question": "Show payments made to vendors during last year.",
+      "sql": "SELECT v.vendor_name AS vendor, ROUND(SUM(p.payment_amount), 2) AS payments FROM fact_bill_payment p JOIN dim_vendor v ON v.vendor_key = p.vendor_key AND v.is_current WHERE CAST(FLOOR(p.payment_date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "payments"
+      ],
+      "mode": "set",
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'Last year' = the previous calendar year. Verified 2026-11-19: no rows (no data for this period). Alternative \"total payments only\": 1 row(s), every figure null or 0 (no data for this period).",
+      "alternatives": [
+        {
+          "label": "total payments only",
+          "sql": "SELECT ROUND(SUM(payment_amount), 2) AS payments FROM fact_bill_payment WHERE CAST(FLOOR(payment_date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12",
+          "measures": [
+            "payments"
+          ]
+        }
+      ]
+    },
+    "CAS-056": {
+      "question": "Compare cash received with cash paid during last year.",
+      "sql": "SELECT (SELECT ROUND(SUM(payment_amount), 2) FROM fact_invoice_payment WHERE CAST(FLOOR(payment_date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12) AS cash_received, (SELECT ROUND(SUM(payment_amount), 2) FROM fact_bill_payment WHERE CAST(FLOOR(payment_date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12) AS cash_paid",
+      "measures": [
+        "cash_received",
+        "cash_paid"
+      ],
+      "mode": "set",
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'Last year' = the previous calendar year. Verified 2026-11-19: 1 row(s), every figure null or 0 (no data for this period). Alternative \"bank accounts: debits and credits\": 1 row(s), every figure null or 0 (no data for this period).",
+      "alternatives": [
+        {
+          "label": "bank accounts: debits and credits",
+          "sql": "SELECT ROUND(SUM(g.debit_amount), 2) AS cash_received, ROUND(SUM(g.credit_amount), 2) AS cash_paid FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12",
+          "measures": [
+            "cash_received",
+            "cash_paid"
+          ]
+        }
+      ]
+    },
+    "CAS-057": {
+      "question": "Which months had the largest net cash outflow in last year?",
+      "sql": "SELECT CAST(FLOOR(f.period_date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(f.amount), 2) AS net_cash_change FROM fact_cash_flow f WHERE f.line_group = 'CashIncrease' AND f.is_total AND CAST(FLOOR(f.period_date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 GROUP BY 1 HAVING SUM(f.amount) < 0 ORDER BY 2",
+      "measures": [
+        "net_cash_change"
+      ],
+      "mode": "set",
+      "absolute": true,
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'Last year' = the previous calendar year. Only months with a net outflow are listed; outflows are compared by size (sign-insensitive). TBD. Verified 2026-11-19: no rows (no data for this period). Alternative \"bank accounts: months with net outflow\": no rows (no data for this period).",
+      "alternatives": [
+        {
+          "label": "bank accounts: months with net outflow",
+          "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.debit_amount) - SUM(g.credit_amount), 2) AS net_cash_change FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 GROUP BY 1 HAVING SUM(g.debit_amount) - SUM(g.credit_amount) < 0 ORDER BY 2",
+          "measures": [
+            "net_cash_change"
+          ]
+        }
+      ]
+    },
+    "CAS-058": {
+      "question": "Show deposits and withdrawals by month for last year.",
+      "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.debit_amount), 2) AS deposits, ROUND(SUM(g.credit_amount), 2) AS withdrawals FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "deposits",
+        "withdrawals"
+      ],
+      "mode": "set",
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'Last year' = the previous calendar year. Verified 2026-11-19: no rows (no data for this period). Alternative \"bank + Undeposited Funds\": no rows (no data for this period).",
+      "alternatives": [
+        {
+          "label": "bank + Undeposited Funds",
+          "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.debit_amount), 2) AS deposits, ROUND(SUM(g.credit_amount), 2) AS withdrawals FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank' OR account_subtype = 'UndepositedFunds') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 GROUP BY 1 ORDER BY 1",
+          "measures": [
+            "deposits",
+            "withdrawals"
+          ]
+        }
+      ]
+    },
+    "CAS-059": {
+      "question": "How did operating cash movement change compared with the preceding period for last year?",
+      "sql": "SELECT 'current period' AS period, ROUND(SUM(f.amount), 2) AS operating_cash FROM fact_cash_flow f WHERE f.line_group = 'OperatingActivities' AND f.is_total AND CAST(FLOOR(f.period_date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 UNION ALL SELECT 'preceding period', ROUND(SUM(f.amount), 2) FROM fact_cash_flow f WHERE f.line_group = 'OperatingActivities' AND f.is_total AND CAST(FLOOR(f.period_date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 2) * 100 + 1 AND (year(current_date) - 2) * 100 + 12",
+      "measures": [
+        "operating_cash"
+      ],
+      "mode": "set",
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'Last year' = the previous calendar year. Operating cash movement = 'Net cash provided by operating activities' (fact_cash_flow). Preceding period = the year before that. TBD. Verified 2026-11-19: 2 row(s), every figure null or 0 (no data for this period)."
+    },
+    "CAS-060": {
+      "question": "List the largest cash receipts and payments during last year.",
+      "sql": "SELECT 'receipt' AS kind, payment_date_key AS date_key, ROUND(payment_amount, 2) AS amount FROM fact_invoice_payment WHERE CAST(FLOOR(payment_date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 UNION ALL SELECT 'payment', payment_date_key, ROUND(payment_amount, 2) FROM fact_bill_payment WHERE CAST(FLOOR(payment_date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 ORDER BY 3 DESC",
+      "measures": [
+        "amount"
+      ],
+      "mode": "set",
+      "absolute": true,
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'Last year' = the previous calendar year. All receipts and payments in the period are listed; TBD: how many the chat should show as 'largest'. Verified 2026-11-19: no rows (no data for this period)."
+    },
+    "CAS-061": {
+      "question": "Show cash inflows and outflows for the current fiscal year.",
+      "sql": "SELECT ROUND(SUM(g.debit_amount), 2) AS cash_in, ROUND(SUM(g.credit_amount), 2) AS cash_out FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER)",
+      "measures": [
+        "cash_in",
+        "cash_out"
+      ],
+      "mode": "set",
+      "absolute": true,
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'Current fiscal year' = fiscal year of current_date, to date; dim_company.fiscal_year_start_month = 1, so it equals the calendar year. Verified 2026-11-19: 1 row(s); first: cash_in=9071.35, cash_out=7070.35. Alternative \"bank + Undeposited Funds\": 1 row(s); first: cash_in=12828.77, cash_out=8765.25. Alternative \"customer receipts and vendor payments\": 1 row(s); first: cash_in=4852.62, cash_out=4539.5.",
+      "alternatives": [
+        {
+          "label": "bank + Undeposited Funds",
+          "sql": "SELECT ROUND(SUM(g.debit_amount), 2) AS cash_in, ROUND(SUM(g.credit_amount), 2) AS cash_out FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank' OR account_subtype = 'UndepositedFunds') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER)",
+          "measures": [
+            "cash_in",
+            "cash_out"
+          ]
+        },
+        {
+          "label": "customer receipts and vendor payments",
+          "sql": "SELECT (SELECT ROUND(SUM(payment_amount), 2) FROM fact_invoice_payment WHERE CAST(FLOOR(payment_date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER)) AS cash_in, (SELECT ROUND(SUM(payment_amount), 2) FROM fact_bill_payment WHERE CAST(FLOOR(payment_date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER)) AS cash_out",
+          "measures": [
+            "cash_in",
+            "cash_out"
+          ]
+        }
+      ]
+    },
+    "CAS-062": {
+      "question": "What was the net change in cash during the current fiscal year?",
+      "sql": "SELECT ROUND(SUM(f.amount), 2) AS net_cash_change FROM fact_cash_flow f WHERE f.line_group = 'CashIncrease' AND f.is_total AND CAST(FLOOR(f.period_date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER)",
+      "measures": [
+        "net_cash_change"
+      ],
+      "mode": "scalar",
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'Current fiscal year' = fiscal year of current_date, to date; dim_company.fiscal_year_start_month = 1, so it equals the calendar year. fact_cash_flow has monthly periods; a period counts when its start date is in the window. TBD. Verified 2026-11-19: 1 row(s); first: net_cash_change=4063.52. Alternative \"bank accounts: debits - credits\": 1 row(s); first: net_cash_change=2001. Alternative \"bank + Undeposited Funds: debits - credits\": 1 row(s); first: net_cash_change=4063.52.",
+      "alternatives": [
+        {
+          "label": "bank accounts: debits - credits",
+          "sql": "SELECT ROUND(SUM(g.debit_amount) - SUM(g.credit_amount), 2) AS net_cash_change FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER)",
+          "measures": [
+            "net_cash_change"
+          ]
+        },
+        {
+          "label": "bank + Undeposited Funds: debits - credits",
+          "sql": "SELECT ROUND(SUM(g.debit_amount) - SUM(g.credit_amount), 2) AS net_cash_change FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank' OR account_subtype = 'UndepositedFunds') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER)",
+          "measures": [
+            "net_cash_change"
+          ]
+        }
+      ]
+    },
+    "CAS-063": {
+      "question": "Show the monthly cash movement for the current fiscal year.",
+      "sql": "SELECT CAST(FLOOR(f.period_date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(f.amount), 2) AS net_cash_change FROM fact_cash_flow f WHERE f.line_group = 'CashIncrease' AND f.is_total AND CAST(FLOOR(f.period_date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "net_cash_change"
+      ],
+      "mode": "set",
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'Current fiscal year' = fiscal year of current_date, to date; dim_company.fiscal_year_start_month = 1, so it equals the calendar year. Verified 2026-11-19: 8 row(s); first: year_month=202604, net_cash_change=5000. Alternative \"bank accounts: debits - credits by month\": 6 row(s); first: year_month=202604, net_cash_change=5000.",
+      "alternatives": [
+        {
+          "label": "bank accounts: debits - credits by month",
+          "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.debit_amount) - SUM(g.credit_amount), 2) AS net_cash_change FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+          "measures": [
+            "net_cash_change"
+          ]
+        }
+      ]
+    },
+    "CAS-064": {
+      "question": "Break down customer receipts for the current fiscal year.",
+      "sql": "SELECT c.customer_name AS customer, ROUND(SUM(p.payment_amount), 2) AS receipts FROM fact_invoice_payment p JOIN dim_customer c ON c.customer_key = p.customer_key AND c.is_current WHERE CAST(FLOOR(p.payment_date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "receipts"
+      ],
+      "mode": "set",
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'Current fiscal year' = fiscal year of current_date, to date; dim_company.fiscal_year_start_month = 1, so it equals the calendar year. Verified 2026-11-19: 9 row(s); first: customer=Cool Cars, receipts=2369.52. Alternative \"total receipts only\": 1 row(s); first: receipts=4852.62.",
+      "alternatives": [
+        {
+          "label": "total receipts only",
+          "sql": "SELECT ROUND(SUM(payment_amount), 2) AS receipts FROM fact_invoice_payment WHERE CAST(FLOOR(payment_date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER)",
+          "measures": [
+            "receipts"
+          ]
+        }
+      ]
+    },
+    "CAS-065": {
+      "question": "Show payments made to vendors during the current fiscal year.",
+      "sql": "SELECT v.vendor_name AS vendor, ROUND(SUM(p.payment_amount), 2) AS payments FROM fact_bill_payment p JOIN dim_vendor v ON v.vendor_key = p.vendor_key AND v.is_current WHERE CAST(FLOOR(p.payment_date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "payments"
+      ],
+      "mode": "set",
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'Current fiscal year' = fiscal year of current_date, to date; dim_company.fiscal_year_start_month = 1, so it equals the calendar year. Verified 2026-11-19: 9 row(s); first: vendor=Brosnahan Insurance Agency, payments=2000. Alternative \"total payments only\": 1 row(s); first: payments=4539.5.",
+      "alternatives": [
+        {
+          "label": "total payments only",
+          "sql": "SELECT ROUND(SUM(payment_amount), 2) AS payments FROM fact_bill_payment WHERE CAST(FLOOR(payment_date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER)",
+          "measures": [
+            "payments"
+          ]
+        }
+      ]
+    },
+    "CAS-066": {
+      "question": "Compare cash received with cash paid during the current fiscal year.",
+      "sql": "SELECT (SELECT ROUND(SUM(payment_amount), 2) FROM fact_invoice_payment WHERE CAST(FLOOR(payment_date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER)) AS cash_received, (SELECT ROUND(SUM(payment_amount), 2) FROM fact_bill_payment WHERE CAST(FLOOR(payment_date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER)) AS cash_paid",
+      "measures": [
+        "cash_received",
+        "cash_paid"
+      ],
+      "mode": "set",
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'Current fiscal year' = fiscal year of current_date, to date; dim_company.fiscal_year_start_month = 1, so it equals the calendar year. Verified 2026-11-19: 1 row(s); first: cash_received=4852.62, cash_paid=4539.5. Alternative \"bank accounts: debits and credits\": 1 row(s); first: cash_received=9071.35, cash_paid=7070.35.",
+      "alternatives": [
+        {
+          "label": "bank accounts: debits and credits",
+          "sql": "SELECT ROUND(SUM(g.debit_amount), 2) AS cash_received, ROUND(SUM(g.credit_amount), 2) AS cash_paid FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER)",
+          "measures": [
+            "cash_received",
+            "cash_paid"
+          ]
+        }
+      ]
+    },
+    "CAS-067": {
+      "question": "Which months had the largest net cash outflow in the current fiscal year?",
+      "sql": "SELECT CAST(FLOOR(f.period_date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(f.amount), 2) AS net_cash_change FROM fact_cash_flow f WHERE f.line_group = 'CashIncrease' AND f.is_total AND CAST(FLOOR(f.period_date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 HAVING SUM(f.amount) < 0 ORDER BY 2",
+      "measures": [
+        "net_cash_change"
+      ],
+      "mode": "set",
+      "absolute": true,
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'Current fiscal year' = fiscal year of current_date, to date; dim_company.fiscal_year_start_month = 1, so it equals the calendar year. Only months with a net outflow are listed; outflows are compared by size (sign-insensitive). TBD. Verified 2026-11-19: 2 row(s); first: year_month=202609, net_cash_change=-900. Alternative \"bank accounts: months with net outflow\": 5 row(s); first: year_month=202608, net_cash_change=-1278.36.",
+      "alternatives": [
+        {
+          "label": "bank accounts: months with net outflow",
+          "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.debit_amount) - SUM(g.credit_amount), 2) AS net_cash_change FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 HAVING SUM(g.debit_amount) - SUM(g.credit_amount) < 0 ORDER BY 2",
+          "measures": [
+            "net_cash_change"
+          ]
+        }
+      ]
+    },
+    "CAS-068": {
+      "question": "Show deposits and withdrawals by month for the current fiscal year.",
+      "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.debit_amount), 2) AS deposits, ROUND(SUM(g.credit_amount), 2) AS withdrawals FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "deposits",
+        "withdrawals"
+      ],
+      "mode": "set",
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'Current fiscal year' = fiscal year of current_date, to date; dim_company.fiscal_year_start_month = 1, so it equals the calendar year. Verified 2026-11-19: 6 row(s); first: year_month=202604, deposits=5000, withdrawals=0. Alternative \"bank + Undeposited Funds\": 6 row(s); first: year_month=202604, deposits=5000, withdrawals=0.",
+      "alternatives": [
+        {
+          "label": "bank + Undeposited Funds",
+          "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.debit_amount), 2) AS deposits, ROUND(SUM(g.credit_amount), 2) AS withdrawals FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank' OR account_subtype = 'UndepositedFunds') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+          "measures": [
+            "deposits",
+            "withdrawals"
+          ]
+        }
+      ]
+    },
+    "CAS-069": {
+      "question": "How did operating cash movement change compared with the preceding period for the current fiscal year?",
+      "sql": "SELECT 'current period' AS period, ROUND(SUM(f.amount), 2) AS operating_cash FROM fact_cash_flow f WHERE f.line_group = 'OperatingActivities' AND f.is_total AND CAST(FLOOR(f.period_date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER) UNION ALL SELECT 'preceding period', ROUND(SUM(f.amount), 2) FROM fact_cash_flow f WHERE f.line_group = 'OperatingActivities' AND f.is_total AND CAST(FLOOR(f.period_date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12",
+      "measures": [
+        "operating_cash"
+      ],
+      "mode": "set",
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'Current fiscal year' = fiscal year of current_date, to date; dim_company.fiscal_year_start_month = 1, so it equals the calendar year. Operating cash movement = 'Net cash provided by operating activities' (fact_cash_flow). Preceding period = previous fiscal year. TBD. Verified 2026-11-19: 2 row(s); first: period=current period, operating_cash=1896.02."
+    },
+    "CAS-070": {
+      "question": "List the largest cash receipts and payments during the current fiscal year.",
+      "sql": "SELECT 'receipt' AS kind, payment_date_key AS date_key, ROUND(payment_amount, 2) AS amount FROM fact_invoice_payment WHERE CAST(FLOOR(payment_date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER) UNION ALL SELECT 'payment', payment_date_key, ROUND(payment_amount, 2) FROM fact_bill_payment WHERE CAST(FLOOR(payment_date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER) ORDER BY 3 DESC",
+      "measures": [
+        "amount"
+      ],
+      "mode": "set",
+      "absolute": true,
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'Current fiscal year' = fiscal year of current_date, to date; dim_company.fiscal_year_start_month = 1, so it equals the calendar year. All receipts and payments in the period are listed; TBD: how many the chat should show as 'largest'. Verified 2026-11-19: 26 row(s); first: kind=payment, date_key=20260823, amount=2000."
+    },
+    "CAS-071": {
+      "question": "Show cash inflows and outflows for the previous fiscal year.",
+      "sql": "SELECT ROUND(SUM(g.debit_amount), 2) AS cash_in, ROUND(SUM(g.credit_amount), 2) AS cash_out FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12",
+      "measures": [
+        "cash_in",
+        "cash_out"
+      ],
+      "mode": "set",
+      "absolute": true,
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'Previous fiscal year' = the fiscal year before the current one (calendar year, start month 1). Verified 2026-11-19: 1 row(s), every figure null or 0 (no data for this period). Alternative \"bank + Undeposited Funds\": 1 row(s), every figure null or 0 (no data for this period). Alternative \"customer receipts and vendor payments\": 1 row(s), every figure null or 0 (no data for this period).",
+      "alternatives": [
+        {
+          "label": "bank + Undeposited Funds",
+          "sql": "SELECT ROUND(SUM(g.debit_amount), 2) AS cash_in, ROUND(SUM(g.credit_amount), 2) AS cash_out FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank' OR account_subtype = 'UndepositedFunds') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12",
+          "measures": [
+            "cash_in",
+            "cash_out"
+          ]
+        },
+        {
+          "label": "customer receipts and vendor payments",
+          "sql": "SELECT (SELECT ROUND(SUM(payment_amount), 2) FROM fact_invoice_payment WHERE CAST(FLOOR(payment_date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12) AS cash_in, (SELECT ROUND(SUM(payment_amount), 2) FROM fact_bill_payment WHERE CAST(FLOOR(payment_date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12) AS cash_out",
+          "measures": [
+            "cash_in",
+            "cash_out"
+          ]
+        }
+      ]
+    },
+    "CAS-072": {
+      "question": "What was the net change in cash during the previous fiscal year?",
+      "sql": "SELECT ROUND(SUM(f.amount), 2) AS net_cash_change FROM fact_cash_flow f WHERE f.line_group = 'CashIncrease' AND f.is_total AND CAST(FLOOR(f.period_date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12",
+      "measures": [
+        "net_cash_change"
+      ],
+      "mode": "scalar",
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'Previous fiscal year' = the fiscal year before the current one (calendar year, start month 1). fact_cash_flow has monthly periods; a period counts when its start date is in the window. TBD. Verified 2026-11-19: 1 row(s), every figure null or 0 (no data for this period). Alternative \"bank accounts: debits - credits\": 1 row(s), every figure null or 0 (no data for this period). Alternative \"bank + Undeposited Funds: debits - credits\": 1 row(s), every figure null or 0 (no data for this period).",
+      "alternatives": [
+        {
+          "label": "bank accounts: debits - credits",
+          "sql": "SELECT ROUND(SUM(g.debit_amount) - SUM(g.credit_amount), 2) AS net_cash_change FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12",
+          "measures": [
+            "net_cash_change"
+          ]
+        },
+        {
+          "label": "bank + Undeposited Funds: debits - credits",
+          "sql": "SELECT ROUND(SUM(g.debit_amount) - SUM(g.credit_amount), 2) AS net_cash_change FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank' OR account_subtype = 'UndepositedFunds') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12",
+          "measures": [
+            "net_cash_change"
+          ]
+        }
+      ]
+    },
+    "CAS-073": {
+      "question": "Show the monthly cash movement for the previous fiscal year.",
+      "sql": "SELECT CAST(FLOOR(f.period_date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(f.amount), 2) AS net_cash_change FROM fact_cash_flow f WHERE f.line_group = 'CashIncrease' AND f.is_total AND CAST(FLOOR(f.period_date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "net_cash_change"
+      ],
+      "mode": "set",
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'Previous fiscal year' = the fiscal year before the current one (calendar year, start month 1). Verified 2026-11-19: no rows (no data for this period). Alternative \"bank accounts: debits - credits by month\": no rows (no data for this period).",
+      "alternatives": [
+        {
+          "label": "bank accounts: debits - credits by month",
+          "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.debit_amount) - SUM(g.credit_amount), 2) AS net_cash_change FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 GROUP BY 1 ORDER BY 1",
+          "measures": [
+            "net_cash_change"
+          ]
+        }
+      ]
+    },
+    "CAS-074": {
+      "question": "Break down customer receipts for the previous fiscal year.",
+      "sql": "SELECT c.customer_name AS customer, ROUND(SUM(p.payment_amount), 2) AS receipts FROM fact_invoice_payment p JOIN dim_customer c ON c.customer_key = p.customer_key AND c.is_current WHERE CAST(FLOOR(p.payment_date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "receipts"
+      ],
+      "mode": "set",
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'Previous fiscal year' = the fiscal year before the current one (calendar year, start month 1). Verified 2026-11-19: no rows (no data for this period). Alternative \"total receipts only\": 1 row(s), every figure null or 0 (no data for this period).",
+      "alternatives": [
+        {
+          "label": "total receipts only",
+          "sql": "SELECT ROUND(SUM(payment_amount), 2) AS receipts FROM fact_invoice_payment WHERE CAST(FLOOR(payment_date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12",
+          "measures": [
+            "receipts"
+          ]
+        }
+      ]
+    },
+    "CAS-075": {
+      "question": "Show payments made to vendors during the previous fiscal year.",
+      "sql": "SELECT v.vendor_name AS vendor, ROUND(SUM(p.payment_amount), 2) AS payments FROM fact_bill_payment p JOIN dim_vendor v ON v.vendor_key = p.vendor_key AND v.is_current WHERE CAST(FLOOR(p.payment_date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "payments"
+      ],
+      "mode": "set",
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'Previous fiscal year' = the fiscal year before the current one (calendar year, start month 1). Verified 2026-11-19: no rows (no data for this period). Alternative \"total payments only\": 1 row(s), every figure null or 0 (no data for this period).",
+      "alternatives": [
+        {
+          "label": "total payments only",
+          "sql": "SELECT ROUND(SUM(payment_amount), 2) AS payments FROM fact_bill_payment WHERE CAST(FLOOR(payment_date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12",
+          "measures": [
+            "payments"
+          ]
+        }
+      ]
+    },
+    "CAS-076": {
+      "question": "Compare cash received with cash paid during the previous fiscal year.",
+      "sql": "SELECT (SELECT ROUND(SUM(payment_amount), 2) FROM fact_invoice_payment WHERE CAST(FLOOR(payment_date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12) AS cash_received, (SELECT ROUND(SUM(payment_amount), 2) FROM fact_bill_payment WHERE CAST(FLOOR(payment_date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12) AS cash_paid",
+      "measures": [
+        "cash_received",
+        "cash_paid"
+      ],
+      "mode": "set",
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'Previous fiscal year' = the fiscal year before the current one (calendar year, start month 1). Verified 2026-11-19: 1 row(s), every figure null or 0 (no data for this period). Alternative \"bank accounts: debits and credits\": 1 row(s), every figure null or 0 (no data for this period).",
+      "alternatives": [
+        {
+          "label": "bank accounts: debits and credits",
+          "sql": "SELECT ROUND(SUM(g.debit_amount), 2) AS cash_received, ROUND(SUM(g.credit_amount), 2) AS cash_paid FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12",
+          "measures": [
+            "cash_received",
+            "cash_paid"
+          ]
+        }
+      ]
+    },
+    "CAS-077": {
+      "question": "Which months had the largest net cash outflow in the previous fiscal year?",
+      "sql": "SELECT CAST(FLOOR(f.period_date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(f.amount), 2) AS net_cash_change FROM fact_cash_flow f WHERE f.line_group = 'CashIncrease' AND f.is_total AND CAST(FLOOR(f.period_date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 GROUP BY 1 HAVING SUM(f.amount) < 0 ORDER BY 2",
+      "measures": [
+        "net_cash_change"
+      ],
+      "mode": "set",
+      "absolute": true,
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'Previous fiscal year' = the fiscal year before the current one (calendar year, start month 1). Only months with a net outflow are listed; outflows are compared by size (sign-insensitive). TBD. Verified 2026-11-19: no rows (no data for this period). Alternative \"bank accounts: months with net outflow\": no rows (no data for this period).",
+      "alternatives": [
+        {
+          "label": "bank accounts: months with net outflow",
+          "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.debit_amount) - SUM(g.credit_amount), 2) AS net_cash_change FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 GROUP BY 1 HAVING SUM(g.debit_amount) - SUM(g.credit_amount) < 0 ORDER BY 2",
+          "measures": [
+            "net_cash_change"
+          ]
+        }
+      ]
+    },
+    "CAS-078": {
+      "question": "Show deposits and withdrawals by month for the previous fiscal year.",
+      "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.debit_amount), 2) AS deposits, ROUND(SUM(g.credit_amount), 2) AS withdrawals FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "deposits",
+        "withdrawals"
+      ],
+      "mode": "set",
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'Previous fiscal year' = the fiscal year before the current one (calendar year, start month 1). Verified 2026-11-19: no rows (no data for this period). Alternative \"bank + Undeposited Funds\": no rows (no data for this period).",
+      "alternatives": [
+        {
+          "label": "bank + Undeposited Funds",
+          "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.debit_amount), 2) AS deposits, ROUND(SUM(g.credit_amount), 2) AS withdrawals FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank' OR account_subtype = 'UndepositedFunds') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 GROUP BY 1 ORDER BY 1",
+          "measures": [
+            "deposits",
+            "withdrawals"
+          ]
+        }
+      ]
+    },
+    "CAS-079": {
+      "question": "How did operating cash movement change compared with the preceding period for the previous fiscal year?",
+      "sql": "SELECT 'current period' AS period, ROUND(SUM(f.amount), 2) AS operating_cash FROM fact_cash_flow f WHERE f.line_group = 'OperatingActivities' AND f.is_total AND CAST(FLOOR(f.period_date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 UNION ALL SELECT 'preceding period', ROUND(SUM(f.amount), 2) FROM fact_cash_flow f WHERE f.line_group = 'OperatingActivities' AND f.is_total AND CAST(FLOOR(f.period_date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 2) * 100 + 1 AND (year(current_date) - 2) * 100 + 12",
+      "measures": [
+        "operating_cash"
+      ],
+      "mode": "set",
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'Previous fiscal year' = the fiscal year before the current one (calendar year, start month 1). Operating cash movement = 'Net cash provided by operating activities' (fact_cash_flow). Preceding period = the fiscal year before that. TBD. Verified 2026-11-19: 2 row(s), every figure null or 0 (no data for this period)."
+    },
+    "CAS-080": {
+      "question": "List the largest cash receipts and payments during the previous fiscal year.",
+      "sql": "SELECT 'receipt' AS kind, payment_date_key AS date_key, ROUND(payment_amount, 2) AS amount FROM fact_invoice_payment WHERE CAST(FLOOR(payment_date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 UNION ALL SELECT 'payment', payment_date_key, ROUND(payment_amount, 2) FROM fact_bill_payment WHERE CAST(FLOOR(payment_date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 ORDER BY 3 DESC",
+      "measures": [
+        "amount"
+      ],
+      "mode": "set",
+      "absolute": true,
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'Previous fiscal year' = the fiscal year before the current one (calendar year, start month 1). All receipts and payments in the period are listed; TBD: how many the chat should show as 'largest'. Verified 2026-11-19: no rows (no data for this period)."
+    },
+    "CAS-081": {
+      "question": "Show cash inflows and outflows for the last 90 days.",
+      "sql": "SELECT ROUND(SUM(g.debit_amount), 2) AS cash_in, ROUND(SUM(g.credit_amount), 2) AS cash_out FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank') AND g.date_key BETWEEN CAST(strftime(current_date - INTERVAL 90 DAY, '%Y%m%d') AS INTEGER) AND CAST(strftime(current_date, '%Y%m%d') AS INTEGER)",
+      "measures": [
+        "cash_in",
+        "cash_out"
+      ],
+      "mode": "set",
+      "absolute": true,
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'Last 90 days' = current_date - 90 days to current_date, inclusive (TBD: boundary day). Verified 2026-11-19: 1 row(s); first: cash_in=2785.95, cash_out=4303.82. Alternative \"bank + Undeposited Funds\": 1 row(s); first: cash_in=5856.22, cash_out=5998.72. Alternative \"customer receipts and vendor payments\": 1 row(s); first: cash_in=3005.07, cash_out=3089.5.",
+      "alternatives": [
+        {
+          "label": "bank + Undeposited Funds",
+          "sql": "SELECT ROUND(SUM(g.debit_amount), 2) AS cash_in, ROUND(SUM(g.credit_amount), 2) AS cash_out FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank' OR account_subtype = 'UndepositedFunds') AND g.date_key BETWEEN CAST(strftime(current_date - INTERVAL 90 DAY, '%Y%m%d') AS INTEGER) AND CAST(strftime(current_date, '%Y%m%d') AS INTEGER)",
+          "measures": [
+            "cash_in",
+            "cash_out"
+          ]
+        },
+        {
+          "label": "customer receipts and vendor payments",
+          "sql": "SELECT (SELECT ROUND(SUM(payment_amount), 2) FROM fact_invoice_payment WHERE payment_date_key BETWEEN CAST(strftime(current_date - INTERVAL 90 DAY, '%Y%m%d') AS INTEGER) AND CAST(strftime(current_date, '%Y%m%d') AS INTEGER)) AS cash_in, (SELECT ROUND(SUM(payment_amount), 2) FROM fact_bill_payment WHERE payment_date_key BETWEEN CAST(strftime(current_date - INTERVAL 90 DAY, '%Y%m%d') AS INTEGER) AND CAST(strftime(current_date, '%Y%m%d') AS INTEGER)) AS cash_out",
+          "measures": [
+            "cash_in",
+            "cash_out"
+          ]
+        }
+      ]
+    },
+    "CAS-082": {
+      "question": "What was the net change in cash during the last 90 days?",
+      "sql": "SELECT ROUND(SUM(f.amount), 2) AS net_cash_change FROM fact_cash_flow f WHERE f.line_group = 'CashIncrease' AND f.is_total AND f.period_date_key BETWEEN CAST(strftime(current_date - INTERVAL 90 DAY, '%Y%m%d') AS INTEGER) AND CAST(strftime(current_date, '%Y%m%d') AS INTEGER)",
+      "measures": [
+        "net_cash_change"
+      ],
+      "mode": "scalar",
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'Last 90 days' = current_date - 90 days to current_date, inclusive (TBD: boundary day). fact_cash_flow has monthly periods; a period counts when its start date is in the window. TBD. Verified 2026-11-19: 1 row(s); first: net_cash_change=-900. Alternative \"bank accounts: debits - credits\": 1 row(s); first: net_cash_change=-1517.87. Alternative \"bank + Undeposited Funds: debits - credits\": 1 row(s); first: net_cash_change=-142.5.",
+      "alternatives": [
+        {
+          "label": "bank accounts: debits - credits",
+          "sql": "SELECT ROUND(SUM(g.debit_amount) - SUM(g.credit_amount), 2) AS net_cash_change FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank') AND g.date_key BETWEEN CAST(strftime(current_date - INTERVAL 90 DAY, '%Y%m%d') AS INTEGER) AND CAST(strftime(current_date, '%Y%m%d') AS INTEGER)",
+          "measures": [
+            "net_cash_change"
+          ]
+        },
+        {
+          "label": "bank + Undeposited Funds: debits - credits",
+          "sql": "SELECT ROUND(SUM(g.debit_amount) - SUM(g.credit_amount), 2) AS net_cash_change FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank' OR account_subtype = 'UndepositedFunds') AND g.date_key BETWEEN CAST(strftime(current_date - INTERVAL 90 DAY, '%Y%m%d') AS INTEGER) AND CAST(strftime(current_date, '%Y%m%d') AS INTEGER)",
+          "measures": [
+            "net_cash_change"
+          ]
+        }
+      ]
+    },
+    "CAS-083": {
+      "question": "Show the monthly cash movement for the last 90 days.",
+      "sql": "SELECT CAST(FLOOR(f.period_date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(f.amount), 2) AS net_cash_change FROM fact_cash_flow f WHERE f.line_group = 'CashIncrease' AND f.is_total AND f.period_date_key BETWEEN CAST(strftime(current_date - INTERVAL 90 DAY, '%Y%m%d') AS INTEGER) AND CAST(strftime(current_date, '%Y%m%d') AS INTEGER) GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "net_cash_change"
+      ],
+      "mode": "set",
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'Last 90 days' = current_date - 90 days to current_date, inclusive (TBD: boundary day). Verified 2026-11-19: 3 row(s); first: year_month=202609, net_cash_change=-900. Alternative \"bank accounts: debits - credits by month\": 2 row(s); first: year_month=202608, net_cash_change=-617.87.",
+      "alternatives": [
+        {
+          "label": "bank accounts: debits - credits by month",
+          "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.debit_amount) - SUM(g.credit_amount), 2) AS net_cash_change FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank') AND g.date_key BETWEEN CAST(strftime(current_date - INTERVAL 90 DAY, '%Y%m%d') AS INTEGER) AND CAST(strftime(current_date, '%Y%m%d') AS INTEGER) GROUP BY 1 ORDER BY 1",
+          "measures": [
+            "net_cash_change"
+          ]
+        }
+      ]
+    },
+    "CAS-084": {
+      "question": "Break down customer receipts for the last 90 days.",
+      "sql": "SELECT c.customer_name AS customer, ROUND(SUM(p.payment_amount), 2) AS receipts FROM fact_invoice_payment p JOIN dim_customer c ON c.customer_key = p.customer_key AND c.is_current WHERE p.payment_date_key BETWEEN CAST(strftime(current_date - INTERVAL 90 DAY, '%Y%m%d') AS INTEGER) AND CAST(strftime(current_date, '%Y%m%d') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "receipts"
+      ],
+      "mode": "set",
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'Last 90 days' = current_date - 90 days to current_date, inclusive (TBD: boundary day). Verified 2026-11-19: 7 row(s); first: customer=Cool Cars, receipts=1675.52. Alternative \"total receipts only\": 1 row(s); first: receipts=3005.07.",
+      "alternatives": [
+        {
+          "label": "total receipts only",
+          "sql": "SELECT ROUND(SUM(payment_amount), 2) AS receipts FROM fact_invoice_payment WHERE payment_date_key BETWEEN CAST(strftime(current_date - INTERVAL 90 DAY, '%Y%m%d') AS INTEGER) AND CAST(strftime(current_date, '%Y%m%d') AS INTEGER)",
+          "measures": [
+            "receipts"
+          ]
+        }
+      ]
+    },
+    "CAS-085": {
+      "question": "Show payments made to vendors during the last 90 days.",
+      "sql": "SELECT v.vendor_name AS vendor, ROUND(SUM(p.payment_amount), 2) AS payments FROM fact_bill_payment p JOIN dim_vendor v ON v.vendor_key = p.vendor_key AND v.is_current WHERE p.payment_date_key BETWEEN CAST(strftime(current_date - INTERVAL 90 DAY, '%Y%m%d') AS INTEGER) AND CAST(strftime(current_date, '%Y%m%d') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "payments"
+      ],
+      "mode": "set",
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'Last 90 days' = current_date - 90 days to current_date, inclusive (TBD: boundary day). Verified 2026-11-19: 6 row(s); first: vendor=Brosnahan Insurance Agency, payments=2000. Alternative \"total payments only\": 1 row(s); first: payments=3089.5.",
+      "alternatives": [
+        {
+          "label": "total payments only",
+          "sql": "SELECT ROUND(SUM(payment_amount), 2) AS payments FROM fact_bill_payment WHERE payment_date_key BETWEEN CAST(strftime(current_date - INTERVAL 90 DAY, '%Y%m%d') AS INTEGER) AND CAST(strftime(current_date, '%Y%m%d') AS INTEGER)",
+          "measures": [
+            "payments"
+          ]
+        }
+      ]
+    },
+    "CAS-086": {
+      "question": "Compare cash received with cash paid during the last 90 days.",
+      "sql": "SELECT (SELECT ROUND(SUM(payment_amount), 2) FROM fact_invoice_payment WHERE payment_date_key BETWEEN CAST(strftime(current_date - INTERVAL 90 DAY, '%Y%m%d') AS INTEGER) AND CAST(strftime(current_date, '%Y%m%d') AS INTEGER)) AS cash_received, (SELECT ROUND(SUM(payment_amount), 2) FROM fact_bill_payment WHERE payment_date_key BETWEEN CAST(strftime(current_date - INTERVAL 90 DAY, '%Y%m%d') AS INTEGER) AND CAST(strftime(current_date, '%Y%m%d') AS INTEGER)) AS cash_paid",
+      "measures": [
+        "cash_received",
+        "cash_paid"
+      ],
+      "mode": "set",
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'Last 90 days' = current_date - 90 days to current_date, inclusive (TBD: boundary day). Verified 2026-11-19: 1 row(s); first: cash_received=3005.07, cash_paid=3089.5. Alternative \"bank accounts: debits and credits\": 1 row(s); first: cash_received=2785.95, cash_paid=4303.82.",
+      "alternatives": [
+        {
+          "label": "bank accounts: debits and credits",
+          "sql": "SELECT ROUND(SUM(g.debit_amount), 2) AS cash_received, ROUND(SUM(g.credit_amount), 2) AS cash_paid FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank') AND g.date_key BETWEEN CAST(strftime(current_date - INTERVAL 90 DAY, '%Y%m%d') AS INTEGER) AND CAST(strftime(current_date, '%Y%m%d') AS INTEGER)",
+          "measures": [
+            "cash_received",
+            "cash_paid"
+          ]
+        }
+      ]
+    },
+    "CAS-087": {
+      "question": "Which months had the largest net cash outflow in the last 90 days?",
+      "sql": "SELECT CAST(FLOOR(f.period_date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(f.amount), 2) AS net_cash_change FROM fact_cash_flow f WHERE f.line_group = 'CashIncrease' AND f.is_total AND f.period_date_key BETWEEN CAST(strftime(current_date - INTERVAL 90 DAY, '%Y%m%d') AS INTEGER) AND CAST(strftime(current_date, '%Y%m%d') AS INTEGER) GROUP BY 1 HAVING SUM(f.amount) < 0 ORDER BY 2",
+      "measures": [
+        "net_cash_change"
+      ],
+      "mode": "set",
+      "absolute": true,
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'Last 90 days' = current_date - 90 days to current_date, inclusive (TBD: boundary day). Only months with a net outflow are listed; outflows are compared by size (sign-insensitive). TBD. Verified 2026-11-19: 1 row(s); first: year_month=202609, net_cash_change=-900. Alternative \"bank accounts: months with net outflow\": 2 row(s); first: year_month=202609, net_cash_change=-900.",
+      "alternatives": [
+        {
+          "label": "bank accounts: months with net outflow",
+          "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.debit_amount) - SUM(g.credit_amount), 2) AS net_cash_change FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank') AND g.date_key BETWEEN CAST(strftime(current_date - INTERVAL 90 DAY, '%Y%m%d') AS INTEGER) AND CAST(strftime(current_date, '%Y%m%d') AS INTEGER) GROUP BY 1 HAVING SUM(g.debit_amount) - SUM(g.credit_amount) < 0 ORDER BY 2",
+          "measures": [
+            "net_cash_change"
+          ]
+        }
+      ]
+    },
+    "CAS-088": {
+      "question": "Show deposits and withdrawals by month for the last 90 days.",
+      "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.debit_amount), 2) AS deposits, ROUND(SUM(g.credit_amount), 2) AS withdrawals FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank') AND g.date_key BETWEEN CAST(strftime(current_date - INTERVAL 90 DAY, '%Y%m%d') AS INTEGER) AND CAST(strftime(current_date, '%Y%m%d') AS INTEGER) GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "deposits",
+        "withdrawals"
+      ],
+      "mode": "set",
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'Last 90 days' = current_date - 90 days to current_date, inclusive (TBD: boundary day). Verified 2026-11-19: 2 row(s); first: year_month=202608, deposits=2785.95, withdrawals=3403.82. Alternative \"bank + Undeposited Funds\": 2 row(s); first: year_month=202608, deposits=5856.22, withdrawals=5098.72.",
+      "alternatives": [
+        {
+          "label": "bank + Undeposited Funds",
+          "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.debit_amount), 2) AS deposits, ROUND(SUM(g.credit_amount), 2) AS withdrawals FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank' OR account_subtype = 'UndepositedFunds') AND g.date_key BETWEEN CAST(strftime(current_date - INTERVAL 90 DAY, '%Y%m%d') AS INTEGER) AND CAST(strftime(current_date, '%Y%m%d') AS INTEGER) GROUP BY 1 ORDER BY 1",
+          "measures": [
+            "deposits",
+            "withdrawals"
+          ]
+        }
+      ]
+    },
+    "CAS-089": {
+      "question": "How did operating cash movement change compared with the preceding period for the last 90 days?",
+      "sql": "SELECT 'current period' AS period, ROUND(SUM(f.amount), 2) AS operating_cash FROM fact_cash_flow f WHERE f.line_group = 'OperatingActivities' AND f.is_total AND f.period_date_key BETWEEN CAST(strftime(current_date - INTERVAL 90 DAY, '%Y%m%d') AS INTEGER) AND CAST(strftime(current_date, '%Y%m%d') AS INTEGER) UNION ALL SELECT 'preceding period', ROUND(SUM(f.amount), 2) FROM fact_cash_flow f WHERE f.line_group = 'OperatingActivities' AND f.is_total AND f.period_date_key BETWEEN CAST(strftime(current_date - INTERVAL 181 DAY, '%Y%m%d') AS INTEGER) AND CAST(strftime(current_date - INTERVAL 91 DAY, '%Y%m%d') AS INTEGER)",
+      "measures": [
+        "operating_cash"
+      ],
+      "mode": "set",
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'Last 90 days' = current_date - 90 days to current_date, inclusive (TBD: boundary day). Operating cash movement = 'Net cash provided by operating activities' (fact_cash_flow). Preceding period = the 91 days before that. TBD. Verified 2026-11-19: 2 row(s); first: period=current period, operating_cash=-900."
+    },
+    "CAS-090": {
+      "question": "List the largest cash receipts and payments during the last 90 days.",
+      "sql": "SELECT 'receipt' AS kind, payment_date_key AS date_key, ROUND(payment_amount, 2) AS amount FROM fact_invoice_payment WHERE payment_date_key BETWEEN CAST(strftime(current_date - INTERVAL 90 DAY, '%Y%m%d') AS INTEGER) AND CAST(strftime(current_date, '%Y%m%d') AS INTEGER) UNION ALL SELECT 'payment', payment_date_key, ROUND(payment_amount, 2) FROM fact_bill_payment WHERE payment_date_key BETWEEN CAST(strftime(current_date - INTERVAL 90 DAY, '%Y%m%d') AS INTEGER) AND CAST(strftime(current_date, '%Y%m%d') AS INTEGER) ORDER BY 3 DESC",
+      "measures": [
+        "amount"
+      ],
+      "mode": "set",
+      "absolute": true,
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'Last 90 days' = current_date - 90 days to current_date, inclusive (TBD: boundary day). All receipts and payments in the period are listed; TBD: how many the chat should show as 'largest'. Verified 2026-11-19: 16 row(s); first: kind=payment, date_key=20260823, amount=2000."
+    },
+    "CAS-091": {
+      "question": "Show cash inflows and outflows for the last 12 months.",
+      "sql": "SELECT ROUND(SUM(g.debit_amount), 2) AS cash_in, ROUND(SUM(g.credit_amount), 2) AS cash_out FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 11 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER)",
+      "measures": [
+        "cash_in",
+        "cash_out"
+      ],
+      "mode": "set",
+      "absolute": true,
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'Last 12 months' = the 12 calendar months up to and including the current month. Verified 2026-11-19: 1 row(s); first: cash_in=9071.35, cash_out=7070.35. Alternative \"bank + Undeposited Funds\": 1 row(s); first: cash_in=12828.77, cash_out=8765.25. Alternative \"customer receipts and vendor payments\": 1 row(s); first: cash_in=4852.62, cash_out=4539.5.",
+      "alternatives": [
+        {
+          "label": "bank + Undeposited Funds",
+          "sql": "SELECT ROUND(SUM(g.debit_amount), 2) AS cash_in, ROUND(SUM(g.credit_amount), 2) AS cash_out FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank' OR account_subtype = 'UndepositedFunds') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 11 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER)",
+          "measures": [
+            "cash_in",
+            "cash_out"
+          ]
+        },
+        {
+          "label": "customer receipts and vendor payments",
+          "sql": "SELECT (SELECT ROUND(SUM(payment_amount), 2) FROM fact_invoice_payment WHERE CAST(FLOOR(payment_date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 11 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER)) AS cash_in, (SELECT ROUND(SUM(payment_amount), 2) FROM fact_bill_payment WHERE CAST(FLOOR(payment_date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 11 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER)) AS cash_out",
+          "measures": [
+            "cash_in",
+            "cash_out"
+          ]
+        }
+      ]
+    },
+    "CAS-092": {
+      "question": "What was the net change in cash during the last 12 months?",
+      "sql": "SELECT ROUND(SUM(f.amount), 2) AS net_cash_change FROM fact_cash_flow f WHERE f.line_group = 'CashIncrease' AND f.is_total AND CAST(FLOOR(f.period_date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 11 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER)",
+      "measures": [
+        "net_cash_change"
+      ],
+      "mode": "scalar",
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'Last 12 months' = the 12 calendar months up to and including the current month. fact_cash_flow has monthly periods; a period counts when its start date is in the window. TBD. Verified 2026-11-19: 1 row(s); first: net_cash_change=4063.52. Alternative \"bank accounts: debits - credits\": 1 row(s); first: net_cash_change=2001. Alternative \"bank + Undeposited Funds: debits - credits\": 1 row(s); first: net_cash_change=4063.52.",
+      "alternatives": [
+        {
+          "label": "bank accounts: debits - credits",
+          "sql": "SELECT ROUND(SUM(g.debit_amount) - SUM(g.credit_amount), 2) AS net_cash_change FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 11 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER)",
+          "measures": [
+            "net_cash_change"
+          ]
+        },
+        {
+          "label": "bank + Undeposited Funds: debits - credits",
+          "sql": "SELECT ROUND(SUM(g.debit_amount) - SUM(g.credit_amount), 2) AS net_cash_change FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank' OR account_subtype = 'UndepositedFunds') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 11 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER)",
+          "measures": [
+            "net_cash_change"
+          ]
+        }
+      ]
+    },
+    "CAS-093": {
+      "question": "Show the monthly cash movement for the last 12 months.",
+      "sql": "SELECT CAST(FLOOR(f.period_date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(f.amount), 2) AS net_cash_change FROM fact_cash_flow f WHERE f.line_group = 'CashIncrease' AND f.is_total AND CAST(FLOOR(f.period_date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 11 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "net_cash_change"
+      ],
+      "mode": "set",
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'Last 12 months' = the 12 calendar months up to and including the current month. Verified 2026-11-19: 8 row(s); first: year_month=202604, net_cash_change=5000. Alternative \"bank accounts: debits - credits by month\": 6 row(s); first: year_month=202604, net_cash_change=5000.",
+      "alternatives": [
+        {
+          "label": "bank accounts: debits - credits by month",
+          "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.debit_amount) - SUM(g.credit_amount), 2) AS net_cash_change FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 11 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+          "measures": [
+            "net_cash_change"
+          ]
+        }
+      ]
+    },
+    "CAS-094": {
+      "question": "Break down customer receipts for the last 12 months.",
+      "sql": "SELECT c.customer_name AS customer, ROUND(SUM(p.payment_amount), 2) AS receipts FROM fact_invoice_payment p JOIN dim_customer c ON c.customer_key = p.customer_key AND c.is_current WHERE CAST(FLOOR(p.payment_date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 11 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "receipts"
+      ],
+      "mode": "set",
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'Last 12 months' = the 12 calendar months up to and including the current month. Verified 2026-11-19: 9 row(s); first: customer=Cool Cars, receipts=2369.52. Alternative \"total receipts only\": 1 row(s); first: receipts=4852.62.",
+      "alternatives": [
+        {
+          "label": "total receipts only",
+          "sql": "SELECT ROUND(SUM(payment_amount), 2) AS receipts FROM fact_invoice_payment WHERE CAST(FLOOR(payment_date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 11 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER)",
+          "measures": [
+            "receipts"
+          ]
+        }
+      ]
+    },
+    "CAS-095": {
+      "question": "Show payments made to vendors during the last 12 months.",
+      "sql": "SELECT v.vendor_name AS vendor, ROUND(SUM(p.payment_amount), 2) AS payments FROM fact_bill_payment p JOIN dim_vendor v ON v.vendor_key = p.vendor_key AND v.is_current WHERE CAST(FLOOR(p.payment_date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 11 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "payments"
+      ],
+      "mode": "set",
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'Last 12 months' = the 12 calendar months up to and including the current month. Verified 2026-11-19: 9 row(s); first: vendor=Brosnahan Insurance Agency, payments=2000. Alternative \"total payments only\": 1 row(s); first: payments=4539.5.",
+      "alternatives": [
+        {
+          "label": "total payments only",
+          "sql": "SELECT ROUND(SUM(payment_amount), 2) AS payments FROM fact_bill_payment WHERE CAST(FLOOR(payment_date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 11 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER)",
+          "measures": [
+            "payments"
+          ]
+        }
+      ]
+    },
+    "CAS-096": {
+      "question": "Compare cash received with cash paid during the last 12 months.",
+      "sql": "SELECT (SELECT ROUND(SUM(payment_amount), 2) FROM fact_invoice_payment WHERE CAST(FLOOR(payment_date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 11 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER)) AS cash_received, (SELECT ROUND(SUM(payment_amount), 2) FROM fact_bill_payment WHERE CAST(FLOOR(payment_date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 11 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER)) AS cash_paid",
+      "measures": [
+        "cash_received",
+        "cash_paid"
+      ],
+      "mode": "set",
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'Last 12 months' = the 12 calendar months up to and including the current month. Verified 2026-11-19: 1 row(s); first: cash_received=4852.62, cash_paid=4539.5. Alternative \"bank accounts: debits and credits\": 1 row(s); first: cash_received=9071.35, cash_paid=7070.35.",
+      "alternatives": [
+        {
+          "label": "bank accounts: debits and credits",
+          "sql": "SELECT ROUND(SUM(g.debit_amount), 2) AS cash_received, ROUND(SUM(g.credit_amount), 2) AS cash_paid FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 11 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER)",
+          "measures": [
+            "cash_received",
+            "cash_paid"
+          ]
+        }
+      ]
+    },
+    "CAS-097": {
+      "question": "Which months had the largest net cash outflow in the last 12 months?",
+      "sql": "SELECT CAST(FLOOR(f.period_date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(f.amount), 2) AS net_cash_change FROM fact_cash_flow f WHERE f.line_group = 'CashIncrease' AND f.is_total AND CAST(FLOOR(f.period_date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 11 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 HAVING SUM(f.amount) < 0 ORDER BY 2",
+      "measures": [
+        "net_cash_change"
+      ],
+      "mode": "set",
+      "absolute": true,
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'Last 12 months' = the 12 calendar months up to and including the current month. Only months with a net outflow are listed; outflows are compared by size (sign-insensitive). TBD. Verified 2026-11-19: 2 row(s); first: year_month=202609, net_cash_change=-900. Alternative \"bank accounts: months with net outflow\": 5 row(s); first: year_month=202608, net_cash_change=-1278.36.",
+      "alternatives": [
+        {
+          "label": "bank accounts: months with net outflow",
+          "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.debit_amount) - SUM(g.credit_amount), 2) AS net_cash_change FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 11 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 HAVING SUM(g.debit_amount) - SUM(g.credit_amount) < 0 ORDER BY 2",
+          "measures": [
+            "net_cash_change"
+          ]
+        }
+      ]
+    },
+    "CAS-098": {
+      "question": "Show deposits and withdrawals by month for the last 12 months.",
+      "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.debit_amount), 2) AS deposits, ROUND(SUM(g.credit_amount), 2) AS withdrawals FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 11 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "deposits",
+        "withdrawals"
+      ],
+      "mode": "set",
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'Last 12 months' = the 12 calendar months up to and including the current month. Verified 2026-11-19: 6 row(s); first: year_month=202604, deposits=5000, withdrawals=0. Alternative \"bank + Undeposited Funds\": 6 row(s); first: year_month=202604, deposits=5000, withdrawals=0.",
+      "alternatives": [
+        {
+          "label": "bank + Undeposited Funds",
+          "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.debit_amount), 2) AS deposits, ROUND(SUM(g.credit_amount), 2) AS withdrawals FROM vw_gl_normalized g WHERE g.account_key IN (SELECT account_key FROM dim_account WHERE account_type = 'Bank' OR account_subtype = 'UndepositedFunds') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 11 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+          "measures": [
+            "deposits",
+            "withdrawals"
+          ]
+        }
+      ]
+    },
+    "CAS-099": {
+      "question": "How did operating cash movement change compared with the preceding period for the last 12 months?",
+      "sql": "SELECT 'current period' AS period, ROUND(SUM(f.amount), 2) AS operating_cash FROM fact_cash_flow f WHERE f.line_group = 'OperatingActivities' AND f.is_total AND CAST(FLOOR(f.period_date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 11 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) UNION ALL SELECT 'preceding period', ROUND(SUM(f.amount), 2) FROM fact_cash_flow f WHERE f.line_group = 'OperatingActivities' AND f.is_total AND CAST(FLOOR(f.period_date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 23 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date - INTERVAL 12 MONTH, '%Y%m') AS INTEGER)",
+      "measures": [
+        "operating_cash"
+      ],
+      "mode": "set",
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'Last 12 months' = the 12 calendar months up to and including the current month. Operating cash movement = 'Net cash provided by operating activities' (fact_cash_flow). Preceding period = the 12 months before that. TBD. Verified 2026-11-19: 2 row(s); first: period=current period, operating_cash=1896.02."
+    },
+    "CAS-100": {
+      "question": "List the largest cash receipts and payments during the last 12 months.",
+      "sql": "SELECT 'receipt' AS kind, payment_date_key AS date_key, ROUND(payment_amount, 2) AS amount FROM fact_invoice_payment WHERE CAST(FLOOR(payment_date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 11 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) UNION ALL SELECT 'payment', payment_date_key, ROUND(payment_amount, 2) FROM fact_bill_payment WHERE CAST(FLOOR(payment_date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 11 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) ORDER BY 3 DESC",
+      "measures": [
+        "amount"
+      ],
+      "mode": "set",
+      "absolute": true,
+      "notes": "Cash = bank accounts (dim_account.account_type 'Bank': Checking, Savings); inflows = GL debits, outflows = GL credits. Net change = 'Net cash increase for period' in fact_cash_flow (QuickBooks statement of cash flows, monthly periods). Customer receipts = fact_invoice_payment; vendor payments = fact_bill_payment. TBD: owner review (Undeposited Funds is not cash here; accepted as an alternative where it applies). 'Last 12 months' = the 12 calendar months up to and including the current month. All receipts and payments in the period are listed; TBD: how many the chat should show as 'largest'. Verified 2026-11-19: 26 row(s); first: kind=payment, date_key=20260823, amount=2000."
+    }
+  }
+}

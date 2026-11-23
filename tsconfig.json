@@ -19,7 +19,9 @@
     "step-definitions/**/*.ts",
     "fixtures/**/*.ts",
     "utils/**/*.ts",
+    "ci/**/*.ts",
     "playwright.config.ts",
+    "playwright.ci.config.ts",
     "global-setup.ts",
     "global-teardown.ts"
   ]

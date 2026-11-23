@@ -1,0 +1,214 @@
+# Asks the chat all 800 regression questions every night at 9:00 pm India time and makes one Excel report.
+# How to use it, and where the Excel is: README, "Nightly run on GitHub Actions".
+name: Nightly 800 questions
+
+on:
+  schedule:
+    # 15:30 UTC = 9:00 pm in India (no summer time). GitHub can start it some minutes late when it is busy.
+    - cron: '30 15 * * *'
+  workflow_dispatch:
+    inputs:
+      questions:
+        description: 'trial = 10 questions, all = all 800'
+        type: choice
+        options: [trial, all]
+        default: trial
+  push:
+    # A push to this branch runs the trial, or all 800 if the commit message contains [run-800].
+    branches: [nightly-800]
+
+permissions:
+  contents: read
+
+# One run at a time, so two runs never ask questions together.
+concurrency:
+  group: nightly-800
+  cancel-in-progress: false
+
+env:
+  # First and last night of the 9 pm runs (India dates). Outside these dates the schedule does nothing.
+  FIRST_NIGHT: '2026-11-25'
+  LAST_NIGHT: '2026-12-08'
+  TRIAL_QUESTIONS: REV-073 REV-083 PRO-071 EXP-046 EXP-048 CAS-030 BUD-047 COM-037 AMB-020 UNS-004
+  BASE_URL: https://app.eleviqai.com/
+  STORAGE_STATE: .auth/app-session.json
+  TZ: Asia/Kolkata
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  check:
+    name: Check the app and the sign-in
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    outputs:
+      mode: ${{ steps.mode.outputs.mode }}
+    steps:
+      - name: Decide what to run
+        id: mode
+        env:
+          EVENT: ${{ github.event_name }}
+          CHOICE: ${{ inputs.questions }}
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+        run: |
+          case "$EVENT" in
+            schedule)
+              # The date of the evening this run belongs to, also when GitHub starts it after midnight.
+              night=$(date -d '-12 hours' +%F)
+              if [[ "$night" < "$FIRST_NIGHT" || "$night" > "$LAST_NIGHT" ]]; then mode=skip; else mode=all; fi
+              ;;
+            workflow_dispatch) mode=$CHOICE ;;
+            *) if [[ "$COMMIT_MESSAGE" == *'[run-800]'* ]]; then mode=all; else mode=trial; fi ;;
+          esac
+          echo "mode=$mode" >> "$GITHUB_OUTPUT"
+          case "$mode" in
+            all) text='All 800 questions.' ;;
+            trial) text="Trial: $TRIAL_QUESTIONS" ;;
+            *) text="Nothing to run: the 9 pm runs are set for $FIRST_NIGHT to $LAST_NIGHT." ;;
+          esac
+          echo "::notice title=What this run does::$text"
+
+      - name: Get the code
+        if: steps.mode.outputs.mode != 'skip'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node
+        if: steps.mode.outputs.mode != 'skip'
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+
+      - name: Install the packages
+        if: steps.mode.outputs.mode != 'skip'
+        run: npm ci --no-audit --no-fund
+
+      - name: Install the browser
+        if: steps.mode.outputs.mode != 'skip'
+        run: npx playwright install --with-deps chromium
+
+      - name: Prepare the saved sign-in
+        if: steps.mode.outputs.mode != 'skip'
+        env:
+          APP_SESSION_JSON: ${{ secrets.APP_SESSION_JSON }}
+        run: node ci/prepare-session.mjs
+
+      - name: Check the app
+        if: steps.mode.outputs.mode != 'skip'
+        run: node ci/check-app.mjs
+
+  ask:
+    name: Ask ${{ matrix.category }}
+    needs: check
+    if: needs.check.outputs.mode != 'skip'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 200
+    strategy:
+      fail-fast: false
+      # Two categories at a time: about 6 to 7 hours for all 800.
+      max-parallel: 2
+      matrix:
+        category: [REV, PRO, EXP, CAS, BUD, COM, AMB, UNS]
+    env:
+      MODE: ${{ needs.check.outputs.mode }}
+      CATEGORY: ${{ matrix.category }}
+    steps:
+      - name: Get the code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+
+      - name: Install the packages
+        run: npm ci --no-audit --no-fund
+
+      - name: Install the browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Prepare the saved sign-in
+        env:
+          APP_SESSION_JSON: ${{ secrets.APP_SESSION_JSON }}
+        run: node ci/prepare-session.mjs
+
+      - name: Check the app
+        run: node ci/check-app.mjs
+
+      - name: Ask the questions
+        id: ask
+        run: |
+          questions=$(node ci/questions.mjs)
+          npx bddgen -c playwright.ci.config.ts
+          set +e
+          npx playwright test -c playwright.ci.config.ts --project=chromium --grep "$questions" 2>&1 | node ci/redact-log.mjs
+          echo "Playwright ended with exit code ${PIPESTATUS[0]} (0 = every question passed, 1 = some questions failed or did not run)."
+
+      - name: Check the results
+        if: always() && steps.ask.outcome != 'skipped'
+        run: node ci/check-results.mjs
+
+      - name: Keep this category's rows for the Excel
+        if: always() && steps.ask.outcome != 'skipped'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: rows-${{ matrix.category }}
+          path: test-results/ci/rows-${{ matrix.category }}.json
+          if-no-files-found: ignore
+          retention-days: 3
+          overwrite: true
+
+  report:
+    name: Excel report
+    needs: [check, ask]
+    if: always() && needs.check.result == 'success' && needs.check.outputs.mode != 'skip'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Get the code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+
+      - name: Install the packages
+        run: npm ci --no-audit --no-fund
+
+      - name: Get the rows of every category
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: rows-*
+          path: test-results/ci-rows
+          merge-multiple: true
+
+      - name: Make the Excel
+        id: excel
+        env:
+          MODE: ${{ needs.check.outputs.mode }}
+        run: npx tsx ci/merge-reports.ts
+
+      - name: Put the Excel on the run's page
+        id: upload
+        if: always() && steps.excel.outputs.file != ''
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          path: ${{ steps.excel.outputs.file }}
+          archive: false
+          if-no-files-found: error
+          retention-days: 30
+          overwrite: true
+
+      - name: Link the Excel in the summary
+        if: always() && steps.upload.outputs.artifact-url != ''
+        env:
+          LINK: ${{ steps.upload.outputs.artifact-url }}
+        run: echo "**[Download the Excel report]($LINK)** (you need to be signed in to GitHub; it is kept for 30 days)" >> "$GITHUB_STEP_SUMMARY"

@@ -5,6 +5,7 @@ import * as path from 'path';
 import { BasePage } from '../BasePage';
 import { logger } from '../../utils/logger';
 import { verifyChatAnswerAgainstOracle } from '../../utils/sqlOracle';
+import { verifyChatAsksForClarification, verifyChatDeclinesOutOfScope } from '../../utils/chatBehaviour';
 
 const msFromEnv = (value: string | undefined, fallback: number): number => {
   const parsed = Number(value);
@@ -132,11 +133,25 @@ export class ChatPage extends BasePage {
    * match. Every side of the comparison is written to the report's annotations.
    */
   async expectAnswerMatchesDatabaseOracle(caseId: string): Promise<void> {
+    await verifyChatAnswerAgainstOracle(this.page, caseId, this.submittedQuestion());
+  }
+
+  /** AMB cases: the app asks for the missing details instead of guessing (utils/chatBehaviour.ts). */
+  async expectAppAsksForClarification(caseId: string): Promise<void> {
+    await verifyChatAsksForClarification(this.page, caseId, this.submittedQuestion());
+  }
+
+  /** UNS cases: the app safely declines the out-of-scope request (utils/chatBehaviour.ts). */
+  async expectAppDeclinesOutOfScope(caseId: string): Promise<void> {
+    await verifyChatDeclinesOutOfScope(this.page, caseId, this.submittedQuestion());
+  }
+
+  private submittedQuestion(): string {
     const question = submittedQuestions.get(this.page);
     if (question === undefined) {
       throw new Error('No submitted question recorded for this page; the question was never submitted.');
     }
-    await verifyChatAnswerAgainstOracle(this.page, caseId, question);
+    return question;
   }
 
   /**

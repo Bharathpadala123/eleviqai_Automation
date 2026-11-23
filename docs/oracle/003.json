@@ -1,0 +1,1256 @@
+{
+  "ticketNo": "003",
+  "generatedBy": "SQL Oracle Generator (Stage 3.5) · 2026-11-19 · AI-generated, human review required (one SQL pattern per question template; every query dry-run on 2026-11-19, 0 errors)",
+  "connection": "QuickBooks - IES Sandbox Company US 6de8 Parent",
+  "reviewStatus": "Draft - pending human review",
+  "definitions": {
+    "totalOperatingExpenses": "TBD (owner review): Operating expenses = GL lines with reporting_category 'Operating Expense' (excludes COGS and other expenses).",
+    "payrollExpenses": "TBD (owner review): Payroll = expense accounts whose subtype starts with 'Payroll' or whose name mentions payroll, wages or salaries, plus 'Cost of Labor' and 'Workers Compensation'.",
+    "rentExpenses": "TBD (owner review): Rent = the 'Rent or Lease' account (account_subtype RentOrLeaseOfBuildings); equipment rental is not rent.",
+    "marketingExpenses": "TBD (owner review): Marketing = the 'Advertising' account (account_subtype AdvertisingPromotional).",
+    "travelExpenses": "TBD (owner review): Travel = accounts with subtype Travel or TravelMeals, or named 'Travel...'; automobile and fuel are not counted.",
+    "softwareSubscriptionCosts": "TBD (owner review): Software subscriptions = accounts named '...software...' or '...subscription...', or subtype DuesSubscriptions.",
+    "professionalFees": "TBD (owner review): Professional fees = accounts with subtype LegalProfessionalFees (Accounting, Bookkeeper, Lawyer, Legal & Professional Fees).",
+    "officeExpenses": "TBD (owner review): Office expenses = the 'Office Expenses' account (subtype OfficeGeneralAdministrativeExpenses).",
+    "utilitiesExpenses": "TBD (owner review): Utilities = accounts with subtype Utilities (Gas and Electric, Telephone).",
+    "insuranceExpenses": "TBD (owner review): Insurance = accounts with subtype Insurance.",
+    "thisMonth": "Calendar month of current_date on the Data Bridge Agent (DuckDB).",
+    "lastMonth": "Calendar month before the month of current_date on the Data Bridge Agent (DuckDB).",
+    "thisQuarter": "Calendar quarter of current_date, to date (Data Bridge Agent, DuckDB).",
+    "lastQuarter": "The full calendar quarter before the quarter of current_date.",
+    "thisYear": "Calendar year of current_date, to date.",
+    "lastYear": "The previous calendar year.",
+    "currentFiscalYear": "Fiscal year of current_date, to date; dim_company.fiscal_year_start_month = 1, so it equals the calendar year.",
+    "previousFiscalYear": "The fiscal year before the current one (calendar year, start month 1).",
+    "last90Days": "current_date - 90 days to current_date, inclusive (TBD: boundary day).",
+    "last12Months": "The 12 calendar months up to and including the current month.",
+    "noData": "TBD (D-B): provisionally an empty result, null and 0 all mean 'no data'.",
+    "precedingPeriod": "TBD: the period of the same length immediately before (previous month / quarter / year).",
+    "alternatives": "A case may list 'alternatives': other readings that are also accepted. Check 4 passes if the primary oracle or any alternative matches, and the report names which one.",
+    "customers": "Customer breakdowns count named customers only (inner join to dim_customer).",
+    "modeNone": "mode 'none' (sql null): no fair figure oracle exists for the case; its notes say why. Checks 1-3 still run (data answer, chat SQL re-run, faithful $ amounts) and Check 4 is recorded as SKIPPED.",
+    "verification": "Every primary and alternative query was dry-run on 2026-11-19 through the read-only Data Explorer (current_date 2026-11-19); each case's notes end with what it returned. Periods with no data test the empty-answer path only."
+  },
+  "cases": {
+    "EXP-001": {
+      "question": "Show total operating expenses for this month.",
+      "sql": "SELECT ROUND(SUM(g.reporting_amount), 2) AS operating_expenses FROM vw_gl_normalized g WHERE g.reporting_category = 'Operating Expense' AND CAST(FLOOR(g.date_key / 100) AS INTEGER) = CAST(strftime(current_date, '%Y%m') AS INTEGER)",
+      "measures": [
+        "operating_expenses"
+      ],
+      "mode": "scalar",
+      "notes": "Operating expenses = GL lines with reporting_category 'Operating Expense' (excludes COGS and other expenses). TBD. 'This month' = calendar month of current_date. Verified 2026-11-19: 1 row(s), every figure null or 0 (no data for this period)."
+    },
+    "EXP-002": {
+      "question": "Break down total operating expenses by vendor for this month.",
+      "sql": "SELECT v.vendor_name AS vendor, ROUND(SUM(g.reporting_amount), 2) AS operating_expenses FROM vw_gl_normalized g JOIN dim_vendor v ON v.vendor_key = g.vendor_key AND v.is_current WHERE g.reporting_category = 'Operating Expense' AND CAST(FLOOR(g.date_key / 100) AS INTEGER) = CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "operating_expenses"
+      ],
+      "mode": "set",
+      "notes": "Operating expenses = GL lines with reporting_category 'Operating Expense' (excludes COGS and other expenses). TBD. 'This month' = calendar month of current_date. Vendor breakdowns count named vendors only (inner join to dim_vendor); lines without a vendor are left out. TBD. Verified 2026-11-19: no rows (no data for this period). Alternative \"including lines without a vendor ('Unassigned')\": no rows (no data for this period).",
+      "alternatives": [
+        {
+          "label": "including lines without a vendor ('Unassigned')",
+          "sql": "SELECT COALESCE(v.vendor_name, 'Unassigned') AS vendor, ROUND(SUM(g.reporting_amount), 2) AS operating_expenses FROM vw_gl_normalized g LEFT JOIN dim_vendor v ON v.vendor_key = g.vendor_key AND v.is_current WHERE g.reporting_category = 'Operating Expense' AND CAST(FLOOR(g.date_key / 100) AS INTEGER) = CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+          "measures": [
+            "operating_expenses"
+          ]
+        }
+      ]
+    },
+    "EXP-003": {
+      "question": "Show the monthly trend for total operating expenses during this month.",
+      "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.reporting_amount), 2) AS operating_expenses FROM vw_gl_normalized g WHERE g.reporting_category = 'Operating Expense' AND CAST(FLOOR(g.date_key / 100) AS INTEGER) = CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "operating_expenses"
+      ],
+      "mode": "set",
+      "notes": "Operating expenses = GL lines with reporting_category 'Operating Expense' (excludes COGS and other expenses). TBD. 'This month' = calendar month of current_date. Verified 2026-11-19: no rows (no data for this period)."
+    },
+    "EXP-004": {
+      "question": "Which vendors account for the largest total operating expenses in this month?",
+      "sql": "SELECT v.vendor_name AS vendor, ROUND(SUM(g.reporting_amount), 2) AS operating_expenses FROM vw_gl_normalized g JOIN dim_vendor v ON v.vendor_key = g.vendor_key AND v.is_current WHERE g.reporting_category = 'Operating Expense' AND CAST(FLOOR(g.date_key / 100) AS INTEGER) = CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "operating_expenses"
+      ],
+      "mode": "set",
+      "notes": "Operating expenses = GL lines with reporting_category 'Operating Expense' (excludes COGS and other expenses). TBD. 'This month' = calendar month of current_date. Vendor breakdowns count named vendors only (inner join to dim_vendor); lines without a vendor are left out. TBD. Verified 2026-11-19: no rows (no data for this period). Alternative \"including lines without a vendor ('Unassigned')\": no rows (no data for this period).",
+      "alternatives": [
+        {
+          "label": "including lines without a vendor ('Unassigned')",
+          "sql": "SELECT COALESCE(v.vendor_name, 'Unassigned') AS vendor, ROUND(SUM(g.reporting_amount), 2) AS operating_expenses FROM vw_gl_normalized g LEFT JOIN dim_vendor v ON v.vendor_key = g.vendor_key AND v.is_current WHERE g.reporting_category = 'Operating Expense' AND CAST(FLOOR(g.date_key / 100) AS INTEGER) = CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+          "measures": [
+            "operating_expenses"
+          ]
+        }
+      ]
+    },
+    "EXP-005": {
+      "question": "Compare total operating expenses with the preceding equivalent period.",
+      "sql": "SELECT 'current period' AS period, ROUND(SUM(g.reporting_amount), 2) AS operating_expenses FROM vw_gl_normalized g WHERE g.reporting_category = 'Operating Expense' AND CAST(FLOOR(g.date_key / 100) AS INTEGER) = CAST(strftime(current_date, '%Y%m') AS INTEGER) UNION ALL SELECT 'preceding period', ROUND(SUM(g.reporting_amount), 2) FROM vw_gl_normalized g WHERE g.reporting_category = 'Operating Expense' AND CAST(FLOOR(g.date_key / 100) AS INTEGER) = CAST(strftime(current_date - INTERVAL 1 MONTH, '%Y%m') AS INTEGER)",
+      "measures": [
+        "operating_expenses"
+      ],
+      "mode": "set",
+      "notes": "Operating expenses = GL lines with reporting_category 'Operating Expense' (excludes COGS and other expenses). TBD. 'This month' = calendar month of current_date. Preceding period = previous calendar month (TBD: the period of the same length immediately before). Verified 2026-11-19: 2 row(s), every figure null or 0 (no data for this period)."
+    },
+    "EXP-006": {
+      "question": "List the transactions contributing to total operating expenses in this month.",
+      "sql": "SELECT g.date_key, COALESCE(g.transaction_number, g.transaction_id) AS transaction_ref, ROUND(g.reporting_amount, 2) AS amount FROM vw_gl_normalized g WHERE g.reporting_category = 'Operating Expense' AND CAST(FLOOR(g.date_key / 100) AS INTEGER) = CAST(strftime(current_date, '%Y%m') AS INTEGER) ORDER BY 3 DESC",
+      "measures": [
+        "amount"
+      ],
+      "mode": "set",
+      "notes": "Operating expenses = GL lines with reporting_category 'Operating Expense' (excludes COGS and other expenses). TBD. 'This month' = calendar month of current_date. Transactions = the individual GL lines in the period (one figure per line). TBD. Verified 2026-11-19: no rows (no data for this period)."
+    },
+    "EXP-007": {
+      "question": "Show total operating expenses by account for this month.",
+      "sql": "SELECT a.account_name AS account, ROUND(SUM(g.reporting_amount), 2) AS operating_expenses FROM vw_gl_normalized g JOIN dim_account a ON a.account_key = g.account_key WHERE g.reporting_category = 'Operating Expense' AND CAST(FLOOR(g.date_key / 100) AS INTEGER) = CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "operating_expenses"
+      ],
+      "mode": "set",
+      "notes": "Operating expenses = GL lines with reporting_category 'Operating Expense' (excludes COGS and other expenses). TBD. 'This month' = calendar month of current_date. Verified 2026-11-19: no rows (no data for this period)."
+    },
+    "EXP-008": {
+      "question": "Identify unusual increases in total operating expenses during this month.",
+      "sql": null,
+      "measures": [],
+      "mode": "none",
+      "notes": "'Unusual increases' has no agreed threshold, so there is no figure oracle. Checks 1-3 still run. TBD: owner definition of 'unusual'."
+    },
+    "EXP-009": {
+      "question": "What percentage of total expenses was total operating expenses in this month?",
+      "sql": "SELECT ROUND(100 * SUM(CASE WHEN g.reporting_category = 'Operating Expense' THEN g.reporting_amount ELSE 0 END) / NULLIF(SUM(g.reporting_amount), 0), 2) AS pct_of_total_expenses FROM vw_gl_normalized g WHERE g.reporting_category IN ('Operating Expense', 'COGS', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) = CAST(strftime(current_date, '%Y%m') AS INTEGER)",
+      "measures": [
+        "pct_of_total_expenses"
+      ],
+      "mode": "scalar",
+      "notes": "Operating expenses = GL lines with reporting_category 'Operating Expense' (excludes COGS and other expenses). TBD. 'This month' = calendar month of current_date. Total expenses = operating expenses + COGS + other expenses (TBD; the alternatives use narrower totals). Verified 2026-11-19: 1 row(s), every figure null or 0 (no data for this period). Alternative \"total expenses = operating expenses only\": 1 row(s), every figure null or 0 (no data for this period). Alternative \"total expenses = operating expenses + other expenses (no COGS)\": 1 row(s), every figure null or 0 (no data for this period).",
+      "alternatives": [
+        {
+          "label": "total expenses = operating expenses only",
+          "sql": "SELECT ROUND(100 * SUM(CASE WHEN g.reporting_category = 'Operating Expense' THEN g.reporting_amount ELSE 0 END) / NULLIF(SUM(g.reporting_amount), 0), 2) AS pct_of_total_expenses FROM vw_gl_normalized g WHERE g.reporting_category IN ('Operating Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) = CAST(strftime(current_date, '%Y%m') AS INTEGER)",
+          "measures": [
+            "pct_of_total_expenses"
+          ]
+        },
+        {
+          "label": "total expenses = operating expenses + other expenses (no COGS)",
+          "sql": "SELECT ROUND(100 * SUM(CASE WHEN g.reporting_category = 'Operating Expense' THEN g.reporting_amount ELSE 0 END) / NULLIF(SUM(g.reporting_amount), 0), 2) AS pct_of_total_expenses FROM vw_gl_normalized g WHERE g.reporting_category IN ('Operating Expense', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) = CAST(strftime(current_date, '%Y%m') AS INTEGER)",
+          "measures": [
+            "pct_of_total_expenses"
+          ]
+        }
+      ]
+    },
+    "EXP-010": {
+      "question": "Rank the months in this month by total operating expenses, highest to lowest.",
+      "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.reporting_amount), 2) AS operating_expenses FROM vw_gl_normalized g WHERE g.reporting_category = 'Operating Expense' AND CAST(FLOOR(g.date_key / 100) AS INTEGER) = CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "operating_expenses"
+      ],
+      "mode": "set",
+      "notes": "Operating expenses = GL lines with reporting_category 'Operating Expense' (excludes COGS and other expenses). TBD. 'This month' = calendar month of current_date. Verified 2026-11-19: no rows (no data for this period)."
+    },
+    "EXP-011": {
+      "question": "Show payroll expenses for last month.",
+      "sql": "SELECT ROUND(SUM(g.reporting_amount), 2) AS payroll_expenses FROM vw_gl_normalized g WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype ILIKE 'Payroll%' OR account_name ILIKE '%payroll%' OR account_name ILIKE '%wage%' OR account_name ILIKE '%salar%' OR account_name IN ('Cost of Labor', 'Workers Compensation')) AND CAST(FLOOR(g.date_key / 100) AS INTEGER) = CAST(strftime(current_date - INTERVAL 1 MONTH, '%Y%m') AS INTEGER)",
+      "measures": [
+        "payroll_expenses"
+      ],
+      "mode": "scalar",
+      "notes": "Payroll = expense accounts whose subtype starts with 'Payroll' or whose name mentions payroll, wages or salaries, plus 'Cost of Labor' and 'Workers Compensation'. TBD. 'Last month' = calendar month before the month of current_date. Verified 2026-11-19: 1 row(s), every figure null or 0 (no data for this period)."
+    },
+    "EXP-012": {
+      "question": "Break down payroll expenses by vendor for last month.",
+      "sql": "SELECT v.vendor_name AS vendor, ROUND(SUM(g.reporting_amount), 2) AS payroll_expenses FROM vw_gl_normalized g JOIN dim_vendor v ON v.vendor_key = g.vendor_key AND v.is_current WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype ILIKE 'Payroll%' OR account_name ILIKE '%payroll%' OR account_name ILIKE '%wage%' OR account_name ILIKE '%salar%' OR account_name IN ('Cost of Labor', 'Workers Compensation')) AND CAST(FLOOR(g.date_key / 100) AS INTEGER) = CAST(strftime(current_date - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "payroll_expenses"
+      ],
+      "mode": "set",
+      "notes": "Payroll = expense accounts whose subtype starts with 'Payroll' or whose name mentions payroll, wages or salaries, plus 'Cost of Labor' and 'Workers Compensation'. TBD. 'Last month' = calendar month before the month of current_date. Vendor breakdowns count named vendors only (inner join to dim_vendor); lines without a vendor are left out. TBD. Verified 2026-11-19: no rows (no data for this period). Alternative \"including lines without a vendor ('Unassigned')\": no rows (no data for this period).",
+      "alternatives": [
+        {
+          "label": "including lines without a vendor ('Unassigned')",
+          "sql": "SELECT COALESCE(v.vendor_name, 'Unassigned') AS vendor, ROUND(SUM(g.reporting_amount), 2) AS payroll_expenses FROM vw_gl_normalized g LEFT JOIN dim_vendor v ON v.vendor_key = g.vendor_key AND v.is_current WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype ILIKE 'Payroll%' OR account_name ILIKE '%payroll%' OR account_name ILIKE '%wage%' OR account_name ILIKE '%salar%' OR account_name IN ('Cost of Labor', 'Workers Compensation')) AND CAST(FLOOR(g.date_key / 100) AS INTEGER) = CAST(strftime(current_date - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+          "measures": [
+            "payroll_expenses"
+          ]
+        }
+      ]
+    },
+    "EXP-013": {
+      "question": "Show the monthly trend for payroll expenses during last month.",
+      "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.reporting_amount), 2) AS payroll_expenses FROM vw_gl_normalized g WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype ILIKE 'Payroll%' OR account_name ILIKE '%payroll%' OR account_name ILIKE '%wage%' OR account_name ILIKE '%salar%' OR account_name IN ('Cost of Labor', 'Workers Compensation')) AND CAST(FLOOR(g.date_key / 100) AS INTEGER) = CAST(strftime(current_date - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "payroll_expenses"
+      ],
+      "mode": "set",
+      "notes": "Payroll = expense accounts whose subtype starts with 'Payroll' or whose name mentions payroll, wages or salaries, plus 'Cost of Labor' and 'Workers Compensation'. TBD. 'Last month' = calendar month before the month of current_date. Verified 2026-11-19: no rows (no data for this period)."
+    },
+    "EXP-014": {
+      "question": "Which vendors account for the largest payroll expenses in last month?",
+      "sql": "SELECT v.vendor_name AS vendor, ROUND(SUM(g.reporting_amount), 2) AS payroll_expenses FROM vw_gl_normalized g JOIN dim_vendor v ON v.vendor_key = g.vendor_key AND v.is_current WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype ILIKE 'Payroll%' OR account_name ILIKE '%payroll%' OR account_name ILIKE '%wage%' OR account_name ILIKE '%salar%' OR account_name IN ('Cost of Labor', 'Workers Compensation')) AND CAST(FLOOR(g.date_key / 100) AS INTEGER) = CAST(strftime(current_date - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "payroll_expenses"
+      ],
+      "mode": "set",
+      "notes": "Payroll = expense accounts whose subtype starts with 'Payroll' or whose name mentions payroll, wages or salaries, plus 'Cost of Labor' and 'Workers Compensation'. TBD. 'Last month' = calendar month before the month of current_date. Vendor breakdowns count named vendors only (inner join to dim_vendor); lines without a vendor are left out. TBD. Verified 2026-11-19: no rows (no data for this period). Alternative \"including lines without a vendor ('Unassigned')\": no rows (no data for this period).",
+      "alternatives": [
+        {
+          "label": "including lines without a vendor ('Unassigned')",
+          "sql": "SELECT COALESCE(v.vendor_name, 'Unassigned') AS vendor, ROUND(SUM(g.reporting_amount), 2) AS payroll_expenses FROM vw_gl_normalized g LEFT JOIN dim_vendor v ON v.vendor_key = g.vendor_key AND v.is_current WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype ILIKE 'Payroll%' OR account_name ILIKE '%payroll%' OR account_name ILIKE '%wage%' OR account_name ILIKE '%salar%' OR account_name IN ('Cost of Labor', 'Workers Compensation')) AND CAST(FLOOR(g.date_key / 100) AS INTEGER) = CAST(strftime(current_date - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+          "measures": [
+            "payroll_expenses"
+          ]
+        }
+      ]
+    },
+    "EXP-015": {
+      "question": "Compare payroll expenses with the preceding equivalent period.",
+      "sql": "SELECT 'current period' AS period, ROUND(SUM(g.reporting_amount), 2) AS payroll_expenses FROM vw_gl_normalized g WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype ILIKE 'Payroll%' OR account_name ILIKE '%payroll%' OR account_name ILIKE '%wage%' OR account_name ILIKE '%salar%' OR account_name IN ('Cost of Labor', 'Workers Compensation')) AND CAST(FLOOR(g.date_key / 100) AS INTEGER) = CAST(strftime(current_date - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) UNION ALL SELECT 'preceding period', ROUND(SUM(g.reporting_amount), 2) FROM vw_gl_normalized g WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype ILIKE 'Payroll%' OR account_name ILIKE '%payroll%' OR account_name ILIKE '%wage%' OR account_name ILIKE '%salar%' OR account_name IN ('Cost of Labor', 'Workers Compensation')) AND CAST(FLOOR(g.date_key / 100) AS INTEGER) = CAST(strftime(current_date - INTERVAL 2 MONTH, '%Y%m') AS INTEGER)",
+      "measures": [
+        "payroll_expenses"
+      ],
+      "mode": "set",
+      "notes": "Payroll = expense accounts whose subtype starts with 'Payroll' or whose name mentions payroll, wages or salaries, plus 'Cost of Labor' and 'Workers Compensation'. TBD. 'Last month' = calendar month before the month of current_date. Preceding period = the month before that (TBD: the period of the same length immediately before). Verified 2026-11-19: 2 row(s), every figure null or 0 (no data for this period)."
+    },
+    "EXP-016": {
+      "question": "List the transactions contributing to payroll expenses in last month.",
+      "sql": "SELECT g.date_key, COALESCE(g.transaction_number, g.transaction_id) AS transaction_ref, ROUND(g.reporting_amount, 2) AS amount FROM vw_gl_normalized g WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype ILIKE 'Payroll%' OR account_name ILIKE '%payroll%' OR account_name ILIKE '%wage%' OR account_name ILIKE '%salar%' OR account_name IN ('Cost of Labor', 'Workers Compensation')) AND CAST(FLOOR(g.date_key / 100) AS INTEGER) = CAST(strftime(current_date - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) ORDER BY 3 DESC",
+      "measures": [
+        "amount"
+      ],
+      "mode": "set",
+      "notes": "Payroll = expense accounts whose subtype starts with 'Payroll' or whose name mentions payroll, wages or salaries, plus 'Cost of Labor' and 'Workers Compensation'. TBD. 'Last month' = calendar month before the month of current_date. Transactions = the individual GL lines in the period (one figure per line). TBD. Verified 2026-11-19: no rows (no data for this period)."
+    },
+    "EXP-017": {
+      "question": "Show payroll expenses by account for last month.",
+      "sql": "SELECT a.account_name AS account, ROUND(SUM(g.reporting_amount), 2) AS payroll_expenses FROM vw_gl_normalized g JOIN dim_account a ON a.account_key = g.account_key WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype ILIKE 'Payroll%' OR account_name ILIKE '%payroll%' OR account_name ILIKE '%wage%' OR account_name ILIKE '%salar%' OR account_name IN ('Cost of Labor', 'Workers Compensation')) AND CAST(FLOOR(g.date_key / 100) AS INTEGER) = CAST(strftime(current_date - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "payroll_expenses"
+      ],
+      "mode": "set",
+      "notes": "Payroll = expense accounts whose subtype starts with 'Payroll' or whose name mentions payroll, wages or salaries, plus 'Cost of Labor' and 'Workers Compensation'. TBD. 'Last month' = calendar month before the month of current_date. Verified 2026-11-19: no rows (no data for this period)."
+    },
+    "EXP-018": {
+      "question": "Identify unusual increases in payroll expenses during last month.",
+      "sql": null,
+      "measures": [],
+      "mode": "none",
+      "notes": "'Unusual increases' has no agreed threshold, so there is no figure oracle. Checks 1-3 still run. TBD: owner definition of 'unusual'."
+    },
+    "EXP-019": {
+      "question": "What percentage of total expenses was payroll expenses in last month?",
+      "sql": "SELECT ROUND(100 * SUM(CASE WHEN g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype ILIKE 'Payroll%' OR account_name ILIKE '%payroll%' OR account_name ILIKE '%wage%' OR account_name ILIKE '%salar%' OR account_name IN ('Cost of Labor', 'Workers Compensation')) THEN g.reporting_amount ELSE 0 END) / NULLIF(SUM(g.reporting_amount), 0), 2) AS pct_of_total_expenses FROM vw_gl_normalized g WHERE g.reporting_category IN ('Operating Expense', 'COGS', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) = CAST(strftime(current_date - INTERVAL 1 MONTH, '%Y%m') AS INTEGER)",
+      "measures": [
+        "pct_of_total_expenses"
+      ],
+      "mode": "scalar",
+      "notes": "Payroll = expense accounts whose subtype starts with 'Payroll' or whose name mentions payroll, wages or salaries, plus 'Cost of Labor' and 'Workers Compensation'. TBD. 'Last month' = calendar month before the month of current_date. Total expenses = operating expenses + COGS + other expenses (TBD; the alternatives use narrower totals). Verified 2026-11-19: 1 row(s), every figure null or 0 (no data for this period). Alternative \"total expenses = operating expenses only\": 1 row(s), every figure null or 0 (no data for this period). Alternative \"total expenses = operating expenses + other expenses (no COGS)\": 1 row(s), every figure null or 0 (no data for this period).",
+      "alternatives": [
+        {
+          "label": "total expenses = operating expenses only",
+          "sql": "SELECT ROUND(100 * SUM(CASE WHEN g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype ILIKE 'Payroll%' OR account_name ILIKE '%payroll%' OR account_name ILIKE '%wage%' OR account_name ILIKE '%salar%' OR account_name IN ('Cost of Labor', 'Workers Compensation')) THEN g.reporting_amount ELSE 0 END) / NULLIF(SUM(g.reporting_amount), 0), 2) AS pct_of_total_expenses FROM vw_gl_normalized g WHERE g.reporting_category IN ('Operating Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) = CAST(strftime(current_date - INTERVAL 1 MONTH, '%Y%m') AS INTEGER)",
+          "measures": [
+            "pct_of_total_expenses"
+          ]
+        },
+        {
+          "label": "total expenses = operating expenses + other expenses (no COGS)",
+          "sql": "SELECT ROUND(100 * SUM(CASE WHEN g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype ILIKE 'Payroll%' OR account_name ILIKE '%payroll%' OR account_name ILIKE '%wage%' OR account_name ILIKE '%salar%' OR account_name IN ('Cost of Labor', 'Workers Compensation')) THEN g.reporting_amount ELSE 0 END) / NULLIF(SUM(g.reporting_amount), 0), 2) AS pct_of_total_expenses FROM vw_gl_normalized g WHERE g.reporting_category IN ('Operating Expense', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) = CAST(strftime(current_date - INTERVAL 1 MONTH, '%Y%m') AS INTEGER)",
+          "measures": [
+            "pct_of_total_expenses"
+          ]
+        }
+      ]
+    },
+    "EXP-020": {
+      "question": "Rank the months in last month by payroll expenses, highest to lowest.",
+      "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.reporting_amount), 2) AS payroll_expenses FROM vw_gl_normalized g WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype ILIKE 'Payroll%' OR account_name ILIKE '%payroll%' OR account_name ILIKE '%wage%' OR account_name ILIKE '%salar%' OR account_name IN ('Cost of Labor', 'Workers Compensation')) AND CAST(FLOOR(g.date_key / 100) AS INTEGER) = CAST(strftime(current_date - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "payroll_expenses"
+      ],
+      "mode": "set",
+      "notes": "Payroll = expense accounts whose subtype starts with 'Payroll' or whose name mentions payroll, wages or salaries, plus 'Cost of Labor' and 'Workers Compensation'. TBD. 'Last month' = calendar month before the month of current_date. Verified 2026-11-19: no rows (no data for this period)."
+    },
+    "EXP-021": {
+      "question": "Show rent expenses for this quarter.",
+      "sql": "SELECT ROUND(SUM(g.reporting_amount), 2) AS rent_expenses FROM vw_gl_normalized g WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'RentOrLeaseOfBuildings') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date), '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER)",
+      "measures": [
+        "rent_expenses"
+      ],
+      "mode": "scalar",
+      "notes": "Rent = the 'Rent or Lease' account (account_subtype RentOrLeaseOfBuildings); equipment rental is not rent. TBD. 'This quarter' = calendar quarter of current_date, to date. Verified 2026-11-19: 1 row(s), every figure null or 0 (no data for this period)."
+    },
+    "EXP-022": {
+      "question": "Break down rent expenses by vendor for this quarter.",
+      "sql": "SELECT v.vendor_name AS vendor, ROUND(SUM(g.reporting_amount), 2) AS rent_expenses FROM vw_gl_normalized g JOIN dim_vendor v ON v.vendor_key = g.vendor_key AND v.is_current WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'RentOrLeaseOfBuildings') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date), '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "rent_expenses"
+      ],
+      "mode": "set",
+      "notes": "Rent = the 'Rent or Lease' account (account_subtype RentOrLeaseOfBuildings); equipment rental is not rent. TBD. 'This quarter' = calendar quarter of current_date, to date. Vendor breakdowns count named vendors only (inner join to dim_vendor); lines without a vendor are left out. TBD. Verified 2026-11-19: no rows (no data for this period). Alternative \"including lines without a vendor ('Unassigned')\": no rows (no data for this period).",
+      "alternatives": [
+        {
+          "label": "including lines without a vendor ('Unassigned')",
+          "sql": "SELECT COALESCE(v.vendor_name, 'Unassigned') AS vendor, ROUND(SUM(g.reporting_amount), 2) AS rent_expenses FROM vw_gl_normalized g LEFT JOIN dim_vendor v ON v.vendor_key = g.vendor_key AND v.is_current WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'RentOrLeaseOfBuildings') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date), '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+          "measures": [
+            "rent_expenses"
+          ]
+        }
+      ]
+    },
+    "EXP-023": {
+      "question": "Show the monthly trend for rent expenses during this quarter.",
+      "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.reporting_amount), 2) AS rent_expenses FROM vw_gl_normalized g WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'RentOrLeaseOfBuildings') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date), '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "rent_expenses"
+      ],
+      "mode": "set",
+      "notes": "Rent = the 'Rent or Lease' account (account_subtype RentOrLeaseOfBuildings); equipment rental is not rent. TBD. 'This quarter' = calendar quarter of current_date, to date. Verified 2026-11-19: no rows (no data for this period)."
+    },
+    "EXP-024": {
+      "question": "Which vendors account for the largest rent expenses in this quarter?",
+      "sql": "SELECT v.vendor_name AS vendor, ROUND(SUM(g.reporting_amount), 2) AS rent_expenses FROM vw_gl_normalized g JOIN dim_vendor v ON v.vendor_key = g.vendor_key AND v.is_current WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'RentOrLeaseOfBuildings') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date), '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "rent_expenses"
+      ],
+      "mode": "set",
+      "notes": "Rent = the 'Rent or Lease' account (account_subtype RentOrLeaseOfBuildings); equipment rental is not rent. TBD. 'This quarter' = calendar quarter of current_date, to date. Vendor breakdowns count named vendors only (inner join to dim_vendor); lines without a vendor are left out. TBD. Verified 2026-11-19: no rows (no data for this period). Alternative \"including lines without a vendor ('Unassigned')\": no rows (no data for this period).",
+      "alternatives": [
+        {
+          "label": "including lines without a vendor ('Unassigned')",
+          "sql": "SELECT COALESCE(v.vendor_name, 'Unassigned') AS vendor, ROUND(SUM(g.reporting_amount), 2) AS rent_expenses FROM vw_gl_normalized g LEFT JOIN dim_vendor v ON v.vendor_key = g.vendor_key AND v.is_current WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'RentOrLeaseOfBuildings') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date), '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+          "measures": [
+            "rent_expenses"
+          ]
+        }
+      ]
+    },
+    "EXP-025": {
+      "question": "Compare rent expenses with the preceding equivalent period.",
+      "sql": "SELECT 'current period' AS period, ROUND(SUM(g.reporting_amount), 2) AS rent_expenses FROM vw_gl_normalized g WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'RentOrLeaseOfBuildings') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date), '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) UNION ALL SELECT 'preceding period', ROUND(SUM(g.reporting_amount), 2) FROM vw_gl_normalized g WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'RentOrLeaseOfBuildings') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 3 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 1 MONTH, '%Y%m') AS INTEGER)",
+      "measures": [
+        "rent_expenses"
+      ],
+      "mode": "set",
+      "notes": "Rent = the 'Rent or Lease' account (account_subtype RentOrLeaseOfBuildings); equipment rental is not rent. TBD. 'This quarter' = calendar quarter of current_date, to date. Preceding period = previous full calendar quarter (TBD: the period of the same length immediately before). Verified 2026-11-19: 2 row(s); first: period=current period, rent_expenses=None."
+    },
+    "EXP-026": {
+      "question": "List the transactions contributing to rent expenses in this quarter.",
+      "sql": "SELECT g.date_key, COALESCE(g.transaction_number, g.transaction_id) AS transaction_ref, ROUND(g.reporting_amount, 2) AS amount FROM vw_gl_normalized g WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'RentOrLeaseOfBuildings') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date), '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) ORDER BY 3 DESC",
+      "measures": [
+        "amount"
+      ],
+      "mode": "set",
+      "notes": "Rent = the 'Rent or Lease' account (account_subtype RentOrLeaseOfBuildings); equipment rental is not rent. TBD. 'This quarter' = calendar quarter of current_date, to date. Transactions = the individual GL lines in the period (one figure per line). TBD. Verified 2026-11-19: no rows (no data for this period)."
+    },
+    "EXP-027": {
+      "question": "Show rent expenses by account for this quarter.",
+      "sql": "SELECT a.account_name AS account, ROUND(SUM(g.reporting_amount), 2) AS rent_expenses FROM vw_gl_normalized g JOIN dim_account a ON a.account_key = g.account_key WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'RentOrLeaseOfBuildings') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date), '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "rent_expenses"
+      ],
+      "mode": "set",
+      "notes": "Rent = the 'Rent or Lease' account (account_subtype RentOrLeaseOfBuildings); equipment rental is not rent. TBD. 'This quarter' = calendar quarter of current_date, to date. Verified 2026-11-19: no rows (no data for this period)."
+    },
+    "EXP-028": {
+      "question": "Identify unusual increases in rent expenses during this quarter.",
+      "sql": null,
+      "measures": [],
+      "mode": "none",
+      "notes": "'Unusual increases' has no agreed threshold, so there is no figure oracle. Checks 1-3 still run. TBD: owner definition of 'unusual'."
+    },
+    "EXP-029": {
+      "question": "What percentage of total expenses was rent expenses in this quarter?",
+      "sql": "SELECT ROUND(100 * SUM(CASE WHEN g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'RentOrLeaseOfBuildings') THEN g.reporting_amount ELSE 0 END) / NULLIF(SUM(g.reporting_amount), 0), 2) AS pct_of_total_expenses FROM vw_gl_normalized g WHERE g.reporting_category IN ('Operating Expense', 'COGS', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date), '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER)",
+      "measures": [
+        "pct_of_total_expenses"
+      ],
+      "mode": "scalar",
+      "notes": "Rent = the 'Rent or Lease' account (account_subtype RentOrLeaseOfBuildings); equipment rental is not rent. TBD. 'This quarter' = calendar quarter of current_date, to date. Total expenses = operating expenses + COGS + other expenses (TBD; the alternatives use narrower totals). Verified 2026-11-19: 1 row(s), every figure null or 0 (no data for this period). Alternative \"total expenses = operating expenses only\": 1 row(s), every figure null or 0 (no data for this period). Alternative \"total expenses = operating expenses + other expenses (no COGS)\": 1 row(s), every figure null or 0 (no data for this period).",
+      "alternatives": [
+        {
+          "label": "total expenses = operating expenses only",
+          "sql": "SELECT ROUND(100 * SUM(CASE WHEN g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'RentOrLeaseOfBuildings') THEN g.reporting_amount ELSE 0 END) / NULLIF(SUM(g.reporting_amount), 0), 2) AS pct_of_total_expenses FROM vw_gl_normalized g WHERE g.reporting_category IN ('Operating Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date), '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER)",
+          "measures": [
+            "pct_of_total_expenses"
+          ]
+        },
+        {
+          "label": "total expenses = operating expenses + other expenses (no COGS)",
+          "sql": "SELECT ROUND(100 * SUM(CASE WHEN g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'RentOrLeaseOfBuildings') THEN g.reporting_amount ELSE 0 END) / NULLIF(SUM(g.reporting_amount), 0), 2) AS pct_of_total_expenses FROM vw_gl_normalized g WHERE g.reporting_category IN ('Operating Expense', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date), '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER)",
+          "measures": [
+            "pct_of_total_expenses"
+          ]
+        }
+      ]
+    },
+    "EXP-030": {
+      "question": "Rank the months in this quarter by rent expenses, highest to lowest.",
+      "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.reporting_amount), 2) AS rent_expenses FROM vw_gl_normalized g WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'RentOrLeaseOfBuildings') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date), '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "rent_expenses"
+      ],
+      "mode": "set",
+      "notes": "Rent = the 'Rent or Lease' account (account_subtype RentOrLeaseOfBuildings); equipment rental is not rent. TBD. 'This quarter' = calendar quarter of current_date, to date. Verified 2026-11-19: no rows (no data for this period)."
+    },
+    "EXP-031": {
+      "question": "Show marketing expenses for last quarter.",
+      "sql": "SELECT ROUND(SUM(g.reporting_amount), 2) AS marketing_expenses FROM vw_gl_normalized g WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'AdvertisingPromotional') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 3 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 1 MONTH, '%Y%m') AS INTEGER)",
+      "measures": [
+        "marketing_expenses"
+      ],
+      "mode": "scalar",
+      "notes": "Marketing = the 'Advertising' account (account_subtype AdvertisingPromotional). TBD. 'Last quarter' = the full calendar quarter before the quarter of current_date. Verified 2026-11-19: 1 row(s); first: marketing_expenses=74.86."
+    },
+    "EXP-032": {
+      "question": "Break down marketing expenses by vendor for last quarter.",
+      "sql": "SELECT v.vendor_name AS vendor, ROUND(SUM(g.reporting_amount), 2) AS marketing_expenses FROM vw_gl_normalized g JOIN dim_vendor v ON v.vendor_key = g.vendor_key AND v.is_current WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'AdvertisingPromotional') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 3 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "marketing_expenses"
+      ],
+      "mode": "set",
+      "notes": "Marketing = the 'Advertising' account (account_subtype AdvertisingPromotional). TBD. 'Last quarter' = the full calendar quarter before the quarter of current_date. Vendor breakdowns count named vendors only (inner join to dim_vendor); lines without a vendor are left out. TBD. Verified 2026-11-19: 1 row(s); first: vendor=Lee Advertising, marketing_expenses=74.86. Alternative \"including lines without a vendor ('Unassigned')\": 1 row(s); first: vendor=Lee Advertising, marketing_expenses=74.86.",
+      "alternatives": [
+        {
+          "label": "including lines without a vendor ('Unassigned')",
+          "sql": "SELECT COALESCE(v.vendor_name, 'Unassigned') AS vendor, ROUND(SUM(g.reporting_amount), 2) AS marketing_expenses FROM vw_gl_normalized g LEFT JOIN dim_vendor v ON v.vendor_key = g.vendor_key AND v.is_current WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'AdvertisingPromotional') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 3 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+          "measures": [
+            "marketing_expenses"
+          ]
+        }
+      ]
+    },
+    "EXP-033": {
+      "question": "Show the monthly trend for marketing expenses during last quarter.",
+      "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.reporting_amount), 2) AS marketing_expenses FROM vw_gl_normalized g WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'AdvertisingPromotional') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 3 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "marketing_expenses"
+      ],
+      "mode": "set",
+      "notes": "Marketing = the 'Advertising' account (account_subtype AdvertisingPromotional). TBD. 'Last quarter' = the full calendar quarter before the quarter of current_date. Verified 2026-11-19: 1 row(s); first: year_month=202608, marketing_expenses=74.86."
+    },
+    "EXP-034": {
+      "question": "Which vendors account for the largest marketing expenses in last quarter?",
+      "sql": "SELECT v.vendor_name AS vendor, ROUND(SUM(g.reporting_amount), 2) AS marketing_expenses FROM vw_gl_normalized g JOIN dim_vendor v ON v.vendor_key = g.vendor_key AND v.is_current WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'AdvertisingPromotional') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 3 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "marketing_expenses"
+      ],
+      "mode": "set",
+      "notes": "Marketing = the 'Advertising' account (account_subtype AdvertisingPromotional). TBD. 'Last quarter' = the full calendar quarter before the quarter of current_date. Vendor breakdowns count named vendors only (inner join to dim_vendor); lines without a vendor are left out. TBD. Verified 2026-11-19: 1 row(s); first: vendor=Lee Advertising, marketing_expenses=74.86. Alternative \"including lines without a vendor ('Unassigned')\": 1 row(s); first: vendor=Lee Advertising, marketing_expenses=74.86.",
+      "alternatives": [
+        {
+          "label": "including lines without a vendor ('Unassigned')",
+          "sql": "SELECT COALESCE(v.vendor_name, 'Unassigned') AS vendor, ROUND(SUM(g.reporting_amount), 2) AS marketing_expenses FROM vw_gl_normalized g LEFT JOIN dim_vendor v ON v.vendor_key = g.vendor_key AND v.is_current WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'AdvertisingPromotional') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 3 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+          "measures": [
+            "marketing_expenses"
+          ]
+        }
+      ]
+    },
+    "EXP-035": {
+      "question": "Compare marketing expenses with the preceding equivalent period.",
+      "sql": "SELECT 'current period' AS period, ROUND(SUM(g.reporting_amount), 2) AS marketing_expenses FROM vw_gl_normalized g WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'AdvertisingPromotional') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 3 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) UNION ALL SELECT 'preceding period', ROUND(SUM(g.reporting_amount), 2) FROM vw_gl_normalized g WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'AdvertisingPromotional') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 6 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 4 MONTH, '%Y%m') AS INTEGER)",
+      "measures": [
+        "marketing_expenses"
+      ],
+      "mode": "set",
+      "notes": "Marketing = the 'Advertising' account (account_subtype AdvertisingPromotional). TBD. 'Last quarter' = the full calendar quarter before the quarter of current_date. Preceding period = the quarter before that (TBD: the period of the same length immediately before). Verified 2026-11-19: 2 row(s); first: period=current period, marketing_expenses=74.86."
+    },
+    "EXP-036": {
+      "question": "List the transactions contributing to marketing expenses in last quarter.",
+      "sql": "SELECT g.date_key, COALESCE(g.transaction_number, g.transaction_id) AS transaction_ref, ROUND(g.reporting_amount, 2) AS amount FROM vw_gl_normalized g WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'AdvertisingPromotional') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 3 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) ORDER BY 3 DESC",
+      "measures": [
+        "amount"
+      ],
+      "mode": "set",
+      "notes": "Marketing = the 'Advertising' account (account_subtype AdvertisingPromotional). TBD. 'Last quarter' = the full calendar quarter before the quarter of current_date. Transactions = the individual GL lines in the period (one figure per line). TBD. Verified 2026-11-19: 1 row(s); first: date_key=20260824, transaction_ref=55, amount=74.86."
+    },
+    "EXP-037": {
+      "question": "Show marketing expenses by account for last quarter.",
+      "sql": "SELECT a.account_name AS account, ROUND(SUM(g.reporting_amount), 2) AS marketing_expenses FROM vw_gl_normalized g JOIN dim_account a ON a.account_key = g.account_key WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'AdvertisingPromotional') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 3 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "marketing_expenses"
+      ],
+      "mode": "set",
+      "notes": "Marketing = the 'Advertising' account (account_subtype AdvertisingPromotional). TBD. 'Last quarter' = the full calendar quarter before the quarter of current_date. Verified 2026-11-19: 1 row(s); first: account=Advertising, marketing_expenses=74.86."
+    },
+    "EXP-038": {
+      "question": "Identify unusual increases in marketing expenses during last quarter.",
+      "sql": null,
+      "measures": [],
+      "mode": "none",
+      "notes": "'Unusual increases' has no agreed threshold, so there is no figure oracle. Checks 1-3 still run. TBD: owner definition of 'unusual'."
+    },
+    "EXP-039": {
+      "question": "What percentage of total expenses was marketing expenses in last quarter?",
+      "sql": "SELECT ROUND(100 * SUM(CASE WHEN g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'AdvertisingPromotional') THEN g.reporting_amount ELSE 0 END) / NULLIF(SUM(g.reporting_amount), 0), 2) AS pct_of_total_expenses FROM vw_gl_normalized g WHERE g.reporting_category IN ('Operating Expense', 'COGS', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 3 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 1 MONTH, '%Y%m') AS INTEGER)",
+      "measures": [
+        "pct_of_total_expenses"
+      ],
+      "mode": "scalar",
+      "notes": "Marketing = the 'Advertising' account (account_subtype AdvertisingPromotional). TBD. 'Last quarter' = the full calendar quarter before the quarter of current_date. Total expenses = operating expenses + COGS + other expenses (TBD; the alternatives use narrower totals). Verified 2026-11-19: 1 row(s); first: pct_of_total_expenses=0.95. Alternative \"total expenses = operating expenses only\": 1 row(s); first: pct_of_total_expenses=1.65. Alternative \"total expenses = operating expenses + other expenses (no COGS)\": 1 row(s); first: pct_of_total_expenses=1.01.",
+      "alternatives": [
+        {
+          "label": "total expenses = operating expenses only",
+          "sql": "SELECT ROUND(100 * SUM(CASE WHEN g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'AdvertisingPromotional') THEN g.reporting_amount ELSE 0 END) / NULLIF(SUM(g.reporting_amount), 0), 2) AS pct_of_total_expenses FROM vw_gl_normalized g WHERE g.reporting_category IN ('Operating Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 3 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 1 MONTH, '%Y%m') AS INTEGER)",
+          "measures": [
+            "pct_of_total_expenses"
+          ]
+        },
+        {
+          "label": "total expenses = operating expenses + other expenses (no COGS)",
+          "sql": "SELECT ROUND(100 * SUM(CASE WHEN g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'AdvertisingPromotional') THEN g.reporting_amount ELSE 0 END) / NULLIF(SUM(g.reporting_amount), 0), 2) AS pct_of_total_expenses FROM vw_gl_normalized g WHERE g.reporting_category IN ('Operating Expense', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 3 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 1 MONTH, '%Y%m') AS INTEGER)",
+          "measures": [
+            "pct_of_total_expenses"
+          ]
+        }
+      ]
+    },
+    "EXP-040": {
+      "question": "Rank the months in last quarter by marketing expenses, highest to lowest.",
+      "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.reporting_amount), 2) AS marketing_expenses FROM vw_gl_normalized g WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'AdvertisingPromotional') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 3 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(date_trunc('quarter', current_date) - INTERVAL 1 MONTH, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "marketing_expenses"
+      ],
+      "mode": "set",
+      "notes": "Marketing = the 'Advertising' account (account_subtype AdvertisingPromotional). TBD. 'Last quarter' = the full calendar quarter before the quarter of current_date. Verified 2026-11-19: 1 row(s); first: year_month=202608, marketing_expenses=74.86."
+    },
+    "EXP-041": {
+      "question": "Show travel expenses for this year.",
+      "sql": "SELECT ROUND(SUM(g.reporting_amount), 2) AS travel_expenses FROM vw_gl_normalized g WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype IN ('Travel', 'TravelMeals') OR account_name ILIKE 'Travel%') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER)",
+      "measures": [
+        "travel_expenses"
+      ],
+      "mode": "scalar",
+      "notes": "Travel = accounts with subtype Travel or TravelMeals, or named 'Travel...'; automobile and fuel are not counted. TBD. 'This year' = calendar year of current_date, to date. Verified 2026-11-19: 1 row(s), every figure null or 0 (no data for this period)."
+    },
+    "EXP-042": {
+      "question": "Break down travel expenses by vendor for this year.",
+      "sql": "SELECT v.vendor_name AS vendor, ROUND(SUM(g.reporting_amount), 2) AS travel_expenses FROM vw_gl_normalized g JOIN dim_vendor v ON v.vendor_key = g.vendor_key AND v.is_current WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype IN ('Travel', 'TravelMeals') OR account_name ILIKE 'Travel%') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "travel_expenses"
+      ],
+      "mode": "set",
+      "notes": "Travel = accounts with subtype Travel or TravelMeals, or named 'Travel...'; automobile and fuel are not counted. TBD. 'This year' = calendar year of current_date, to date. Vendor breakdowns count named vendors only (inner join to dim_vendor); lines without a vendor are left out. TBD. Verified 2026-11-19: no rows (no data for this period). Alternative \"including lines without a vendor ('Unassigned')\": no rows (no data for this period).",
+      "alternatives": [
+        {
+          "label": "including lines without a vendor ('Unassigned')",
+          "sql": "SELECT COALESCE(v.vendor_name, 'Unassigned') AS vendor, ROUND(SUM(g.reporting_amount), 2) AS travel_expenses FROM vw_gl_normalized g LEFT JOIN dim_vendor v ON v.vendor_key = g.vendor_key AND v.is_current WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype IN ('Travel', 'TravelMeals') OR account_name ILIKE 'Travel%') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+          "measures": [
+            "travel_expenses"
+          ]
+        }
+      ]
+    },
+    "EXP-043": {
+      "question": "Show the monthly trend for travel expenses during this year.",
+      "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.reporting_amount), 2) AS travel_expenses FROM vw_gl_normalized g WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype IN ('Travel', 'TravelMeals') OR account_name ILIKE 'Travel%') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "travel_expenses"
+      ],
+      "mode": "set",
+      "notes": "Travel = accounts with subtype Travel or TravelMeals, or named 'Travel...'; automobile and fuel are not counted. TBD. 'This year' = calendar year of current_date, to date. Verified 2026-11-19: no rows (no data for this period)."
+    },
+    "EXP-044": {
+      "question": "Which vendors account for the largest travel expenses in this year?",
+      "sql": "SELECT v.vendor_name AS vendor, ROUND(SUM(g.reporting_amount), 2) AS travel_expenses FROM vw_gl_normalized g JOIN dim_vendor v ON v.vendor_key = g.vendor_key AND v.is_current WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype IN ('Travel', 'TravelMeals') OR account_name ILIKE 'Travel%') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "travel_expenses"
+      ],
+      "mode": "set",
+      "notes": "Travel = accounts with subtype Travel or TravelMeals, or named 'Travel...'; automobile and fuel are not counted. TBD. 'This year' = calendar year of current_date, to date. Vendor breakdowns count named vendors only (inner join to dim_vendor); lines without a vendor are left out. TBD. Verified 2026-11-19: no rows (no data for this period). Alternative \"including lines without a vendor ('Unassigned')\": no rows (no data for this period).",
+      "alternatives": [
+        {
+          "label": "including lines without a vendor ('Unassigned')",
+          "sql": "SELECT COALESCE(v.vendor_name, 'Unassigned') AS vendor, ROUND(SUM(g.reporting_amount), 2) AS travel_expenses FROM vw_gl_normalized g LEFT JOIN dim_vendor v ON v.vendor_key = g.vendor_key AND v.is_current WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype IN ('Travel', 'TravelMeals') OR account_name ILIKE 'Travel%') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+          "measures": [
+            "travel_expenses"
+          ]
+        }
+      ]
+    },
+    "EXP-045": {
+      "question": "Compare travel expenses with the preceding equivalent period.",
+      "sql": "SELECT 'current period' AS period, ROUND(SUM(g.reporting_amount), 2) AS travel_expenses FROM vw_gl_normalized g WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype IN ('Travel', 'TravelMeals') OR account_name ILIKE 'Travel%') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER) UNION ALL SELECT 'preceding period', ROUND(SUM(g.reporting_amount), 2) FROM vw_gl_normalized g WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype IN ('Travel', 'TravelMeals') OR account_name ILIKE 'Travel%') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12",
+      "measures": [
+        "travel_expenses"
+      ],
+      "mode": "set",
+      "notes": "Travel = accounts with subtype Travel or TravelMeals, or named 'Travel...'; automobile and fuel are not counted. TBD. 'This year' = calendar year of current_date, to date. Preceding period = previous calendar year (TBD: the period of the same length immediately before). Verified 2026-11-19: 2 row(s), every figure null or 0 (no data for this period)."
+    },
+    "EXP-046": {
+      "question": "List the transactions contributing to travel expenses in this year.",
+      "sql": "SELECT g.date_key, COALESCE(g.transaction_number, g.transaction_id) AS transaction_ref, ROUND(g.reporting_amount, 2) AS amount FROM vw_gl_normalized g WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype IN ('Travel', 'TravelMeals') OR account_name ILIKE 'Travel%') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER) ORDER BY 3 DESC",
+      "measures": [
+        "amount"
+      ],
+      "mode": "set",
+      "notes": "Travel = accounts with subtype Travel or TravelMeals, or named 'Travel...'; automobile and fuel are not counted. TBD. 'This year' = calendar year of current_date, to date. Transactions = the individual GL lines in the period (one figure per line). TBD. Verified 2026-11-19: no rows (no data for this period)."
+    },
+    "EXP-047": {
+      "question": "Show travel expenses by account for this year.",
+      "sql": "SELECT a.account_name AS account, ROUND(SUM(g.reporting_amount), 2) AS travel_expenses FROM vw_gl_normalized g JOIN dim_account a ON a.account_key = g.account_key WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype IN ('Travel', 'TravelMeals') OR account_name ILIKE 'Travel%') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "travel_expenses"
+      ],
+      "mode": "set",
+      "notes": "Travel = accounts with subtype Travel or TravelMeals, or named 'Travel...'; automobile and fuel are not counted. TBD. 'This year' = calendar year of current_date, to date. Verified 2026-11-19: no rows (no data for this period)."
+    },
+    "EXP-048": {
+      "question": "Identify unusual increases in travel expenses during this year.",
+      "sql": null,
+      "measures": [],
+      "mode": "none",
+      "notes": "'Unusual increases' has no agreed threshold, so there is no figure oracle. Checks 1-3 still run. TBD: owner definition of 'unusual'."
+    },
+    "EXP-049": {
+      "question": "What percentage of total expenses was travel expenses in this year?",
+      "sql": "SELECT ROUND(100 * SUM(CASE WHEN g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype IN ('Travel', 'TravelMeals') OR account_name ILIKE 'Travel%') THEN g.reporting_amount ELSE 0 END) / NULLIF(SUM(g.reporting_amount), 0), 2) AS pct_of_total_expenses FROM vw_gl_normalized g WHERE g.reporting_category IN ('Operating Expense', 'COGS', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER)",
+      "measures": [
+        "pct_of_total_expenses"
+      ],
+      "mode": "scalar",
+      "notes": "Travel = accounts with subtype Travel or TravelMeals, or named 'Travel...'; automobile and fuel are not counted. TBD. 'This year' = calendar year of current_date, to date. Total expenses = operating expenses + COGS + other expenses (TBD; the alternatives use narrower totals). Verified 2026-11-19: 1 row(s), every figure null or 0 (no data for this period). Alternative \"total expenses = operating expenses only\": 1 row(s), every figure null or 0 (no data for this period). Alternative \"total expenses = operating expenses + other expenses (no COGS)\": 1 row(s), every figure null or 0 (no data for this period).",
+      "alternatives": [
+        {
+          "label": "total expenses = operating expenses only",
+          "sql": "SELECT ROUND(100 * SUM(CASE WHEN g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype IN ('Travel', 'TravelMeals') OR account_name ILIKE 'Travel%') THEN g.reporting_amount ELSE 0 END) / NULLIF(SUM(g.reporting_amount), 0), 2) AS pct_of_total_expenses FROM vw_gl_normalized g WHERE g.reporting_category IN ('Operating Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER)",
+          "measures": [
+            "pct_of_total_expenses"
+          ]
+        },
+        {
+          "label": "total expenses = operating expenses + other expenses (no COGS)",
+          "sql": "SELECT ROUND(100 * SUM(CASE WHEN g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype IN ('Travel', 'TravelMeals') OR account_name ILIKE 'Travel%') THEN g.reporting_amount ELSE 0 END) / NULLIF(SUM(g.reporting_amount), 0), 2) AS pct_of_total_expenses FROM vw_gl_normalized g WHERE g.reporting_category IN ('Operating Expense', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER)",
+          "measures": [
+            "pct_of_total_expenses"
+          ]
+        }
+      ]
+    },
+    "EXP-050": {
+      "question": "Rank the months in this year by travel expenses, highest to lowest.",
+      "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.reporting_amount), 2) AS travel_expenses FROM vw_gl_normalized g WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype IN ('Travel', 'TravelMeals') OR account_name ILIKE 'Travel%') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "travel_expenses"
+      ],
+      "mode": "set",
+      "notes": "Travel = accounts with subtype Travel or TravelMeals, or named 'Travel...'; automobile and fuel are not counted. TBD. 'This year' = calendar year of current_date, to date. Verified 2026-11-19: no rows (no data for this period)."
+    },
+    "EXP-051": {
+      "question": "Show software subscription costs for last year.",
+      "sql": "SELECT ROUND(SUM(g.reporting_amount), 2) AS software_costs FROM vw_gl_normalized g WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_name ILIKE '%software%' OR account_name ILIKE '%subscription%' OR account_subtype = 'DuesSubscriptions') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12",
+      "measures": [
+        "software_costs"
+      ],
+      "mode": "scalar",
+      "notes": "Software subscriptions = accounts named '...software...' or '...subscription...', or subtype DuesSubscriptions. TBD. 'Last year' = the previous calendar year. Verified 2026-11-19: 1 row(s), every figure null or 0 (no data for this period)."
+    },
+    "EXP-052": {
+      "question": "Break down software subscription costs by vendor for last year.",
+      "sql": "SELECT v.vendor_name AS vendor, ROUND(SUM(g.reporting_amount), 2) AS software_costs FROM vw_gl_normalized g JOIN dim_vendor v ON v.vendor_key = g.vendor_key AND v.is_current WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_name ILIKE '%software%' OR account_name ILIKE '%subscription%' OR account_subtype = 'DuesSubscriptions') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "software_costs"
+      ],
+      "mode": "set",
+      "notes": "Software subscriptions = accounts named '...software...' or '...subscription...', or subtype DuesSubscriptions. TBD. 'Last year' = the previous calendar year. Vendor breakdowns count named vendors only (inner join to dim_vendor); lines without a vendor are left out. TBD. Verified 2026-11-19: no rows (no data for this period). Alternative \"including lines without a vendor ('Unassigned')\": no rows (no data for this period).",
+      "alternatives": [
+        {
+          "label": "including lines without a vendor ('Unassigned')",
+          "sql": "SELECT COALESCE(v.vendor_name, 'Unassigned') AS vendor, ROUND(SUM(g.reporting_amount), 2) AS software_costs FROM vw_gl_normalized g LEFT JOIN dim_vendor v ON v.vendor_key = g.vendor_key AND v.is_current WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_name ILIKE '%software%' OR account_name ILIKE '%subscription%' OR account_subtype = 'DuesSubscriptions') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 GROUP BY 1 ORDER BY 2 DESC",
+          "measures": [
+            "software_costs"
+          ]
+        }
+      ]
+    },
+    "EXP-053": {
+      "question": "Show the monthly trend for software subscription costs during last year.",
+      "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.reporting_amount), 2) AS software_costs FROM vw_gl_normalized g WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_name ILIKE '%software%' OR account_name ILIKE '%subscription%' OR account_subtype = 'DuesSubscriptions') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "software_costs"
+      ],
+      "mode": "set",
+      "notes": "Software subscriptions = accounts named '...software...' or '...subscription...', or subtype DuesSubscriptions. TBD. 'Last year' = the previous calendar year. Verified 2026-11-19: no rows (no data for this period)."
+    },
+    "EXP-054": {
+      "question": "Which vendors account for the largest software subscription costs in last year?",
+      "sql": "SELECT v.vendor_name AS vendor, ROUND(SUM(g.reporting_amount), 2) AS software_costs FROM vw_gl_normalized g JOIN dim_vendor v ON v.vendor_key = g.vendor_key AND v.is_current WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_name ILIKE '%software%' OR account_name ILIKE '%subscription%' OR account_subtype = 'DuesSubscriptions') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "software_costs"
+      ],
+      "mode": "set",
+      "notes": "Software subscriptions = accounts named '...software...' or '...subscription...', or subtype DuesSubscriptions. TBD. 'Last year' = the previous calendar year. Vendor breakdowns count named vendors only (inner join to dim_vendor); lines without a vendor are left out. TBD. Verified 2026-11-19: no rows (no data for this period). Alternative \"including lines without a vendor ('Unassigned')\": no rows (no data for this period).",
+      "alternatives": [
+        {
+          "label": "including lines without a vendor ('Unassigned')",
+          "sql": "SELECT COALESCE(v.vendor_name, 'Unassigned') AS vendor, ROUND(SUM(g.reporting_amount), 2) AS software_costs FROM vw_gl_normalized g LEFT JOIN dim_vendor v ON v.vendor_key = g.vendor_key AND v.is_current WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_name ILIKE '%software%' OR account_name ILIKE '%subscription%' OR account_subtype = 'DuesSubscriptions') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 GROUP BY 1 ORDER BY 2 DESC",
+          "measures": [
+            "software_costs"
+          ]
+        }
+      ]
+    },
+    "EXP-055": {
+      "question": "Compare software subscription costs with the preceding equivalent period.",
+      "sql": "SELECT 'current period' AS period, ROUND(SUM(g.reporting_amount), 2) AS software_costs FROM vw_gl_normalized g WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_name ILIKE '%software%' OR account_name ILIKE '%subscription%' OR account_subtype = 'DuesSubscriptions') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 UNION ALL SELECT 'preceding period', ROUND(SUM(g.reporting_amount), 2) FROM vw_gl_normalized g WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_name ILIKE '%software%' OR account_name ILIKE '%subscription%' OR account_subtype = 'DuesSubscriptions') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 2) * 100 + 1 AND (year(current_date) - 2) * 100 + 12",
+      "measures": [
+        "software_costs"
+      ],
+      "mode": "set",
+      "notes": "Software subscriptions = accounts named '...software...' or '...subscription...', or subtype DuesSubscriptions. TBD. 'Last year' = the previous calendar year. Preceding period = the year before that (TBD: the period of the same length immediately before). Verified 2026-11-19: 2 row(s), every figure null or 0 (no data for this period)."
+    },
+    "EXP-056": {
+      "question": "List the transactions contributing to software subscription costs in last year.",
+      "sql": "SELECT g.date_key, COALESCE(g.transaction_number, g.transaction_id) AS transaction_ref, ROUND(g.reporting_amount, 2) AS amount FROM vw_gl_normalized g WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_name ILIKE '%software%' OR account_name ILIKE '%subscription%' OR account_subtype = 'DuesSubscriptions') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 ORDER BY 3 DESC",
+      "measures": [
+        "amount"
+      ],
+      "mode": "set",
+      "notes": "Software subscriptions = accounts named '...software...' or '...subscription...', or subtype DuesSubscriptions. TBD. 'Last year' = the previous calendar year. Transactions = the individual GL lines in the period (one figure per line). TBD. Verified 2026-11-19: no rows (no data for this period)."
+    },
+    "EXP-057": {
+      "question": "Show software subscription costs by account for last year.",
+      "sql": "SELECT a.account_name AS account, ROUND(SUM(g.reporting_amount), 2) AS software_costs FROM vw_gl_normalized g JOIN dim_account a ON a.account_key = g.account_key WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_name ILIKE '%software%' OR account_name ILIKE '%subscription%' OR account_subtype = 'DuesSubscriptions') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "software_costs"
+      ],
+      "mode": "set",
+      "notes": "Software subscriptions = accounts named '...software...' or '...subscription...', or subtype DuesSubscriptions. TBD. 'Last year' = the previous calendar year. Verified 2026-11-19: no rows (no data for this period)."
+    },
+    "EXP-058": {
+      "question": "Identify unusual increases in software subscription costs during last year.",
+      "sql": null,
+      "measures": [],
+      "mode": "none",
+      "notes": "'Unusual increases' has no agreed threshold, so there is no figure oracle. Checks 1-3 still run. TBD: owner definition of 'unusual'."
+    },
+    "EXP-059": {
+      "question": "What percentage of total expenses was software subscription costs in last year?",
+      "sql": "SELECT ROUND(100 * SUM(CASE WHEN g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_name ILIKE '%software%' OR account_name ILIKE '%subscription%' OR account_subtype = 'DuesSubscriptions') THEN g.reporting_amount ELSE 0 END) / NULLIF(SUM(g.reporting_amount), 0), 2) AS pct_of_total_expenses FROM vw_gl_normalized g WHERE g.reporting_category IN ('Operating Expense', 'COGS', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12",
+      "measures": [
+        "pct_of_total_expenses"
+      ],
+      "mode": "scalar",
+      "notes": "Software subscriptions = accounts named '...software...' or '...subscription...', or subtype DuesSubscriptions. TBD. 'Last year' = the previous calendar year. Total expenses = operating expenses + COGS + other expenses (TBD; the alternatives use narrower totals). Verified 2026-11-19: 1 row(s), every figure null or 0 (no data for this period). Alternative \"total expenses = operating expenses only\": 1 row(s), every figure null or 0 (no data for this period). Alternative \"total expenses = operating expenses + other expenses (no COGS)\": 1 row(s), every figure null or 0 (no data for this period).",
+      "alternatives": [
+        {
+          "label": "total expenses = operating expenses only",
+          "sql": "SELECT ROUND(100 * SUM(CASE WHEN g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_name ILIKE '%software%' OR account_name ILIKE '%subscription%' OR account_subtype = 'DuesSubscriptions') THEN g.reporting_amount ELSE 0 END) / NULLIF(SUM(g.reporting_amount), 0), 2) AS pct_of_total_expenses FROM vw_gl_normalized g WHERE g.reporting_category IN ('Operating Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12",
+          "measures": [
+            "pct_of_total_expenses"
+          ]
+        },
+        {
+          "label": "total expenses = operating expenses + other expenses (no COGS)",
+          "sql": "SELECT ROUND(100 * SUM(CASE WHEN g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_name ILIKE '%software%' OR account_name ILIKE '%subscription%' OR account_subtype = 'DuesSubscriptions') THEN g.reporting_amount ELSE 0 END) / NULLIF(SUM(g.reporting_amount), 0), 2) AS pct_of_total_expenses FROM vw_gl_normalized g WHERE g.reporting_category IN ('Operating Expense', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12",
+          "measures": [
+            "pct_of_total_expenses"
+          ]
+        }
+      ]
+    },
+    "EXP-060": {
+      "question": "Rank the months in last year by software subscription costs, highest to lowest.",
+      "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.reporting_amount), 2) AS software_costs FROM vw_gl_normalized g WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_name ILIKE '%software%' OR account_name ILIKE '%subscription%' OR account_subtype = 'DuesSubscriptions') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "software_costs"
+      ],
+      "mode": "set",
+      "notes": "Software subscriptions = accounts named '...software...' or '...subscription...', or subtype DuesSubscriptions. TBD. 'Last year' = the previous calendar year. Verified 2026-11-19: no rows (no data for this period)."
+    },
+    "EXP-061": {
+      "question": "Show professional fees for the current fiscal year.",
+      "sql": "SELECT ROUND(SUM(g.reporting_amount), 2) AS professional_fees FROM vw_gl_normalized g WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'LegalProfessionalFees') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER)",
+      "measures": [
+        "professional_fees"
+      ],
+      "mode": "scalar",
+      "notes": "Professional fees = accounts with subtype LegalProfessionalFees (Accounting, Bookkeeper, Lawyer, Legal & Professional Fees). TBD. 'Current fiscal year' = fiscal year of current_date, to date; dim_company.fiscal_year_start_month = 1, so it equals the calendar year. Verified 2026-11-19: 1 row(s); first: professional_fees=1170."
+    },
+    "EXP-062": {
+      "question": "Break down professional fees by vendor for the current fiscal year.",
+      "sql": "SELECT v.vendor_name AS vendor, ROUND(SUM(g.reporting_amount), 2) AS professional_fees FROM vw_gl_normalized g JOIN dim_vendor v ON v.vendor_key = g.vendor_key AND v.is_current WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'LegalProfessionalFees') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "professional_fees"
+      ],
+      "mode": "set",
+      "notes": "Professional fees = accounts with subtype LegalProfessionalFees (Accounting, Bookkeeper, Lawyer, Legal & Professional Fees). TBD. 'Current fiscal year' = fiscal year of current_date, to date; dim_company.fiscal_year_start_month = 1, so it equals the calendar year. Vendor breakdowns count named vendors only (inner join to dim_vendor); lines without a vendor are left out. TBD. Verified 2026-11-19: 4 row(s); first: vendor=Robertson & Associates, professional_fees=865. Alternative \"including lines without a vendor ('Unassigned')\": 4 row(s); first: vendor=Robertson & Associates, professional_fees=865.",
+      "alternatives": [
+        {
+          "label": "including lines without a vendor ('Unassigned')",
+          "sql": "SELECT COALESCE(v.vendor_name, 'Unassigned') AS vendor, ROUND(SUM(g.reporting_amount), 2) AS professional_fees FROM vw_gl_normalized g LEFT JOIN dim_vendor v ON v.vendor_key = g.vendor_key AND v.is_current WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'LegalProfessionalFees') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+          "measures": [
+            "professional_fees"
+          ]
+        }
+      ]
+    },
+    "EXP-063": {
+      "question": "Show the monthly trend for professional fees during the current fiscal year.",
+      "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.reporting_amount), 2) AS professional_fees FROM vw_gl_normalized g WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'LegalProfessionalFees') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "professional_fees"
+      ],
+      "mode": "set",
+      "notes": "Professional fees = accounts with subtype LegalProfessionalFees (Accounting, Bookkeeper, Lawyer, Legal & Professional Fees). TBD. 'Current fiscal year' = fiscal year of current_date, to date; dim_company.fiscal_year_start_month = 1, so it equals the calendar year. Verified 2026-11-19: 4 row(s); first: year_month=202604, professional_fees=300."
+    },
+    "EXP-064": {
+      "question": "Which vendors account for the largest professional fees in the current fiscal year?",
+      "sql": "SELECT v.vendor_name AS vendor, ROUND(SUM(g.reporting_amount), 2) AS professional_fees FROM vw_gl_normalized g JOIN dim_vendor v ON v.vendor_key = g.vendor_key AND v.is_current WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'LegalProfessionalFees') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "professional_fees"
+      ],
+      "mode": "set",
+      "notes": "Professional fees = accounts with subtype LegalProfessionalFees (Accounting, Bookkeeper, Lawyer, Legal & Professional Fees). TBD. 'Current fiscal year' = fiscal year of current_date, to date; dim_company.fiscal_year_start_month = 1, so it equals the calendar year. Vendor breakdowns count named vendors only (inner join to dim_vendor); lines without a vendor are left out. TBD. Verified 2026-11-19: 4 row(s); first: vendor=Robertson & Associates, professional_fees=865. Alternative \"including lines without a vendor ('Unassigned')\": 4 row(s); first: vendor=Robertson & Associates, professional_fees=865.",
+      "alternatives": [
+        {
+          "label": "including lines without a vendor ('Unassigned')",
+          "sql": "SELECT COALESCE(v.vendor_name, 'Unassigned') AS vendor, ROUND(SUM(g.reporting_amount), 2) AS professional_fees FROM vw_gl_normalized g LEFT JOIN dim_vendor v ON v.vendor_key = g.vendor_key AND v.is_current WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'LegalProfessionalFees') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+          "measures": [
+            "professional_fees"
+          ]
+        }
+      ]
+    },
+    "EXP-065": {
+      "question": "Compare professional fees with the preceding equivalent period.",
+      "sql": "SELECT 'current period' AS period, ROUND(SUM(g.reporting_amount), 2) AS professional_fees FROM vw_gl_normalized g WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'LegalProfessionalFees') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER) UNION ALL SELECT 'preceding period', ROUND(SUM(g.reporting_amount), 2) FROM vw_gl_normalized g WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'LegalProfessionalFees') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12",
+      "measures": [
+        "professional_fees"
+      ],
+      "mode": "set",
+      "notes": "Professional fees = accounts with subtype LegalProfessionalFees (Accounting, Bookkeeper, Lawyer, Legal & Professional Fees). TBD. 'Current fiscal year' = fiscal year of current_date, to date; dim_company.fiscal_year_start_month = 1, so it equals the calendar year. Preceding period = previous fiscal year (TBD: the period of the same length immediately before). Verified 2026-11-19: 2 row(s); first: period=current period, professional_fees=1170."
+    },
+    "EXP-066": {
+      "question": "List the transactions contributing to professional fees in the current fiscal year.",
+      "sql": "SELECT g.date_key, COALESCE(g.transaction_number, g.transaction_id) AS transaction_ref, ROUND(g.reporting_amount, 2) AS amount FROM vw_gl_normalized g WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'LegalProfessionalFees') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER) ORDER BY 3 DESC",
+      "measures": [
+        "amount"
+      ],
+      "mode": "set",
+      "notes": "Professional fees = accounts with subtype LegalProfessionalFees (Accounting, Bookkeeper, Lawyer, Legal & Professional Fees). TBD. 'Current fiscal year' = fiscal year of current_date, to date; dim_company.fiscal_year_start_month = 1, so it equals the calendar year. Transactions = the individual GL lines in the period (one figure per line). TBD. Verified 2026-11-19: 7 row(s); first: date_key=20260826, transaction_ref=108, amount=315."
+    },
+    "EXP-067": {
+      "question": "Show professional fees by account for the current fiscal year.",
+      "sql": "SELECT a.account_name AS account, ROUND(SUM(g.reporting_amount), 2) AS professional_fees FROM vw_gl_normalized g JOIN dim_account a ON a.account_key = g.account_key WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'LegalProfessionalFees') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "professional_fees"
+      ],
+      "mode": "set",
+      "notes": "Professional fees = accounts with subtype LegalProfessionalFees (Accounting, Bookkeeper, Lawyer, Legal & Professional Fees). TBD. 'Current fiscal year' = fiscal year of current_date, to date; dim_company.fiscal_year_start_month = 1, so it equals the calendar year. Verified 2026-11-19: 4 row(s); first: account=Accounting, professional_fees=640."
+    },
+    "EXP-068": {
+      "question": "Identify unusual increases in professional fees during the current fiscal year.",
+      "sql": null,
+      "measures": [],
+      "mode": "none",
+      "notes": "'Unusual increases' has no agreed threshold, so there is no figure oracle. Checks 1-3 still run. TBD: owner definition of 'unusual'."
+    },
+    "EXP-069": {
+      "question": "What percentage of total expenses was professional fees in the current fiscal year?",
+      "sql": "SELECT ROUND(100 * SUM(CASE WHEN g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'LegalProfessionalFees') THEN g.reporting_amount ELSE 0 END) / NULLIF(SUM(g.reporting_amount), 0), 2) AS pct_of_total_expenses FROM vw_gl_normalized g WHERE g.reporting_category IN ('Operating Expense', 'COGS', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER)",
+      "measures": [
+        "pct_of_total_expenses"
+      ],
+      "mode": "scalar",
+      "notes": "Professional fees = accounts with subtype LegalProfessionalFees (Accounting, Bookkeeper, Lawyer, Legal & Professional Fees). TBD. 'Current fiscal year' = fiscal year of current_date, to date; dim_company.fiscal_year_start_month = 1, so it equals the calendar year. Total expenses = operating expenses + COGS + other expenses (TBD; the alternatives use narrower totals). Verified 2026-11-19: 1 row(s); first: pct_of_total_expenses=13.67. Alternative \"total expenses = operating expenses only\": 1 row(s); first: pct_of_total_expenses=22.34. Alternative \"total expenses = operating expenses + other expenses (no COGS)\": 1 row(s); first: pct_of_total_expenses=14.35.",
+      "alternatives": [
+        {
+          "label": "total expenses = operating expenses only",
+          "sql": "SELECT ROUND(100 * SUM(CASE WHEN g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'LegalProfessionalFees') THEN g.reporting_amount ELSE 0 END) / NULLIF(SUM(g.reporting_amount), 0), 2) AS pct_of_total_expenses FROM vw_gl_normalized g WHERE g.reporting_category IN ('Operating Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER)",
+          "measures": [
+            "pct_of_total_expenses"
+          ]
+        },
+        {
+          "label": "total expenses = operating expenses + other expenses (no COGS)",
+          "sql": "SELECT ROUND(100 * SUM(CASE WHEN g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'LegalProfessionalFees') THEN g.reporting_amount ELSE 0 END) / NULLIF(SUM(g.reporting_amount), 0), 2) AS pct_of_total_expenses FROM vw_gl_normalized g WHERE g.reporting_category IN ('Operating Expense', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER)",
+          "measures": [
+            "pct_of_total_expenses"
+          ]
+        }
+      ]
+    },
+    "EXP-070": {
+      "question": "Rank the months in the current fiscal year by professional fees, highest to lowest.",
+      "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.reporting_amount), 2) AS professional_fees FROM vw_gl_normalized g WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'LegalProfessionalFees') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "professional_fees"
+      ],
+      "mode": "set",
+      "notes": "Professional fees = accounts with subtype LegalProfessionalFees (Accounting, Bookkeeper, Lawyer, Legal & Professional Fees). TBD. 'Current fiscal year' = fiscal year of current_date, to date; dim_company.fiscal_year_start_month = 1, so it equals the calendar year. Verified 2026-11-19: 4 row(s); first: year_month=202604, professional_fees=300."
+    },
+    "EXP-071": {
+      "question": "Show office expenses for the previous fiscal year.",
+      "sql": "SELECT ROUND(SUM(g.reporting_amount), 2) AS office_expenses FROM vw_gl_normalized g WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'OfficeGeneralAdministrativeExpenses') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12",
+      "measures": [
+        "office_expenses"
+      ],
+      "mode": "scalar",
+      "notes": "Office expenses = the 'Office Expenses' account (subtype OfficeGeneralAdministrativeExpenses). TBD. 'Previous fiscal year' = the fiscal year before the current one (calendar year, start month 1). Verified 2026-11-19: 1 row(s), every figure null or 0 (no data for this period)."
+    },
+    "EXP-072": {
+      "question": "Break down office expenses by vendor for the previous fiscal year.",
+      "sql": "SELECT v.vendor_name AS vendor, ROUND(SUM(g.reporting_amount), 2) AS office_expenses FROM vw_gl_normalized g JOIN dim_vendor v ON v.vendor_key = g.vendor_key AND v.is_current WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'OfficeGeneralAdministrativeExpenses') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "office_expenses"
+      ],
+      "mode": "set",
+      "notes": "Office expenses = the 'Office Expenses' account (subtype OfficeGeneralAdministrativeExpenses). TBD. 'Previous fiscal year' = the fiscal year before the current one (calendar year, start month 1). Vendor breakdowns count named vendors only (inner join to dim_vendor); lines without a vendor are left out. TBD. Verified 2026-11-19: no rows (no data for this period). Alternative \"including lines without a vendor ('Unassigned')\": no rows (no data for this period).",
+      "alternatives": [
+        {
+          "label": "including lines without a vendor ('Unassigned')",
+          "sql": "SELECT COALESCE(v.vendor_name, 'Unassigned') AS vendor, ROUND(SUM(g.reporting_amount), 2) AS office_expenses FROM vw_gl_normalized g LEFT JOIN dim_vendor v ON v.vendor_key = g.vendor_key AND v.is_current WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'OfficeGeneralAdministrativeExpenses') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 GROUP BY 1 ORDER BY 2 DESC",
+          "measures": [
+            "office_expenses"
+          ]
+        }
+      ]
+    },
+    "EXP-073": {
+      "question": "Show the monthly trend for office expenses during the previous fiscal year.",
+      "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.reporting_amount), 2) AS office_expenses FROM vw_gl_normalized g WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'OfficeGeneralAdministrativeExpenses') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "office_expenses"
+      ],
+      "mode": "set",
+      "notes": "Office expenses = the 'Office Expenses' account (subtype OfficeGeneralAdministrativeExpenses). TBD. 'Previous fiscal year' = the fiscal year before the current one (calendar year, start month 1). Verified 2026-11-19: no rows (no data for this period)."
+    },
+    "EXP-074": {
+      "question": "Which vendors account for the largest office expenses in the previous fiscal year?",
+      "sql": "SELECT v.vendor_name AS vendor, ROUND(SUM(g.reporting_amount), 2) AS office_expenses FROM vw_gl_normalized g JOIN dim_vendor v ON v.vendor_key = g.vendor_key AND v.is_current WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'OfficeGeneralAdministrativeExpenses') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "office_expenses"
+      ],
+      "mode": "set",
+      "notes": "Office expenses = the 'Office Expenses' account (subtype OfficeGeneralAdministrativeExpenses). TBD. 'Previous fiscal year' = the fiscal year before the current one (calendar year, start month 1). Vendor breakdowns count named vendors only (inner join to dim_vendor); lines without a vendor are left out. TBD. Verified 2026-11-19: no rows (no data for this period). Alternative \"including lines without a vendor ('Unassigned')\": no rows (no data for this period).",
+      "alternatives": [
+        {
+          "label": "including lines without a vendor ('Unassigned')",
+          "sql": "SELECT COALESCE(v.vendor_name, 'Unassigned') AS vendor, ROUND(SUM(g.reporting_amount), 2) AS office_expenses FROM vw_gl_normalized g LEFT JOIN dim_vendor v ON v.vendor_key = g.vendor_key AND v.is_current WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'OfficeGeneralAdministrativeExpenses') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 GROUP BY 1 ORDER BY 2 DESC",
+          "measures": [
+            "office_expenses"
+          ]
+        }
+      ]
+    },
+    "EXP-075": {
+      "question": "Compare office expenses with the preceding equivalent period.",
+      "sql": "SELECT 'current period' AS period, ROUND(SUM(g.reporting_amount), 2) AS office_expenses FROM vw_gl_normalized g WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'OfficeGeneralAdministrativeExpenses') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 UNION ALL SELECT 'preceding period', ROUND(SUM(g.reporting_amount), 2) FROM vw_gl_normalized g WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'OfficeGeneralAdministrativeExpenses') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 2) * 100 + 1 AND (year(current_date) - 2) * 100 + 12",
+      "measures": [
+        "office_expenses"
+      ],
+      "mode": "set",
+      "notes": "Office expenses = the 'Office Expenses' account (subtype OfficeGeneralAdministrativeExpenses). TBD. 'Previous fiscal year' = the fiscal year before the current one (calendar year, start month 1). Preceding period = the fiscal year before that (TBD: the period of the same length immediately before). Verified 2026-11-19: 2 row(s), every figure null or 0 (no data for this period)."
+    },
+    "EXP-076": {
+      "question": "List the transactions contributing to office expenses in the previous fiscal year.",
+      "sql": "SELECT g.date_key, COALESCE(g.transaction_number, g.transaction_id) AS transaction_ref, ROUND(g.reporting_amount, 2) AS amount FROM vw_gl_normalized g WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'OfficeGeneralAdministrativeExpenses') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 ORDER BY 3 DESC",
+      "measures": [
+        "amount"
+      ],
+      "mode": "set",
+      "notes": "Office expenses = the 'Office Expenses' account (subtype OfficeGeneralAdministrativeExpenses). TBD. 'Previous fiscal year' = the fiscal year before the current one (calendar year, start month 1). Transactions = the individual GL lines in the period (one figure per line). TBD. Verified 2026-11-19: no rows (no data for this period)."
+    },
+    "EXP-077": {
+      "question": "Show office expenses by account for the previous fiscal year.",
+      "sql": "SELECT a.account_name AS account, ROUND(SUM(g.reporting_amount), 2) AS office_expenses FROM vw_gl_normalized g JOIN dim_account a ON a.account_key = g.account_key WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'OfficeGeneralAdministrativeExpenses') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "office_expenses"
+      ],
+      "mode": "set",
+      "notes": "Office expenses = the 'Office Expenses' account (subtype OfficeGeneralAdministrativeExpenses). TBD. 'Previous fiscal year' = the fiscal year before the current one (calendar year, start month 1). Verified 2026-11-19: no rows (no data for this period)."
+    },
+    "EXP-078": {
+      "question": "Identify unusual increases in office expenses during the previous fiscal year.",
+      "sql": null,
+      "measures": [],
+      "mode": "none",
+      "notes": "'Unusual increases' has no agreed threshold, so there is no figure oracle. Checks 1-3 still run. TBD: owner definition of 'unusual'."
+    },
+    "EXP-079": {
+      "question": "What percentage of total expenses was office expenses in the previous fiscal year?",
+      "sql": "SELECT ROUND(100 * SUM(CASE WHEN g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'OfficeGeneralAdministrativeExpenses') THEN g.reporting_amount ELSE 0 END) / NULLIF(SUM(g.reporting_amount), 0), 2) AS pct_of_total_expenses FROM vw_gl_normalized g WHERE g.reporting_category IN ('Operating Expense', 'COGS', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12",
+      "measures": [
+        "pct_of_total_expenses"
+      ],
+      "mode": "scalar",
+      "notes": "Office expenses = the 'Office Expenses' account (subtype OfficeGeneralAdministrativeExpenses). TBD. 'Previous fiscal year' = the fiscal year before the current one (calendar year, start month 1). Total expenses = operating expenses + COGS + other expenses (TBD; the alternatives use narrower totals). Verified 2026-11-19: 1 row(s), every figure null or 0 (no data for this period). Alternative \"total expenses = operating expenses only\": 1 row(s), every figure null or 0 (no data for this period). Alternative \"total expenses = operating expenses + other expenses (no COGS)\": 1 row(s), every figure null or 0 (no data for this period).",
+      "alternatives": [
+        {
+          "label": "total expenses = operating expenses only",
+          "sql": "SELECT ROUND(100 * SUM(CASE WHEN g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'OfficeGeneralAdministrativeExpenses') THEN g.reporting_amount ELSE 0 END) / NULLIF(SUM(g.reporting_amount), 0), 2) AS pct_of_total_expenses FROM vw_gl_normalized g WHERE g.reporting_category IN ('Operating Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12",
+          "measures": [
+            "pct_of_total_expenses"
+          ]
+        },
+        {
+          "label": "total expenses = operating expenses + other expenses (no COGS)",
+          "sql": "SELECT ROUND(100 * SUM(CASE WHEN g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'OfficeGeneralAdministrativeExpenses') THEN g.reporting_amount ELSE 0 END) / NULLIF(SUM(g.reporting_amount), 0), 2) AS pct_of_total_expenses FROM vw_gl_normalized g WHERE g.reporting_category IN ('Operating Expense', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12",
+          "measures": [
+            "pct_of_total_expenses"
+          ]
+        }
+      ]
+    },
+    "EXP-080": {
+      "question": "Rank the months in the previous fiscal year by office expenses, highest to lowest.",
+      "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.reporting_amount), 2) AS office_expenses FROM vw_gl_normalized g WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'OfficeGeneralAdministrativeExpenses') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "office_expenses"
+      ],
+      "mode": "set",
+      "notes": "Office expenses = the 'Office Expenses' account (subtype OfficeGeneralAdministrativeExpenses). TBD. 'Previous fiscal year' = the fiscal year before the current one (calendar year, start month 1). Verified 2026-11-19: no rows (no data for this period)."
+    },
+    "EXP-081": {
+      "question": "Show utilities expenses for the last 90 days.",
+      "sql": "SELECT ROUND(SUM(g.reporting_amount), 2) AS utilities_expenses FROM vw_gl_normalized g WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'Utilities') AND g.date_key BETWEEN CAST(strftime(current_date - INTERVAL 90 DAY, '%Y%m%d') AS INTEGER) AND CAST(strftime(current_date, '%Y%m%d') AS INTEGER)",
+      "measures": [
+        "utilities_expenses"
+      ],
+      "mode": "scalar",
+      "notes": "Utilities = accounts with subtype Utilities (Gas and Electric, Telephone). TBD. 'Last 90 days' = current_date - 90 days to current_date, inclusive (TBD: boundary day). Verified 2026-11-19: 1 row(s), every figure null or 0 (no data for this period)."
+    },
+    "EXP-082": {
+      "question": "Break down utilities expenses by vendor for the last 90 days.",
+      "sql": "SELECT v.vendor_name AS vendor, ROUND(SUM(g.reporting_amount), 2) AS utilities_expenses FROM vw_gl_normalized g JOIN dim_vendor v ON v.vendor_key = g.vendor_key AND v.is_current WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'Utilities') AND g.date_key BETWEEN CAST(strftime(current_date - INTERVAL 90 DAY, '%Y%m%d') AS INTEGER) AND CAST(strftime(current_date, '%Y%m%d') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "utilities_expenses"
+      ],
+      "mode": "set",
+      "notes": "Utilities = accounts with subtype Utilities (Gas and Electric, Telephone). TBD. 'Last 90 days' = current_date - 90 days to current_date, inclusive (TBD: boundary day). Vendor breakdowns count named vendors only (inner join to dim_vendor); lines without a vendor are left out. TBD. Verified 2026-11-19: no rows (no data for this period). Alternative \"including lines without a vendor ('Unassigned')\": no rows (no data for this period).",
+      "alternatives": [
+        {
+          "label": "including lines without a vendor ('Unassigned')",
+          "sql": "SELECT COALESCE(v.vendor_name, 'Unassigned') AS vendor, ROUND(SUM(g.reporting_amount), 2) AS utilities_expenses FROM vw_gl_normalized g LEFT JOIN dim_vendor v ON v.vendor_key = g.vendor_key AND v.is_current WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'Utilities') AND g.date_key BETWEEN CAST(strftime(current_date - INTERVAL 90 DAY, '%Y%m%d') AS INTEGER) AND CAST(strftime(current_date, '%Y%m%d') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+          "measures": [
+            "utilities_expenses"
+          ]
+        }
+      ]
+    },
+    "EXP-083": {
+      "question": "Show the monthly trend for utilities expenses during the last 90 days.",
+      "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.reporting_amount), 2) AS utilities_expenses FROM vw_gl_normalized g WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'Utilities') AND g.date_key BETWEEN CAST(strftime(current_date - INTERVAL 90 DAY, '%Y%m%d') AS INTEGER) AND CAST(strftime(current_date, '%Y%m%d') AS INTEGER) GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "utilities_expenses"
+      ],
+      "mode": "set",
+      "notes": "Utilities = accounts with subtype Utilities (Gas and Electric, Telephone). TBD. 'Last 90 days' = current_date - 90 days to current_date, inclusive (TBD: boundary day). Verified 2026-11-19: no rows (no data for this period)."
+    },
+    "EXP-084": {
+      "question": "Which vendors account for the largest utilities expenses in the last 90 days?",
+      "sql": "SELECT v.vendor_name AS vendor, ROUND(SUM(g.reporting_amount), 2) AS utilities_expenses FROM vw_gl_normalized g JOIN dim_vendor v ON v.vendor_key = g.vendor_key AND v.is_current WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'Utilities') AND g.date_key BETWEEN CAST(strftime(current_date - INTERVAL 90 DAY, '%Y%m%d') AS INTEGER) AND CAST(strftime(current_date, '%Y%m%d') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "utilities_expenses"
+      ],
+      "mode": "set",
+      "notes": "Utilities = accounts with subtype Utilities (Gas and Electric, Telephone). TBD. 'Last 90 days' = current_date - 90 days to current_date, inclusive (TBD: boundary day). Vendor breakdowns count named vendors only (inner join to dim_vendor); lines without a vendor are left out. TBD. Verified 2026-11-19: no rows (no data for this period). Alternative \"including lines without a vendor ('Unassigned')\": no rows (no data for this period).",
+      "alternatives": [
+        {
+          "label": "including lines without a vendor ('Unassigned')",
+          "sql": "SELECT COALESCE(v.vendor_name, 'Unassigned') AS vendor, ROUND(SUM(g.reporting_amount), 2) AS utilities_expenses FROM vw_gl_normalized g LEFT JOIN dim_vendor v ON v.vendor_key = g.vendor_key AND v.is_current WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'Utilities') AND g.date_key BETWEEN CAST(strftime(current_date - INTERVAL 90 DAY, '%Y%m%d') AS INTEGER) AND CAST(strftime(current_date, '%Y%m%d') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+          "measures": [
+            "utilities_expenses"
+          ]
+        }
+      ]
+    },
+    "EXP-085": {
+      "question": "Compare utilities expenses with the preceding equivalent period.",
+      "sql": "SELECT 'current period' AS period, ROUND(SUM(g.reporting_amount), 2) AS utilities_expenses FROM vw_gl_normalized g WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'Utilities') AND g.date_key BETWEEN CAST(strftime(current_date - INTERVAL 90 DAY, '%Y%m%d') AS INTEGER) AND CAST(strftime(current_date, '%Y%m%d') AS INTEGER) UNION ALL SELECT 'preceding period', ROUND(SUM(g.reporting_amount), 2) FROM vw_gl_normalized g WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'Utilities') AND g.date_key BETWEEN CAST(strftime(current_date - INTERVAL 181 DAY, '%Y%m%d') AS INTEGER) AND CAST(strftime(current_date - INTERVAL 91 DAY, '%Y%m%d') AS INTEGER)",
+      "measures": [
+        "utilities_expenses"
+      ],
+      "mode": "set",
+      "notes": "Utilities = accounts with subtype Utilities (Gas and Electric, Telephone). TBD. 'Last 90 days' = current_date - 90 days to current_date, inclusive (TBD: boundary day). Preceding period = the 91 days before that (TBD: the period of the same length immediately before). Verified 2026-11-19: 2 row(s); first: period=current period, utilities_expenses=None."
+    },
+    "EXP-086": {
+      "question": "List the transactions contributing to utilities expenses in the last 90 days.",
+      "sql": "SELECT g.date_key, COALESCE(g.transaction_number, g.transaction_id) AS transaction_ref, ROUND(g.reporting_amount, 2) AS amount FROM vw_gl_normalized g WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'Utilities') AND g.date_key BETWEEN CAST(strftime(current_date - INTERVAL 90 DAY, '%Y%m%d') AS INTEGER) AND CAST(strftime(current_date, '%Y%m%d') AS INTEGER) ORDER BY 3 DESC",
+      "measures": [
+        "amount"
+      ],
+      "mode": "set",
+      "notes": "Utilities = accounts with subtype Utilities (Gas and Electric, Telephone). TBD. 'Last 90 days' = current_date - 90 days to current_date, inclusive (TBD: boundary day). Transactions = the individual GL lines in the period (one figure per line). TBD. Verified 2026-11-19: no rows (no data for this period)."
+    },
+    "EXP-087": {
+      "question": "Show utilities expenses by account for the last 90 days.",
+      "sql": "SELECT a.account_name AS account, ROUND(SUM(g.reporting_amount), 2) AS utilities_expenses FROM vw_gl_normalized g JOIN dim_account a ON a.account_key = g.account_key WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'Utilities') AND g.date_key BETWEEN CAST(strftime(current_date - INTERVAL 90 DAY, '%Y%m%d') AS INTEGER) AND CAST(strftime(current_date, '%Y%m%d') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "utilities_expenses"
+      ],
+      "mode": "set",
+      "notes": "Utilities = accounts with subtype Utilities (Gas and Electric, Telephone). TBD. 'Last 90 days' = current_date - 90 days to current_date, inclusive (TBD: boundary day). Verified 2026-11-19: no rows (no data for this period)."
+    },
+    "EXP-088": {
+      "question": "Identify unusual increases in utilities expenses during the last 90 days.",
+      "sql": null,
+      "measures": [],
+      "mode": "none",
+      "notes": "'Unusual increases' has no agreed threshold, so there is no figure oracle. Checks 1-3 still run. TBD: owner definition of 'unusual'."
+    },
+    "EXP-089": {
+      "question": "What percentage of total expenses was utilities expenses in the last 90 days?",
+      "sql": "SELECT ROUND(100 * SUM(CASE WHEN g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'Utilities') THEN g.reporting_amount ELSE 0 END) / NULLIF(SUM(g.reporting_amount), 0), 2) AS pct_of_total_expenses FROM vw_gl_normalized g WHERE g.reporting_category IN ('Operating Expense', 'COGS', 'Other Expense') AND g.date_key BETWEEN CAST(strftime(current_date - INTERVAL 90 DAY, '%Y%m%d') AS INTEGER) AND CAST(strftime(current_date, '%Y%m%d') AS INTEGER)",
+      "measures": [
+        "pct_of_total_expenses"
+      ],
+      "mode": "scalar",
+      "notes": "Utilities = accounts with subtype Utilities (Gas and Electric, Telephone). TBD. 'Last 90 days' = current_date - 90 days to current_date, inclusive (TBD: boundary day). Total expenses = operating expenses + COGS + other expenses (TBD; the alternatives use narrower totals). Verified 2026-11-19: 1 row(s), every figure null or 0 (no data for this period). Alternative \"total expenses = operating expenses only\": 1 row(s), every figure null or 0 (no data for this period). Alternative \"total expenses = operating expenses + other expenses (no COGS)\": 1 row(s), every figure null or 0 (no data for this period).",
+      "alternatives": [
+        {
+          "label": "total expenses = operating expenses only",
+          "sql": "SELECT ROUND(100 * SUM(CASE WHEN g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'Utilities') THEN g.reporting_amount ELSE 0 END) / NULLIF(SUM(g.reporting_amount), 0), 2) AS pct_of_total_expenses FROM vw_gl_normalized g WHERE g.reporting_category IN ('Operating Expense') AND g.date_key BETWEEN CAST(strftime(current_date - INTERVAL 90 DAY, '%Y%m%d') AS INTEGER) AND CAST(strftime(current_date, '%Y%m%d') AS INTEGER)",
+          "measures": [
+            "pct_of_total_expenses"
+          ]
+        },
+        {
+          "label": "total expenses = operating expenses + other expenses (no COGS)",
+          "sql": "SELECT ROUND(100 * SUM(CASE WHEN g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'Utilities') THEN g.reporting_amount ELSE 0 END) / NULLIF(SUM(g.reporting_amount), 0), 2) AS pct_of_total_expenses FROM vw_gl_normalized g WHERE g.reporting_category IN ('Operating Expense', 'Other Expense') AND g.date_key BETWEEN CAST(strftime(current_date - INTERVAL 90 DAY, '%Y%m%d') AS INTEGER) AND CAST(strftime(current_date, '%Y%m%d') AS INTEGER)",
+          "measures": [
+            "pct_of_total_expenses"
+          ]
+        }
+      ]
+    },
+    "EXP-090": {
+      "question": "Rank the months in the last 90 days by utilities expenses, highest to lowest.",
+      "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.reporting_amount), 2) AS utilities_expenses FROM vw_gl_normalized g WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'Utilities') AND g.date_key BETWEEN CAST(strftime(current_date - INTERVAL 90 DAY, '%Y%m%d') AS INTEGER) AND CAST(strftime(current_date, '%Y%m%d') AS INTEGER) GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "utilities_expenses"
+      ],
+      "mode": "set",
+      "notes": "Utilities = accounts with subtype Utilities (Gas and Electric, Telephone). TBD. 'Last 90 days' = current_date - 90 days to current_date, inclusive (TBD: boundary day). Verified 2026-11-19: no rows (no data for this period)."
+    },
+    "EXP-091": {
+      "question": "Show insurance expenses for the last 12 months.",
+      "sql": "SELECT ROUND(SUM(g.reporting_amount), 2) AS insurance_expenses FROM vw_gl_normalized g WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'Insurance') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 11 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER)",
+      "measures": [
+        "insurance_expenses"
+      ],
+      "mode": "scalar",
+      "notes": "Insurance = accounts with subtype Insurance. TBD. 'Last 12 months' = the 12 calendar months up to and including the current month. Verified 2026-11-19: 1 row(s); first: insurance_expenses=241.23."
+    },
+    "EXP-092": {
+      "question": "Break down insurance expenses by vendor for the last 12 months.",
+      "sql": "SELECT v.vendor_name AS vendor, ROUND(SUM(g.reporting_amount), 2) AS insurance_expenses FROM vw_gl_normalized g JOIN dim_vendor v ON v.vendor_key = g.vendor_key AND v.is_current WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'Insurance') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 11 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "insurance_expenses"
+      ],
+      "mode": "set",
+      "notes": "Insurance = accounts with subtype Insurance. TBD. 'Last 12 months' = the 12 calendar months up to and including the current month. Vendor breakdowns count named vendors only (inner join to dim_vendor); lines without a vendor are left out. TBD. Verified 2026-11-19: 1 row(s); first: vendor=Brosnahan Insurance Agency, insurance_expenses=241.23. Alternative \"including lines without a vendor ('Unassigned')\": 1 row(s); first: vendor=Brosnahan Insurance Agency, insurance_expenses=241.23.",
+      "alternatives": [
+        {
+          "label": "including lines without a vendor ('Unassigned')",
+          "sql": "SELECT COALESCE(v.vendor_name, 'Unassigned') AS vendor, ROUND(SUM(g.reporting_amount), 2) AS insurance_expenses FROM vw_gl_normalized g LEFT JOIN dim_vendor v ON v.vendor_key = g.vendor_key AND v.is_current WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'Insurance') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 11 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+          "measures": [
+            "insurance_expenses"
+          ]
+        }
+      ]
+    },
+    "EXP-093": {
+      "question": "Show the monthly trend for insurance expenses during the last 12 months.",
+      "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.reporting_amount), 2) AS insurance_expenses FROM vw_gl_normalized g WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'Insurance') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 11 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "insurance_expenses"
+      ],
+      "mode": "set",
+      "notes": "Insurance = accounts with subtype Insurance. TBD. 'Last 12 months' = the 12 calendar months up to and including the current month. Verified 2026-11-19: 1 row(s); first: year_month=202608, insurance_expenses=241.23."
+    },
+    "EXP-094": {
+      "question": "Which vendors account for the largest insurance expenses in the last 12 months?",
+      "sql": "SELECT v.vendor_name AS vendor, ROUND(SUM(g.reporting_amount), 2) AS insurance_expenses FROM vw_gl_normalized g JOIN dim_vendor v ON v.vendor_key = g.vendor_key AND v.is_current WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'Insurance') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 11 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "insurance_expenses"
+      ],
+      "mode": "set",
+      "notes": "Insurance = accounts with subtype Insurance. TBD. 'Last 12 months' = the 12 calendar months up to and including the current month. Vendor breakdowns count named vendors only (inner join to dim_vendor); lines without a vendor are left out. TBD. Verified 2026-11-19: 1 row(s); first: vendor=Brosnahan Insurance Agency, insurance_expenses=241.23. Alternative \"including lines without a vendor ('Unassigned')\": 1 row(s); first: vendor=Brosnahan Insurance Agency, insurance_expenses=241.23.",
+      "alternatives": [
+        {
+          "label": "including lines without a vendor ('Unassigned')",
+          "sql": "SELECT COALESCE(v.vendor_name, 'Unassigned') AS vendor, ROUND(SUM(g.reporting_amount), 2) AS insurance_expenses FROM vw_gl_normalized g LEFT JOIN dim_vendor v ON v.vendor_key = g.vendor_key AND v.is_current WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'Insurance') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 11 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+          "measures": [
+            "insurance_expenses"
+          ]
+        }
+      ]
+    },
+    "EXP-095": {
+      "question": "Compare insurance expenses with the preceding equivalent period.",
+      "sql": "SELECT 'current period' AS period, ROUND(SUM(g.reporting_amount), 2) AS insurance_expenses FROM vw_gl_normalized g WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'Insurance') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 11 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) UNION ALL SELECT 'preceding period', ROUND(SUM(g.reporting_amount), 2) FROM vw_gl_normalized g WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'Insurance') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 23 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date - INTERVAL 12 MONTH, '%Y%m') AS INTEGER)",
+      "measures": [
+        "insurance_expenses"
+      ],
+      "mode": "set",
+      "notes": "Insurance = accounts with subtype Insurance. TBD. 'Last 12 months' = the 12 calendar months up to and including the current month. Preceding period = the 12 months before that (TBD: the period of the same length immediately before). Verified 2026-11-19: 2 row(s); first: period=current period, insurance_expenses=241.23."
+    },
+    "EXP-096": {
+      "question": "List the transactions contributing to insurance expenses in the last 12 months.",
+      "sql": "SELECT g.date_key, COALESCE(g.transaction_number, g.transaction_id) AS transaction_ref, ROUND(g.reporting_amount, 2) AS amount FROM vw_gl_normalized g WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'Insurance') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 11 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) ORDER BY 3 DESC",
+      "measures": [
+        "amount"
+      ],
+      "mode": "set",
+      "notes": "Insurance = accounts with subtype Insurance. TBD. 'Last 12 months' = the 12 calendar months up to and including the current month. Transactions = the individual GL lines in the period (one figure per line). TBD. Verified 2026-11-19: 1 row(s); first: date_key=20260819, transaction_ref=19, amount=241.23."
+    },
+    "EXP-097": {
+      "question": "Show insurance expenses by account for the last 12 months.",
+      "sql": "SELECT a.account_name AS account, ROUND(SUM(g.reporting_amount), 2) AS insurance_expenses FROM vw_gl_normalized g JOIN dim_account a ON a.account_key = g.account_key WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'Insurance') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 11 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "insurance_expenses"
+      ],
+      "mode": "set",
+      "notes": "Insurance = accounts with subtype Insurance. TBD. 'Last 12 months' = the 12 calendar months up to and including the current month. Verified 2026-11-19: 1 row(s); first: account=Insurance, insurance_expenses=241.23."
+    },
+    "EXP-098": {
+      "question": "Identify unusual increases in insurance expenses during the last 12 months.",
+      "sql": null,
+      "measures": [],
+      "mode": "none",
+      "notes": "'Unusual increases' has no agreed threshold, so there is no figure oracle. Checks 1-3 still run. TBD: owner definition of 'unusual'."
+    },
+    "EXP-099": {
+      "question": "What percentage of total expenses was insurance expenses in the last 12 months?",
+      "sql": "SELECT ROUND(100 * SUM(CASE WHEN g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'Insurance') THEN g.reporting_amount ELSE 0 END) / NULLIF(SUM(g.reporting_amount), 0), 2) AS pct_of_total_expenses FROM vw_gl_normalized g WHERE g.reporting_category IN ('Operating Expense', 'COGS', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 11 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER)",
+      "measures": [
+        "pct_of_total_expenses"
+      ],
+      "mode": "scalar",
+      "notes": "Insurance = accounts with subtype Insurance. TBD. 'Last 12 months' = the 12 calendar months up to and including the current month. Total expenses = operating expenses + COGS + other expenses (TBD; the alternatives use narrower totals). Verified 2026-11-19: 1 row(s); first: pct_of_total_expenses=2.82. Alternative \"total expenses = operating expenses only\": 1 row(s); first: pct_of_total_expenses=4.61. Alternative \"total expenses = operating expenses + other expenses (no COGS)\": 1 row(s); first: pct_of_total_expenses=2.96.",
+      "alternatives": [
+        {
+          "label": "total expenses = operating expenses only",
+          "sql": "SELECT ROUND(100 * SUM(CASE WHEN g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'Insurance') THEN g.reporting_amount ELSE 0 END) / NULLIF(SUM(g.reporting_amount), 0), 2) AS pct_of_total_expenses FROM vw_gl_normalized g WHERE g.reporting_category IN ('Operating Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 11 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER)",
+          "measures": [
+            "pct_of_total_expenses"
+          ]
+        },
+        {
+          "label": "total expenses = operating expenses + other expenses (no COGS)",
+          "sql": "SELECT ROUND(100 * SUM(CASE WHEN g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'Insurance') THEN g.reporting_amount ELSE 0 END) / NULLIF(SUM(g.reporting_amount), 0), 2) AS pct_of_total_expenses FROM vw_gl_normalized g WHERE g.reporting_category IN ('Operating Expense', 'Other Expense') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 11 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER)",
+          "measures": [
+            "pct_of_total_expenses"
+          ]
+        }
+      ]
+    },
+    "EXP-100": {
+      "question": "Rank the months in the last 12 months by insurance expenses, highest to lowest.",
+      "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.reporting_amount), 2) AS insurance_expenses FROM vw_gl_normalized g WHERE g.reporting_category = 'Operating Expense' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'Insurance') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 11 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "insurance_expenses"
+      ],
+      "mode": "set",
+      "notes": "Insurance = accounts with subtype Insurance. TBD. 'Last 12 months' = the 12 calendar months up to and including the current month. Verified 2026-11-19: 1 row(s); first: year_month=202608, insurance_expenses=241.23."
+    }
+  }
+}

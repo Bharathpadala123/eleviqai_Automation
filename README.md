@@ -61,6 +61,32 @@ npm test
 
 `npm test` first runs `bddgen`, which compiles `features/**/*.feature` + `step-definitions/**` into Playwright specs under `.features-gen/` (a gitignored build artifact — never edit it by hand), then runs the scenarios in desktop Chrome only (the `chromium` project; `npm test` passes `--project=chromium`). This project has no mobile project: `mobile-chrome` (`devices['Pixel 5']` emulation) is not configured, by the project owner's decision on 2026-11-19. Run `npm run bddgen` yourself before a raw `npx playwright test` after editing a feature or step definition. If a ticket needs mobile coverage, ask before adding a `mobile-chrome` project back to `playwright.config.ts`.
 
+### Full regression: all 800 chat questions
+
+Every chat question scenario is tagged `@regression` (8 feature files, 100 questions each: REV, PRO, EXP, CAS, BUD, COM, AMB, UNS). Run them all with:
+
+```bash
+npm run test:regression
+```
+
+- **Run time:** about 10 hours. Scenarios run one at a time with a 20 s pause between them (`SCENARIO_GAP_MS`, in milliseconds). In PowerShell, `$env:SCENARIO_GAP_MS = '10000'; npm run test:regression` shortens the pause to 10 s.
+- **One category:** `npx playwright test --project=chromium --grep @002` (tickets `@001` to `@008`), or one question: `--grep @PRO-014`.
+- **Before the run:** the saved session in `.auth/app-session.json` must still be signed in (see "Sign in once" above), and the computer must not sleep during the run.
+- **Results:** `test-results/final-report/EleviqAI_Final_Report_latest.xlsx` has one row per question (verdict, the chat's answer, why it failed, thumbs down). The workbook is rewritten every 25 scenarios, so a stopped run still leaves a report. The Ortoni and HTML reports are produced as usual.
+- **List without running:** `npx playwright test --list --project=chromium --grep @regression --reporter=list`. Keep `--reporter=list`, otherwise the Ortoni reporter rewrites `ortoni-report/index.html` with an empty run.
+- Readiness details and open items: `docs/validation/800_question_suite_readiness.md`.
+
+### Nightly run on GitHub Actions
+
+`.github/workflows/nightly-800.yml` asks all 800 questions on GitHub's machines, so no computer has to stay on.
+
+- **When:** every night at 9:00 pm India time, from 25 November to 8 December 2026 (`FIRST_NIGHT` and `LAST_NIGHT` at the top of the workflow; outside these dates the schedule does nothing). GitHub can start it some minutes late. Two categories run at a time, so a run takes about 6 to 7 hours.
+- **The Excel:** open the run on the repository's Actions tab. `EleviqAI_Final_Report_<date>_<time>.xlsx` is under Artifacts and linked in the summary, and is kept for 30 days. It has the same five sheets as a local run and always lists every question; if a category's job delivers nothing, its questions are listed as Not run.
+- **Green or red:** a run is green when the questions were asked, also when some answers are wrong. Red means it could not do its work, for example because the sign-in expired, the app was down or Cloudflare did not let GitHub's machine in; the run's page says why.
+- **By hand:** Actions tab > Nightly 800 questions > Run workflow, then `trial` (10 questions) or `all`. A push to the branch `nightly-800` also runs the trial, or all 800 if the commit message contains `[run-800]`. Only one run goes at a time; the next one waits.
+- **Sign-in:** the repository secret `APP_SESSION_JSON` holds the content of `.auth/app-session.json` (see "Sign in once" above). It lasts about 30 days; after that, sign in again and paste the new file into the secret. No password is stored on GitHub.
+- **Kept out of public view:** the HTML, Ortoni, JUnit and JSON reports, screenshots, videos and traces are not made on GitHub (`playwright.ci.config.ts`), and the `ci/` scripts hide cookies, tokens and email addresses in the log and the Excel. The Cloudflare cookie from your own browser is not used.
+
 ## Structure
 
 - `docs/agents/` — multi-agent test generation pipeline (plan, generate, normalize, write Gherkin, reuse-match, implement, validate), run end-to-end as one continuous flow by the Pipeline Orchestrator rather than stage-by-stage — see `docs/agents/README.md`
@@ -69,6 +95,7 @@ npm test
 - `pages/` — Page Object Model classes for your site, all extending `pages/BasePage.ts`
 - `locators/` — `locatorConstants.ts`, the auto-healing locator definitions your Page Objects use
 - `fixtures/` — `testFixture.ts`, the shared `test` that step definitions bind to, with automatic per-test logging
+- `ci/` — scripts of the nightly GitHub Actions run: prepare the sign-in, check the app, hide private values, join the Excel
 - `skills/` — Claude Code Skills documenting this framework's conventions
 - `docs/` — agent documentation and generated pipeline output
 

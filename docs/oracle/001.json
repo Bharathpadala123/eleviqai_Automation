@@ -1,6 +1,6 @@
 {
   "ticketNo": "001",
-  "generatedBy": "SQL Oracle Generator (Stage 3.5) · 2026-11-18 (REV-021 to REV-050 added 2026-11-19) · AI-generated, human review required",
+  "generatedBy": "SQL Oracle Generator (Stage 3.5) · 2026-11-18 (REV-021 to REV-050 added 2026-11-19; REV-051 to REV-100 added 2026-11-19) · AI-generated, human review required",
   "connection": "QuickBooks - IES Sandbox Company US 6de8 Parent",
   "reviewStatus": "Draft - pending human review",
   "definitions": {
@@ -17,7 +17,19 @@
     "recognisedSales": "TBD (D-A): GL revenue (vw_gl_normalized reporting_category 'Revenue'), equal to vw_pnl_monthly.revenue.",
     "salesBeforeDiscounts": "TBD (D-A): GL revenue excluding the 'Discounts given' account (account_subtype DiscountsRefundsGiven); invoice gross_amount is accepted as an alternative. GL revenue including discounts is the after-discount figure and is not accepted.",
     "alternatives": "A case may list 'alternatives': other readings that are also accepted (e.g. a daily trend). Check 4 passes if the primary oracle or any alternative matches, and the report names which one.",
-    "customers": "REV-021 onward: customer breakdowns count named customers only (inner join to dim_customer). REV-001 to REV-020 keep their 'Unassigned' row as reviewed."
+    "customers": "REV-021 onward: customer breakdowns count named customers only (inner join to dim_customer). REV-001 to REV-020 keep their 'Unassigned' row as reviewed.",
+    "salesAfterDiscounts": "TBD (owner review): Sales after discounts = GL revenue including the 'Discounts given' account (equals vw_pnl_monthly.revenue).",
+    "serviceRevenue": "TBD (owner review): Service revenue = invoice lines for Service items (dim_product_service.product_type 'Service'), gross_amount - discount_amount.",
+    "productRevenue": "TBD (owner review): Product revenue = invoice lines for Inventory items (dim_product_service.product_type 'Inventory'), gross_amount - discount_amount.",
+    "recurringRevenue": "TBD (owner review): The data has no recurring-revenue marker (no subscription or recurring-transaction field), so no figure oracle is possible.",
+    "revenueFromCustomers": "TBD (owner review): Revenue from customers = GL revenue (reporting_category 'Revenue'); customer breakdowns count named customers only.",
+    "lastYear": "The previous calendar year.",
+    "currentFiscalYear": "Fiscal year of current_date, to date; dim_company.fiscal_year_start_month = 1, so it equals the calendar year.",
+    "previousFiscalYear": "The fiscal year before the current one (calendar year, start month 1).",
+    "last90Days": "current_date - 90 days to current_date, inclusive (TBD: boundary day).",
+    "last12Months": "The 12 calendar months up to and including the current month.",
+    "modeNone": "mode 'none' (sql null): no fair figure oracle exists for the case; its notes say why. Checks 1-3 still run (data answer, chat SQL re-run, faithful $ amounts) and Check 4 is recorded as SKIPPED.",
+    "verification": "Every primary and alternative query was dry-run on 2026-11-19 through the read-only Data Explorer (current_date 2026-11-19); each case's notes end with what it returned. Periods with no data test the empty-answer path only."
   },
   "cases": {
     "REV-001": {
@@ -572,6 +584,788 @@
           "sql": "SELECT c.customer_name AS customer, ROUND(SUM(i.gross_amount), 2) AS sales_before_discounts FROM fact_invoice i JOIN dim_customer c ON c.customer_key = i.customer_key AND c.is_current WHERE CAST(FLOOR(i.invoice_date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC LIMIT 5",
           "measures": [
             "sales_before_discounts"
+          ]
+        }
+      ]
+    },
+    "REV-051": {
+      "question": "Show sales after discounts for last year.",
+      "sql": "SELECT ROUND(SUM(g.reporting_amount), 2) AS sales_after_discounts FROM vw_gl_normalized g WHERE g.reporting_category = 'Revenue' AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12",
+      "measures": [
+        "sales_after_discounts"
+      ],
+      "mode": "scalar",
+      "notes": "Sales after discounts = GL revenue including the 'Discounts given' account (equals vw_pnl_monthly.revenue). TBD (D-A). 'Last year' = the previous calendar year. Verified 2026-11-19: 1 row(s), every figure null or 0 (no data for this period). Alternative \"invoice net (fact_invoice gross_amount - discount_amount)\": 1 row(s), every figure null or 0 (no data for this period).",
+      "alternatives": [
+        {
+          "label": "invoice net (fact_invoice gross_amount - discount_amount)",
+          "sql": "SELECT ROUND(SUM(i.gross_amount - i.discount_amount), 2) AS sales_after_discounts FROM fact_invoice i WHERE CAST(FLOOR(i.invoice_date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12",
+          "measures": [
+            "sales_after_discounts"
+          ]
+        }
+      ]
+    },
+    "REV-052": {
+      "question": "What was sales after discounts during last year?",
+      "sql": "SELECT ROUND(SUM(g.reporting_amount), 2) AS sales_after_discounts FROM vw_gl_normalized g WHERE g.reporting_category = 'Revenue' AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12",
+      "measures": [
+        "sales_after_discounts"
+      ],
+      "mode": "scalar",
+      "notes": "Sales after discounts = GL revenue including the 'Discounts given' account (equals vw_pnl_monthly.revenue). TBD (D-A). 'Last year' = the previous calendar year. Verified 2026-11-19: 1 row(s), every figure null or 0 (no data for this period). Alternative \"invoice net (fact_invoice gross_amount - discount_amount)\": 1 row(s), every figure null or 0 (no data for this period).",
+      "alternatives": [
+        {
+          "label": "invoice net (fact_invoice gross_amount - discount_amount)",
+          "sql": "SELECT ROUND(SUM(i.gross_amount - i.discount_amount), 2) AS sales_after_discounts FROM fact_invoice i WHERE CAST(FLOOR(i.invoice_date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12",
+          "measures": [
+            "sales_after_discounts"
+          ]
+        }
+      ]
+    },
+    "REV-053": {
+      "question": "Break down sales after discounts by month for last year.",
+      "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.reporting_amount), 2) AS sales_after_discounts FROM vw_gl_normalized g WHERE g.reporting_category = 'Revenue' AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "sales_after_discounts"
+      ],
+      "mode": "set",
+      "notes": "Sales after discounts = GL revenue including the 'Discounts given' account (equals vw_pnl_monthly.revenue). TBD (D-A). 'Last year' = the previous calendar year. Verified 2026-11-19: no rows (no data for this period). Alternative \"invoice net (fact_invoice gross_amount - discount_amount)\": no rows (no data for this period).",
+      "alternatives": [
+        {
+          "label": "invoice net (fact_invoice gross_amount - discount_amount)",
+          "sql": "SELECT CAST(FLOOR(i.invoice_date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(i.gross_amount - i.discount_amount), 2) AS sales_after_discounts FROM fact_invoice i WHERE CAST(FLOOR(i.invoice_date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 GROUP BY 1 ORDER BY 1",
+          "measures": [
+            "sales_after_discounts"
+          ]
+        }
+      ]
+    },
+    "REV-054": {
+      "question": "Compare sales after discounts across the months in last year.",
+      "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.reporting_amount), 2) AS sales_after_discounts FROM vw_gl_normalized g WHERE g.reporting_category = 'Revenue' AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "sales_after_discounts"
+      ],
+      "mode": "set",
+      "notes": "Sales after discounts = GL revenue including the 'Discounts given' account (equals vw_pnl_monthly.revenue). TBD (D-A). 'Last year' = the previous calendar year. Verified 2026-11-19: no rows (no data for this period). Alternative \"invoice net (fact_invoice gross_amount - discount_amount)\": no rows (no data for this period).",
+      "alternatives": [
+        {
+          "label": "invoice net (fact_invoice gross_amount - discount_amount)",
+          "sql": "SELECT CAST(FLOOR(i.invoice_date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(i.gross_amount - i.discount_amount), 2) AS sales_after_discounts FROM fact_invoice i WHERE CAST(FLOOR(i.invoice_date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 GROUP BY 1 ORDER BY 1",
+          "measures": [
+            "sales_after_discounts"
+          ]
+        }
+      ]
+    },
+    "REV-055": {
+      "question": "Show the trend in sales after discounts over last year.",
+      "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.reporting_amount), 2) AS sales_after_discounts FROM vw_gl_normalized g WHERE g.reporting_category = 'Revenue' AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "sales_after_discounts"
+      ],
+      "mode": "set",
+      "notes": "Sales after discounts = GL revenue including the 'Discounts given' account (equals vw_pnl_monthly.revenue). TBD (D-A). 'Last year' = the previous calendar year. Verified 2026-11-19: no rows (no data for this period). Alternative \"invoice net (fact_invoice gross_amount - discount_amount)\": no rows (no data for this period). Alternative \"daily trend (same measure by day)\": no rows (no data for this period).",
+      "alternatives": [
+        {
+          "label": "invoice net (fact_invoice gross_amount - discount_amount)",
+          "sql": "SELECT CAST(FLOOR(i.invoice_date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(i.gross_amount - i.discount_amount), 2) AS sales_after_discounts FROM fact_invoice i WHERE CAST(FLOOR(i.invoice_date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 GROUP BY 1 ORDER BY 1",
+          "measures": [
+            "sales_after_discounts"
+          ]
+        },
+        {
+          "label": "daily trend (same measure by day)",
+          "sql": "SELECT g.date_key AS date_key, ROUND(SUM(g.reporting_amount), 2) AS sales_after_discounts FROM vw_gl_normalized g WHERE g.reporting_category = 'Revenue' AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 GROUP BY 1 ORDER BY 1",
+          "measures": [
+            "sales_after_discounts"
+          ]
+        }
+      ]
+    },
+    "REV-056": {
+      "question": "Which customers contributed the most to sales after discounts in last year?",
+      "sql": "SELECT c.customer_name AS customer, ROUND(SUM(g.reporting_amount), 2) AS sales_after_discounts FROM vw_gl_normalized g JOIN dim_customer c ON c.customer_key = g.customer_key AND c.is_current WHERE g.reporting_category = 'Revenue' AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "sales_after_discounts"
+      ],
+      "mode": "set",
+      "notes": "Sales after discounts = GL revenue including the 'Discounts given' account (equals vw_pnl_monthly.revenue). TBD (D-A). 'Last year' = the previous calendar year. Customer breakdowns count named customers only (inner join to dim_customer). Verified 2026-11-19: no rows (no data for this period). Alternative \"invoice net (fact_invoice gross_amount - discount_amount)\": no rows (no data for this period).",
+      "alternatives": [
+        {
+          "label": "invoice net (fact_invoice gross_amount - discount_amount)",
+          "sql": "SELECT c.customer_name AS customer, ROUND(SUM(i.gross_amount - i.discount_amount), 2) AS sales_after_discounts FROM fact_invoice i JOIN dim_customer c ON c.customer_key = i.customer_key AND c.is_current WHERE CAST(FLOOR(i.invoice_date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 GROUP BY 1 ORDER BY 2 DESC",
+          "measures": [
+            "sales_after_discounts"
+          ]
+        }
+      ]
+    },
+    "REV-057": {
+      "question": "Which products or services generated the highest sales after discounts in last year?",
+      "sql": "SELECT COALESCE(p.product_name, 'Unassigned') AS product_service, ROUND(SUM(i.gross_amount - i.discount_amount), 2) AS sales_after_discounts FROM fact_invoice i LEFT JOIN dim_product_service p ON p.product_service_key = i.product_service_key WHERE CAST(FLOOR(i.invoice_date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "sales_after_discounts"
+      ],
+      "mode": "set",
+      "notes": "Sales after discounts = GL revenue including the 'Discounts given' account (equals vw_pnl_monthly.revenue). TBD (D-A). 'Last year' = the previous calendar year. Product breakdown uses invoice lines (fact_invoice) because the GL has no product key. Verified 2026-11-19: no rows (no data for this period)."
+    },
+    "REV-058": {
+      "question": "Show sales after discounts by customer for last year, highest to lowest.",
+      "sql": "SELECT c.customer_name AS customer, ROUND(SUM(g.reporting_amount), 2) AS sales_after_discounts FROM vw_gl_normalized g JOIN dim_customer c ON c.customer_key = g.customer_key AND c.is_current WHERE g.reporting_category = 'Revenue' AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "sales_after_discounts"
+      ],
+      "mode": "set",
+      "notes": "Sales after discounts = GL revenue including the 'Discounts given' account (equals vw_pnl_monthly.revenue). TBD (D-A). 'Last year' = the previous calendar year. Customer breakdowns count named customers only (inner join to dim_customer). Verified 2026-11-19: no rows (no data for this period). Alternative \"invoice net (fact_invoice gross_amount - discount_amount)\": no rows (no data for this period).",
+      "alternatives": [
+        {
+          "label": "invoice net (fact_invoice gross_amount - discount_amount)",
+          "sql": "SELECT c.customer_name AS customer, ROUND(SUM(i.gross_amount - i.discount_amount), 2) AS sales_after_discounts FROM fact_invoice i JOIN dim_customer c ON c.customer_key = i.customer_key AND c.is_current WHERE CAST(FLOOR(i.invoice_date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 GROUP BY 1 ORDER BY 2 DESC",
+          "measures": [
+            "sales_after_discounts"
+          ]
+        }
+      ]
+    },
+    "REV-059": {
+      "question": "How did sales after discounts change during last year compared with the preceding period?",
+      "sql": "SELECT 'current period' AS period, ROUND(SUM(g.reporting_amount), 2) AS sales_after_discounts FROM vw_gl_normalized g WHERE g.reporting_category = 'Revenue' AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 UNION ALL SELECT 'preceding period', ROUND(SUM(g.reporting_amount), 2) FROM vw_gl_normalized g WHERE g.reporting_category = 'Revenue' AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 2) * 100 + 1 AND (year(current_date) - 2) * 100 + 12",
+      "measures": [
+        "sales_after_discounts"
+      ],
+      "mode": "set",
+      "notes": "Sales after discounts = GL revenue including the 'Discounts given' account (equals vw_pnl_monthly.revenue). TBD (D-A). 'Last year' = the previous calendar year. Preceding period = the year before that (TBD: the period of the same length immediately before). Verified 2026-11-19: 2 row(s), every figure null or 0 (no data for this period). Alternative \"invoice net (fact_invoice gross_amount - discount_amount)\": 2 row(s), every figure null or 0 (no data for this period).",
+      "alternatives": [
+        {
+          "label": "invoice net (fact_invoice gross_amount - discount_amount)",
+          "sql": "SELECT 'current period' AS period, ROUND(SUM(i.gross_amount - i.discount_amount), 2) AS sales_after_discounts FROM fact_invoice i WHERE CAST(FLOOR(i.invoice_date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 UNION ALL SELECT 'preceding period', ROUND(SUM(i.gross_amount - i.discount_amount), 2) FROM fact_invoice i WHERE CAST(FLOOR(i.invoice_date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 2) * 100 + 1 AND (year(current_date) - 2) * 100 + 12",
+          "measures": [
+            "sales_after_discounts"
+          ]
+        }
+      ]
+    },
+    "REV-060": {
+      "question": "Identify the top five contributors to sales after discounts for last year.",
+      "sql": "SELECT c.customer_name AS customer, ROUND(SUM(g.reporting_amount), 2) AS sales_after_discounts FROM vw_gl_normalized g JOIN dim_customer c ON c.customer_key = g.customer_key AND c.is_current WHERE g.reporting_category = 'Revenue' AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 GROUP BY 1 ORDER BY 2 DESC LIMIT 5",
+      "measures": [
+        "sales_after_discounts"
+      ],
+      "mode": "set",
+      "notes": "Sales after discounts = GL revenue including the 'Discounts given' account (equals vw_pnl_monthly.revenue). TBD (D-A). 'Last year' = the previous calendar year. Customer breakdowns count named customers only (inner join to dim_customer). 'Top five contributors' = the five named customers with the highest figure. TBD. Verified 2026-11-19: no rows (no data for this period). Alternative \"invoice net (fact_invoice gross_amount - discount_amount)\": no rows (no data for this period).",
+      "alternatives": [
+        {
+          "label": "invoice net (fact_invoice gross_amount - discount_amount)",
+          "sql": "SELECT c.customer_name AS customer, ROUND(SUM(i.gross_amount - i.discount_amount), 2) AS sales_after_discounts FROM fact_invoice i JOIN dim_customer c ON c.customer_key = i.customer_key AND c.is_current WHERE CAST(FLOOR(i.invoice_date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 GROUP BY 1 ORDER BY 2 DESC LIMIT 5",
+          "measures": [
+            "sales_after_discounts"
+          ]
+        }
+      ]
+    },
+    "REV-061": {
+      "question": "Show service revenue for the current fiscal year.",
+      "sql": "SELECT ROUND(SUM(i.gross_amount - i.discount_amount), 2) AS service_revenue FROM fact_invoice i WHERE i.product_service_key IN (SELECT product_service_key FROM dim_product_service WHERE product_type = 'Service') AND CAST(FLOOR(i.invoice_date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER)",
+      "measures": [
+        "service_revenue"
+      ],
+      "mode": "scalar",
+      "notes": "Service revenue = invoice lines for Service items (dim_product_service.product_type 'Service'), gross_amount - discount_amount. TBD: no agreed definition. 'Current fiscal year' = fiscal year of current_date, to date; dim_company.fiscal_year_start_month = 1, so it equals the calendar year. Verified 2026-11-19: 1 row(s); first: service_revenue=6909.8. Alternative \"GL 'Services' income account (account_subtype ServiceFeeIncome)\": 1 row(s); first: service_revenue=503.55.",
+      "alternatives": [
+        {
+          "label": "GL 'Services' income account (account_subtype ServiceFeeIncome)",
+          "sql": "SELECT ROUND(SUM(g.reporting_amount), 2) AS service_revenue FROM vw_gl_normalized g WHERE g.reporting_category = 'Revenue' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'ServiceFeeIncome') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER)",
+          "measures": [
+            "service_revenue"
+          ]
+        }
+      ]
+    },
+    "REV-062": {
+      "question": "What was service revenue during the current fiscal year?",
+      "sql": "SELECT ROUND(SUM(i.gross_amount - i.discount_amount), 2) AS service_revenue FROM fact_invoice i WHERE i.product_service_key IN (SELECT product_service_key FROM dim_product_service WHERE product_type = 'Service') AND CAST(FLOOR(i.invoice_date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER)",
+      "measures": [
+        "service_revenue"
+      ],
+      "mode": "scalar",
+      "notes": "Service revenue = invoice lines for Service items (dim_product_service.product_type 'Service'), gross_amount - discount_amount. TBD: no agreed definition. 'Current fiscal year' = fiscal year of current_date, to date; dim_company.fiscal_year_start_month = 1, so it equals the calendar year. Verified 2026-11-19: 1 row(s); first: service_revenue=6909.8. Alternative \"GL 'Services' income account (account_subtype ServiceFeeIncome)\": 1 row(s); first: service_revenue=503.55.",
+      "alternatives": [
+        {
+          "label": "GL 'Services' income account (account_subtype ServiceFeeIncome)",
+          "sql": "SELECT ROUND(SUM(g.reporting_amount), 2) AS service_revenue FROM vw_gl_normalized g WHERE g.reporting_category = 'Revenue' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'ServiceFeeIncome') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER)",
+          "measures": [
+            "service_revenue"
+          ]
+        }
+      ]
+    },
+    "REV-063": {
+      "question": "Break down service revenue by month for the current fiscal year.",
+      "sql": "SELECT CAST(FLOOR(i.invoice_date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(i.gross_amount - i.discount_amount), 2) AS service_revenue FROM fact_invoice i WHERE i.product_service_key IN (SELECT product_service_key FROM dim_product_service WHERE product_type = 'Service') AND CAST(FLOOR(i.invoice_date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "service_revenue"
+      ],
+      "mode": "set",
+      "notes": "Service revenue = invoice lines for Service items (dim_product_service.product_type 'Service'), gross_amount - discount_amount. TBD: no agreed definition. 'Current fiscal year' = fiscal year of current_date, to date; dim_company.fiscal_year_start_month = 1, so it equals the calendar year. Verified 2026-11-19: 4 row(s); first: year_month=202605, service_revenue=391.25. Alternative \"GL 'Services' income account (account_subtype ServiceFeeIncome)\": 1 row(s); first: year_month=202608, service_revenue=503.55.",
+      "alternatives": [
+        {
+          "label": "GL 'Services' income account (account_subtype ServiceFeeIncome)",
+          "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.reporting_amount), 2) AS service_revenue FROM vw_gl_normalized g WHERE g.reporting_category = 'Revenue' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'ServiceFeeIncome') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+          "measures": [
+            "service_revenue"
+          ]
+        }
+      ]
+    },
+    "REV-064": {
+      "question": "Compare service revenue across the months in the current fiscal year.",
+      "sql": "SELECT CAST(FLOOR(i.invoice_date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(i.gross_amount - i.discount_amount), 2) AS service_revenue FROM fact_invoice i WHERE i.product_service_key IN (SELECT product_service_key FROM dim_product_service WHERE product_type = 'Service') AND CAST(FLOOR(i.invoice_date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "service_revenue"
+      ],
+      "mode": "set",
+      "notes": "Service revenue = invoice lines for Service items (dim_product_service.product_type 'Service'), gross_amount - discount_amount. TBD: no agreed definition. 'Current fiscal year' = fiscal year of current_date, to date; dim_company.fiscal_year_start_month = 1, so it equals the calendar year. Verified 2026-11-19: 4 row(s); first: year_month=202605, service_revenue=391.25. Alternative \"GL 'Services' income account (account_subtype ServiceFeeIncome)\": 1 row(s); first: year_month=202608, service_revenue=503.55.",
+      "alternatives": [
+        {
+          "label": "GL 'Services' income account (account_subtype ServiceFeeIncome)",
+          "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.reporting_amount), 2) AS service_revenue FROM vw_gl_normalized g WHERE g.reporting_category = 'Revenue' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'ServiceFeeIncome') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+          "measures": [
+            "service_revenue"
+          ]
+        }
+      ]
+    },
+    "REV-065": {
+      "question": "Show the trend in service revenue over the current fiscal year.",
+      "sql": "SELECT CAST(FLOOR(i.invoice_date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(i.gross_amount - i.discount_amount), 2) AS service_revenue FROM fact_invoice i WHERE i.product_service_key IN (SELECT product_service_key FROM dim_product_service WHERE product_type = 'Service') AND CAST(FLOOR(i.invoice_date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "service_revenue"
+      ],
+      "mode": "set",
+      "notes": "Service revenue = invoice lines for Service items (dim_product_service.product_type 'Service'), gross_amount - discount_amount. TBD: no agreed definition. 'Current fiscal year' = fiscal year of current_date, to date; dim_company.fiscal_year_start_month = 1, so it equals the calendar year. Verified 2026-11-19: 4 row(s); first: year_month=202605, service_revenue=391.25. Alternative \"GL 'Services' income account (account_subtype ServiceFeeIncome)\": 1 row(s); first: year_month=202608, service_revenue=503.55. Alternative \"daily trend (same measure by day)\": 15 row(s); first: date_key=20260511, service_revenue=391.25.",
+      "alternatives": [
+        {
+          "label": "GL 'Services' income account (account_subtype ServiceFeeIncome)",
+          "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.reporting_amount), 2) AS service_revenue FROM vw_gl_normalized g WHERE g.reporting_category = 'Revenue' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'ServiceFeeIncome') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+          "measures": [
+            "service_revenue"
+          ]
+        },
+        {
+          "label": "daily trend (same measure by day)",
+          "sql": "SELECT i.invoice_date_key AS date_key, ROUND(SUM(i.gross_amount - i.discount_amount), 2) AS service_revenue FROM fact_invoice i WHERE i.product_service_key IN (SELECT product_service_key FROM dim_product_service WHERE product_type = 'Service') AND CAST(FLOOR(i.invoice_date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+          "measures": [
+            "service_revenue"
+          ]
+        }
+      ]
+    },
+    "REV-066": {
+      "question": "Which customers contributed the most to service revenue in the current fiscal year?",
+      "sql": "SELECT c.customer_name AS customer, ROUND(SUM(i.gross_amount - i.discount_amount), 2) AS service_revenue FROM fact_invoice i JOIN dim_customer c ON c.customer_key = i.customer_key AND c.is_current WHERE i.product_service_key IN (SELECT product_service_key FROM dim_product_service WHERE product_type = 'Service') AND CAST(FLOOR(i.invoice_date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "service_revenue"
+      ],
+      "mode": "set",
+      "notes": "Service revenue = invoice lines for Service items (dim_product_service.product_type 'Service'), gross_amount - discount_amount. TBD: no agreed definition. 'Current fiscal year' = fiscal year of current_date, to date; dim_company.fiscal_year_start_month = 1, so it equals the calendar year. Customer breakdowns count named customers only (inner join to dim_customer). Verified 2026-11-19: 17 row(s); first: customer=Cool Cars, service_revenue=2150. Alternative \"GL 'Services' income account (account_subtype ServiceFeeIncome)\": 2 row(s); first: customer=Cool Cars, service_revenue=400.",
+      "alternatives": [
+        {
+          "label": "GL 'Services' income account (account_subtype ServiceFeeIncome)",
+          "sql": "SELECT c.customer_name AS customer, ROUND(SUM(g.reporting_amount), 2) AS service_revenue FROM vw_gl_normalized g JOIN dim_customer c ON c.customer_key = g.customer_key AND c.is_current WHERE g.reporting_category = 'Revenue' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'ServiceFeeIncome') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+          "measures": [
+            "service_revenue"
+          ]
+        }
+      ]
+    },
+    "REV-067": {
+      "question": "Which products or services generated the highest service revenue in the current fiscal year?",
+      "sql": "SELECT COALESCE(p.product_name, 'Unassigned') AS product_service, ROUND(SUM(i.gross_amount - i.discount_amount), 2) AS service_revenue FROM fact_invoice i LEFT JOIN dim_product_service p ON p.product_service_key = i.product_service_key WHERE i.product_service_key IN (SELECT product_service_key FROM dim_product_service WHERE product_type = 'Service') AND CAST(FLOOR(i.invoice_date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "service_revenue"
+      ],
+      "mode": "set",
+      "notes": "Service revenue = invoice lines for Service items (dim_product_service.product_type 'Service'), gross_amount - discount_amount. TBD: no agreed definition. 'Current fiscal year' = fiscal year of current_date, to date; dim_company.fiscal_year_start_month = 1, so it equals the calendar year. Product breakdown uses invoice lines (fact_invoice) because the GL has no product key. Verified 2026-11-19: 12 row(s); first: product_service=Sod, service_revenue=2231.25."
+    },
+    "REV-068": {
+      "question": "Show service revenue by customer for the current fiscal year, highest to lowest.",
+      "sql": "SELECT c.customer_name AS customer, ROUND(SUM(i.gross_amount - i.discount_amount), 2) AS service_revenue FROM fact_invoice i JOIN dim_customer c ON c.customer_key = i.customer_key AND c.is_current WHERE i.product_service_key IN (SELECT product_service_key FROM dim_product_service WHERE product_type = 'Service') AND CAST(FLOOR(i.invoice_date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "service_revenue"
+      ],
+      "mode": "set",
+      "notes": "Service revenue = invoice lines for Service items (dim_product_service.product_type 'Service'), gross_amount - discount_amount. TBD: no agreed definition. 'Current fiscal year' = fiscal year of current_date, to date; dim_company.fiscal_year_start_month = 1, so it equals the calendar year. Customer breakdowns count named customers only (inner join to dim_customer). Verified 2026-11-19: 17 row(s); first: customer=Cool Cars, service_revenue=2150. Alternative \"GL 'Services' income account (account_subtype ServiceFeeIncome)\": 2 row(s); first: customer=Cool Cars, service_revenue=400.",
+      "alternatives": [
+        {
+          "label": "GL 'Services' income account (account_subtype ServiceFeeIncome)",
+          "sql": "SELECT c.customer_name AS customer, ROUND(SUM(g.reporting_amount), 2) AS service_revenue FROM vw_gl_normalized g JOIN dim_customer c ON c.customer_key = g.customer_key AND c.is_current WHERE g.reporting_category = 'Revenue' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'ServiceFeeIncome') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+          "measures": [
+            "service_revenue"
+          ]
+        }
+      ]
+    },
+    "REV-069": {
+      "question": "How did service revenue change during the current fiscal year compared with the preceding period?",
+      "sql": "SELECT 'current period' AS period, ROUND(SUM(i.gross_amount - i.discount_amount), 2) AS service_revenue FROM fact_invoice i WHERE i.product_service_key IN (SELECT product_service_key FROM dim_product_service WHERE product_type = 'Service') AND CAST(FLOOR(i.invoice_date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER) UNION ALL SELECT 'preceding period', ROUND(SUM(i.gross_amount - i.discount_amount), 2) FROM fact_invoice i WHERE i.product_service_key IN (SELECT product_service_key FROM dim_product_service WHERE product_type = 'Service') AND CAST(FLOOR(i.invoice_date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12",
+      "measures": [
+        "service_revenue"
+      ],
+      "mode": "set",
+      "notes": "Service revenue = invoice lines for Service items (dim_product_service.product_type 'Service'), gross_amount - discount_amount. TBD: no agreed definition. 'Current fiscal year' = fiscal year of current_date, to date; dim_company.fiscal_year_start_month = 1, so it equals the calendar year. Preceding period = previous fiscal year (TBD: the period of the same length immediately before). Verified 2026-11-19: 2 row(s); first: period=current period, service_revenue=6909.8. Alternative \"GL 'Services' income account (account_subtype ServiceFeeIncome)\": 2 row(s); first: period=current period, service_revenue=503.55.",
+      "alternatives": [
+        {
+          "label": "GL 'Services' income account (account_subtype ServiceFeeIncome)",
+          "sql": "SELECT 'current period' AS period, ROUND(SUM(g.reporting_amount), 2) AS service_revenue FROM vw_gl_normalized g WHERE g.reporting_category = 'Revenue' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'ServiceFeeIncome') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER) UNION ALL SELECT 'preceding period', ROUND(SUM(g.reporting_amount), 2) FROM vw_gl_normalized g WHERE g.reporting_category = 'Revenue' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'ServiceFeeIncome') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12",
+          "measures": [
+            "service_revenue"
+          ]
+        }
+      ]
+    },
+    "REV-070": {
+      "question": "Identify the top five contributors to service revenue for the current fiscal year.",
+      "sql": "SELECT c.customer_name AS customer, ROUND(SUM(i.gross_amount - i.discount_amount), 2) AS service_revenue FROM fact_invoice i JOIN dim_customer c ON c.customer_key = i.customer_key AND c.is_current WHERE i.product_service_key IN (SELECT product_service_key FROM dim_product_service WHERE product_type = 'Service') AND CAST(FLOOR(i.invoice_date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC LIMIT 5",
+      "measures": [
+        "service_revenue"
+      ],
+      "mode": "set",
+      "notes": "Service revenue = invoice lines for Service items (dim_product_service.product_type 'Service'), gross_amount - discount_amount. TBD: no agreed definition. 'Current fiscal year' = fiscal year of current_date, to date; dim_company.fiscal_year_start_month = 1, so it equals the calendar year. Customer breakdowns count named customers only (inner join to dim_customer). 'Top five contributors' = the five named customers with the highest figure. TBD. Verified 2026-11-19: 5 row(s); first: customer=Cool Cars, service_revenue=2150. Alternative \"GL 'Services' income account (account_subtype ServiceFeeIncome)\": 2 row(s); first: customer=Cool Cars, service_revenue=400.",
+      "alternatives": [
+        {
+          "label": "GL 'Services' income account (account_subtype ServiceFeeIncome)",
+          "sql": "SELECT c.customer_name AS customer, ROUND(SUM(g.reporting_amount), 2) AS service_revenue FROM vw_gl_normalized g JOIN dim_customer c ON c.customer_key = g.customer_key AND c.is_current WHERE g.reporting_category = 'Revenue' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'ServiceFeeIncome') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN year(current_date) * 100 + 1 AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC LIMIT 5",
+          "measures": [
+            "service_revenue"
+          ]
+        }
+      ]
+    },
+    "REV-071": {
+      "question": "Show product revenue for the previous fiscal year.",
+      "sql": "SELECT ROUND(SUM(i.gross_amount - i.discount_amount), 2) AS product_revenue FROM fact_invoice i WHERE i.product_service_key IN (SELECT product_service_key FROM dim_product_service WHERE product_type = 'Inventory') AND CAST(FLOOR(i.invoice_date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12",
+      "measures": [
+        "product_revenue"
+      ],
+      "mode": "scalar",
+      "notes": "Product revenue = invoice lines for Inventory items (dim_product_service.product_type 'Inventory'), gross_amount - discount_amount. TBD: no agreed definition. 'Previous fiscal year' = the fiscal year before the current one (calendar year, start month 1). Verified 2026-11-19: 1 row(s), every figure null or 0 (no data for this period). Alternative \"GL 'Sales of Product Income' account (account_subtype SalesOfProductIncome)\": 1 row(s), every figure null or 0 (no data for this period).",
+      "alternatives": [
+        {
+          "label": "GL 'Sales of Product Income' account (account_subtype SalesOfProductIncome)",
+          "sql": "SELECT ROUND(SUM(g.reporting_amount), 2) AS product_revenue FROM vw_gl_normalized g WHERE g.reporting_category = 'Revenue' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'SalesOfProductIncome') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12",
+          "measures": [
+            "product_revenue"
+          ]
+        }
+      ]
+    },
+    "REV-072": {
+      "question": "What was product revenue during the previous fiscal year?",
+      "sql": "SELECT ROUND(SUM(i.gross_amount - i.discount_amount), 2) AS product_revenue FROM fact_invoice i WHERE i.product_service_key IN (SELECT product_service_key FROM dim_product_service WHERE product_type = 'Inventory') AND CAST(FLOOR(i.invoice_date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12",
+      "measures": [
+        "product_revenue"
+      ],
+      "mode": "scalar",
+      "notes": "Product revenue = invoice lines for Inventory items (dim_product_service.product_type 'Inventory'), gross_amount - discount_amount. TBD: no agreed definition. 'Previous fiscal year' = the fiscal year before the current one (calendar year, start month 1). Verified 2026-11-19: 1 row(s), every figure null or 0 (no data for this period). Alternative \"GL 'Sales of Product Income' account (account_subtype SalesOfProductIncome)\": 1 row(s), every figure null or 0 (no data for this period).",
+      "alternatives": [
+        {
+          "label": "GL 'Sales of Product Income' account (account_subtype SalesOfProductIncome)",
+          "sql": "SELECT ROUND(SUM(g.reporting_amount), 2) AS product_revenue FROM vw_gl_normalized g WHERE g.reporting_category = 'Revenue' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'SalesOfProductIncome') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12",
+          "measures": [
+            "product_revenue"
+          ]
+        }
+      ]
+    },
+    "REV-073": {
+      "question": "Break down product revenue by month for the previous fiscal year.",
+      "sql": "SELECT CAST(FLOOR(i.invoice_date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(i.gross_amount - i.discount_amount), 2) AS product_revenue FROM fact_invoice i WHERE i.product_service_key IN (SELECT product_service_key FROM dim_product_service WHERE product_type = 'Inventory') AND CAST(FLOOR(i.invoice_date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "product_revenue"
+      ],
+      "mode": "set",
+      "notes": "Product revenue = invoice lines for Inventory items (dim_product_service.product_type 'Inventory'), gross_amount - discount_amount. TBD: no agreed definition. 'Previous fiscal year' = the fiscal year before the current one (calendar year, start month 1). Verified 2026-11-19: no rows (no data for this period). Alternative \"GL 'Sales of Product Income' account (account_subtype SalesOfProductIncome)\": no rows (no data for this period).",
+      "alternatives": [
+        {
+          "label": "GL 'Sales of Product Income' account (account_subtype SalesOfProductIncome)",
+          "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.reporting_amount), 2) AS product_revenue FROM vw_gl_normalized g WHERE g.reporting_category = 'Revenue' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'SalesOfProductIncome') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 GROUP BY 1 ORDER BY 1",
+          "measures": [
+            "product_revenue"
+          ]
+        }
+      ]
+    },
+    "REV-074": {
+      "question": "Compare product revenue across the months in the previous fiscal year.",
+      "sql": "SELECT CAST(FLOOR(i.invoice_date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(i.gross_amount - i.discount_amount), 2) AS product_revenue FROM fact_invoice i WHERE i.product_service_key IN (SELECT product_service_key FROM dim_product_service WHERE product_type = 'Inventory') AND CAST(FLOOR(i.invoice_date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "product_revenue"
+      ],
+      "mode": "set",
+      "notes": "Product revenue = invoice lines for Inventory items (dim_product_service.product_type 'Inventory'), gross_amount - discount_amount. TBD: no agreed definition. 'Previous fiscal year' = the fiscal year before the current one (calendar year, start month 1). Verified 2026-11-19: no rows (no data for this period). Alternative \"GL 'Sales of Product Income' account (account_subtype SalesOfProductIncome)\": no rows (no data for this period).",
+      "alternatives": [
+        {
+          "label": "GL 'Sales of Product Income' account (account_subtype SalesOfProductIncome)",
+          "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.reporting_amount), 2) AS product_revenue FROM vw_gl_normalized g WHERE g.reporting_category = 'Revenue' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'SalesOfProductIncome') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 GROUP BY 1 ORDER BY 1",
+          "measures": [
+            "product_revenue"
+          ]
+        }
+      ]
+    },
+    "REV-075": {
+      "question": "Show the trend in product revenue over the previous fiscal year.",
+      "sql": "SELECT CAST(FLOOR(i.invoice_date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(i.gross_amount - i.discount_amount), 2) AS product_revenue FROM fact_invoice i WHERE i.product_service_key IN (SELECT product_service_key FROM dim_product_service WHERE product_type = 'Inventory') AND CAST(FLOOR(i.invoice_date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "product_revenue"
+      ],
+      "mode": "set",
+      "notes": "Product revenue = invoice lines for Inventory items (dim_product_service.product_type 'Inventory'), gross_amount - discount_amount. TBD: no agreed definition. 'Previous fiscal year' = the fiscal year before the current one (calendar year, start month 1). Verified 2026-11-19: no rows (no data for this period). Alternative \"GL 'Sales of Product Income' account (account_subtype SalesOfProductIncome)\": no rows (no data for this period). Alternative \"daily trend (same measure by day)\": no rows (no data for this period).",
+      "alternatives": [
+        {
+          "label": "GL 'Sales of Product Income' account (account_subtype SalesOfProductIncome)",
+          "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.reporting_amount), 2) AS product_revenue FROM vw_gl_normalized g WHERE g.reporting_category = 'Revenue' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'SalesOfProductIncome') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 GROUP BY 1 ORDER BY 1",
+          "measures": [
+            "product_revenue"
+          ]
+        },
+        {
+          "label": "daily trend (same measure by day)",
+          "sql": "SELECT i.invoice_date_key AS date_key, ROUND(SUM(i.gross_amount - i.discount_amount), 2) AS product_revenue FROM fact_invoice i WHERE i.product_service_key IN (SELECT product_service_key FROM dim_product_service WHERE product_type = 'Inventory') AND CAST(FLOOR(i.invoice_date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 GROUP BY 1 ORDER BY 1",
+          "measures": [
+            "product_revenue"
+          ]
+        }
+      ]
+    },
+    "REV-076": {
+      "question": "Which customers contributed the most to product revenue in the previous fiscal year?",
+      "sql": "SELECT c.customer_name AS customer, ROUND(SUM(i.gross_amount - i.discount_amount), 2) AS product_revenue FROM fact_invoice i JOIN dim_customer c ON c.customer_key = i.customer_key AND c.is_current WHERE i.product_service_key IN (SELECT product_service_key FROM dim_product_service WHERE product_type = 'Inventory') AND CAST(FLOOR(i.invoice_date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "product_revenue"
+      ],
+      "mode": "set",
+      "notes": "Product revenue = invoice lines for Inventory items (dim_product_service.product_type 'Inventory'), gross_amount - discount_amount. TBD: no agreed definition. 'Previous fiscal year' = the fiscal year before the current one (calendar year, start month 1). Customer breakdowns count named customers only (inner join to dim_customer). Verified 2026-11-19: no rows (no data for this period). Alternative \"GL 'Sales of Product Income' account (account_subtype SalesOfProductIncome)\": no rows (no data for this period).",
+      "alternatives": [
+        {
+          "label": "GL 'Sales of Product Income' account (account_subtype SalesOfProductIncome)",
+          "sql": "SELECT c.customer_name AS customer, ROUND(SUM(g.reporting_amount), 2) AS product_revenue FROM vw_gl_normalized g JOIN dim_customer c ON c.customer_key = g.customer_key AND c.is_current WHERE g.reporting_category = 'Revenue' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'SalesOfProductIncome') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 GROUP BY 1 ORDER BY 2 DESC",
+          "measures": [
+            "product_revenue"
+          ]
+        }
+      ]
+    },
+    "REV-077": {
+      "question": "Which products or services generated the highest product revenue in the previous fiscal year?",
+      "sql": "SELECT COALESCE(p.product_name, 'Unassigned') AS product_service, ROUND(SUM(i.gross_amount - i.discount_amount), 2) AS product_revenue FROM fact_invoice i LEFT JOIN dim_product_service p ON p.product_service_key = i.product_service_key WHERE i.product_service_key IN (SELECT product_service_key FROM dim_product_service WHERE product_type = 'Inventory') AND CAST(FLOOR(i.invoice_date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "product_revenue"
+      ],
+      "mode": "set",
+      "notes": "Product revenue = invoice lines for Inventory items (dim_product_service.product_type 'Inventory'), gross_amount - discount_amount. TBD: no agreed definition. 'Previous fiscal year' = the fiscal year before the current one (calendar year, start month 1). Product breakdown uses invoice lines (fact_invoice) because the GL has no product key. Verified 2026-11-19: no rows (no data for this period)."
+    },
+    "REV-078": {
+      "question": "Show product revenue by customer for the previous fiscal year, highest to lowest.",
+      "sql": "SELECT c.customer_name AS customer, ROUND(SUM(i.gross_amount - i.discount_amount), 2) AS product_revenue FROM fact_invoice i JOIN dim_customer c ON c.customer_key = i.customer_key AND c.is_current WHERE i.product_service_key IN (SELECT product_service_key FROM dim_product_service WHERE product_type = 'Inventory') AND CAST(FLOOR(i.invoice_date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "product_revenue"
+      ],
+      "mode": "set",
+      "notes": "Product revenue = invoice lines for Inventory items (dim_product_service.product_type 'Inventory'), gross_amount - discount_amount. TBD: no agreed definition. 'Previous fiscal year' = the fiscal year before the current one (calendar year, start month 1). Customer breakdowns count named customers only (inner join to dim_customer). Verified 2026-11-19: no rows (no data for this period). Alternative \"GL 'Sales of Product Income' account (account_subtype SalesOfProductIncome)\": no rows (no data for this period).",
+      "alternatives": [
+        {
+          "label": "GL 'Sales of Product Income' account (account_subtype SalesOfProductIncome)",
+          "sql": "SELECT c.customer_name AS customer, ROUND(SUM(g.reporting_amount), 2) AS product_revenue FROM vw_gl_normalized g JOIN dim_customer c ON c.customer_key = g.customer_key AND c.is_current WHERE g.reporting_category = 'Revenue' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'SalesOfProductIncome') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 GROUP BY 1 ORDER BY 2 DESC",
+          "measures": [
+            "product_revenue"
+          ]
+        }
+      ]
+    },
+    "REV-079": {
+      "question": "How did product revenue change during the previous fiscal year compared with the preceding period?",
+      "sql": "SELECT 'current period' AS period, ROUND(SUM(i.gross_amount - i.discount_amount), 2) AS product_revenue FROM fact_invoice i WHERE i.product_service_key IN (SELECT product_service_key FROM dim_product_service WHERE product_type = 'Inventory') AND CAST(FLOOR(i.invoice_date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 UNION ALL SELECT 'preceding period', ROUND(SUM(i.gross_amount - i.discount_amount), 2) FROM fact_invoice i WHERE i.product_service_key IN (SELECT product_service_key FROM dim_product_service WHERE product_type = 'Inventory') AND CAST(FLOOR(i.invoice_date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 2) * 100 + 1 AND (year(current_date) - 2) * 100 + 12",
+      "measures": [
+        "product_revenue"
+      ],
+      "mode": "set",
+      "notes": "Product revenue = invoice lines for Inventory items (dim_product_service.product_type 'Inventory'), gross_amount - discount_amount. TBD: no agreed definition. 'Previous fiscal year' = the fiscal year before the current one (calendar year, start month 1). Preceding period = the fiscal year before that (TBD: the period of the same length immediately before). Verified 2026-11-19: 2 row(s), every figure null or 0 (no data for this period). Alternative \"GL 'Sales of Product Income' account (account_subtype SalesOfProductIncome)\": 2 row(s), every figure null or 0 (no data for this period).",
+      "alternatives": [
+        {
+          "label": "GL 'Sales of Product Income' account (account_subtype SalesOfProductIncome)",
+          "sql": "SELECT 'current period' AS period, ROUND(SUM(g.reporting_amount), 2) AS product_revenue FROM vw_gl_normalized g WHERE g.reporting_category = 'Revenue' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'SalesOfProductIncome') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 UNION ALL SELECT 'preceding period', ROUND(SUM(g.reporting_amount), 2) FROM vw_gl_normalized g WHERE g.reporting_category = 'Revenue' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'SalesOfProductIncome') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 2) * 100 + 1 AND (year(current_date) - 2) * 100 + 12",
+          "measures": [
+            "product_revenue"
+          ]
+        }
+      ]
+    },
+    "REV-080": {
+      "question": "Identify the top five contributors to product revenue for the previous fiscal year.",
+      "sql": "SELECT c.customer_name AS customer, ROUND(SUM(i.gross_amount - i.discount_amount), 2) AS product_revenue FROM fact_invoice i JOIN dim_customer c ON c.customer_key = i.customer_key AND c.is_current WHERE i.product_service_key IN (SELECT product_service_key FROM dim_product_service WHERE product_type = 'Inventory') AND CAST(FLOOR(i.invoice_date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 GROUP BY 1 ORDER BY 2 DESC LIMIT 5",
+      "measures": [
+        "product_revenue"
+      ],
+      "mode": "set",
+      "notes": "Product revenue = invoice lines for Inventory items (dim_product_service.product_type 'Inventory'), gross_amount - discount_amount. TBD: no agreed definition. 'Previous fiscal year' = the fiscal year before the current one (calendar year, start month 1). Customer breakdowns count named customers only (inner join to dim_customer). 'Top five contributors' = the five named customers with the highest figure. TBD. Verified 2026-11-19: no rows (no data for this period). Alternative \"GL 'Sales of Product Income' account (account_subtype SalesOfProductIncome)\": no rows (no data for this period).",
+      "alternatives": [
+        {
+          "label": "GL 'Sales of Product Income' account (account_subtype SalesOfProductIncome)",
+          "sql": "SELECT c.customer_name AS customer, ROUND(SUM(g.reporting_amount), 2) AS product_revenue FROM vw_gl_normalized g JOIN dim_customer c ON c.customer_key = g.customer_key AND c.is_current WHERE g.reporting_category = 'Revenue' AND g.account_key IN (SELECT account_key FROM dim_account WHERE account_subtype = 'SalesOfProductIncome') AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN (year(current_date) - 1) * 100 + 1 AND (year(current_date) - 1) * 100 + 12 GROUP BY 1 ORDER BY 2 DESC LIMIT 5",
+          "measures": [
+            "product_revenue"
+          ]
+        }
+      ]
+    },
+    "REV-081": {
+      "question": "Show recurring revenue for the last 90 days.",
+      "sql": null,
+      "measures": [],
+      "mode": "none",
+      "notes": "The data has no recurring-revenue marker (no subscription or recurring-transaction field), so no figure oracle is possible. TBD: whether the chat should answer from all revenue or say it cannot identify recurring revenue."
+    },
+    "REV-082": {
+      "question": "What was recurring revenue during the last 90 days?",
+      "sql": null,
+      "measures": [],
+      "mode": "none",
+      "notes": "The data has no recurring-revenue marker (no subscription or recurring-transaction field), so no figure oracle is possible. TBD: whether the chat should answer from all revenue or say it cannot identify recurring revenue."
+    },
+    "REV-083": {
+      "question": "Break down recurring revenue by month for the last 90 days.",
+      "sql": null,
+      "measures": [],
+      "mode": "none",
+      "notes": "The data has no recurring-revenue marker (no subscription or recurring-transaction field), so no figure oracle is possible. TBD: whether the chat should answer from all revenue or say it cannot identify recurring revenue."
+    },
+    "REV-084": {
+      "question": "Compare recurring revenue across the months in the last 90 days.",
+      "sql": null,
+      "measures": [],
+      "mode": "none",
+      "notes": "The data has no recurring-revenue marker (no subscription or recurring-transaction field), so no figure oracle is possible. TBD: whether the chat should answer from all revenue or say it cannot identify recurring revenue."
+    },
+    "REV-085": {
+      "question": "Show the trend in recurring revenue over the last 90 days.",
+      "sql": null,
+      "measures": [],
+      "mode": "none",
+      "notes": "The data has no recurring-revenue marker (no subscription or recurring-transaction field), so no figure oracle is possible. TBD: whether the chat should answer from all revenue or say it cannot identify recurring revenue."
+    },
+    "REV-086": {
+      "question": "Which customers contributed the most to recurring revenue in the last 90 days?",
+      "sql": null,
+      "measures": [],
+      "mode": "none",
+      "notes": "The data has no recurring-revenue marker (no subscription or recurring-transaction field), so no figure oracle is possible. TBD: whether the chat should answer from all revenue or say it cannot identify recurring revenue."
+    },
+    "REV-087": {
+      "question": "Which products or services generated the highest recurring revenue in the last 90 days?",
+      "sql": null,
+      "measures": [],
+      "mode": "none",
+      "notes": "The data has no recurring-revenue marker (no subscription or recurring-transaction field), so no figure oracle is possible. TBD: whether the chat should answer from all revenue or say it cannot identify recurring revenue."
+    },
+    "REV-088": {
+      "question": "Show recurring revenue by customer for the last 90 days, highest to lowest.",
+      "sql": null,
+      "measures": [],
+      "mode": "none",
+      "notes": "The data has no recurring-revenue marker (no subscription or recurring-transaction field), so no figure oracle is possible. TBD: whether the chat should answer from all revenue or say it cannot identify recurring revenue."
+    },
+    "REV-089": {
+      "question": "How did recurring revenue change during the last 90 days compared with the preceding period?",
+      "sql": null,
+      "measures": [],
+      "mode": "none",
+      "notes": "The data has no recurring-revenue marker (no subscription or recurring-transaction field), so no figure oracle is possible. TBD: whether the chat should answer from all revenue or say it cannot identify recurring revenue."
+    },
+    "REV-090": {
+      "question": "Identify the top five contributors to recurring revenue for the last 90 days.",
+      "sql": null,
+      "measures": [],
+      "mode": "none",
+      "notes": "The data has no recurring-revenue marker (no subscription or recurring-transaction field), so no figure oracle is possible. TBD: whether the chat should answer from all revenue or say it cannot identify recurring revenue."
+    },
+    "REV-091": {
+      "question": "Show revenue from customers for the last 12 months.",
+      "sql": "SELECT ROUND(SUM(g.reporting_amount), 2) AS revenue FROM vw_gl_normalized g WHERE g.reporting_category = 'Revenue' AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 11 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER)",
+      "measures": [
+        "revenue"
+      ],
+      "mode": "scalar",
+      "notes": "Revenue from customers = GL revenue (reporting_category 'Revenue'); customer breakdowns count named customers only. TBD (D-A). 'Last 12 months' = the 12 calendar months up to and including the current month. Verified 2026-11-19: 1 row(s); first: revenue=10200.77. Alternative \"named customers only (GL revenue joined to dim_customer)\": 1 row(s); first: revenue=10280.05.",
+      "alternatives": [
+        {
+          "label": "named customers only (GL revenue joined to dim_customer)",
+          "sql": "SELECT ROUND(SUM(g.reporting_amount), 2) AS revenue FROM vw_gl_normalized g WHERE g.reporting_category = 'Revenue' AND g.customer_key IN (SELECT customer_key FROM dim_customer WHERE is_current) AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 11 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER)",
+          "measures": [
+            "revenue"
+          ]
+        }
+      ]
+    },
+    "REV-092": {
+      "question": "What was revenue from customers during the last 12 months?",
+      "sql": "SELECT ROUND(SUM(g.reporting_amount), 2) AS revenue FROM vw_gl_normalized g WHERE g.reporting_category = 'Revenue' AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 11 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER)",
+      "measures": [
+        "revenue"
+      ],
+      "mode": "scalar",
+      "notes": "Revenue from customers = GL revenue (reporting_category 'Revenue'); customer breakdowns count named customers only. TBD (D-A). 'Last 12 months' = the 12 calendar months up to and including the current month. Verified 2026-11-19: 1 row(s); first: revenue=10200.77. Alternative \"named customers only (GL revenue joined to dim_customer)\": 1 row(s); first: revenue=10280.05.",
+      "alternatives": [
+        {
+          "label": "named customers only (GL revenue joined to dim_customer)",
+          "sql": "SELECT ROUND(SUM(g.reporting_amount), 2) AS revenue FROM vw_gl_normalized g WHERE g.reporting_category = 'Revenue' AND g.customer_key IN (SELECT customer_key FROM dim_customer WHERE is_current) AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 11 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER)",
+          "measures": [
+            "revenue"
+          ]
+        }
+      ]
+    },
+    "REV-093": {
+      "question": "Break down revenue from customers by month for the last 12 months.",
+      "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.reporting_amount), 2) AS revenue FROM vw_gl_normalized g WHERE g.reporting_category = 'Revenue' AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 11 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "revenue"
+      ],
+      "mode": "set",
+      "notes": "Revenue from customers = GL revenue (reporting_category 'Revenue'); customer breakdowns count named customers only. TBD (D-A). 'Last 12 months' = the 12 calendar months up to and including the current month. Verified 2026-11-19: 4 row(s); first: year_month=202605, revenue=391.25. Alternative \"named customers only (GL revenue joined to dim_customer)\": 4 row(s); first: year_month=202605, revenue=391.25.",
+      "alternatives": [
+        {
+          "label": "named customers only (GL revenue joined to dim_customer)",
+          "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.reporting_amount), 2) AS revenue FROM vw_gl_normalized g WHERE g.reporting_category = 'Revenue' AND g.customer_key IN (SELECT customer_key FROM dim_customer WHERE is_current) AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 11 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+          "measures": [
+            "revenue"
+          ]
+        }
+      ]
+    },
+    "REV-094": {
+      "question": "Compare revenue from customers across the months in the last 12 months.",
+      "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.reporting_amount), 2) AS revenue FROM vw_gl_normalized g WHERE g.reporting_category = 'Revenue' AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 11 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "revenue"
+      ],
+      "mode": "set",
+      "notes": "Revenue from customers = GL revenue (reporting_category 'Revenue'); customer breakdowns count named customers only. TBD (D-A). 'Last 12 months' = the 12 calendar months up to and including the current month. Verified 2026-11-19: 4 row(s); first: year_month=202605, revenue=391.25. Alternative \"named customers only (GL revenue joined to dim_customer)\": 4 row(s); first: year_month=202605, revenue=391.25.",
+      "alternatives": [
+        {
+          "label": "named customers only (GL revenue joined to dim_customer)",
+          "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.reporting_amount), 2) AS revenue FROM vw_gl_normalized g WHERE g.reporting_category = 'Revenue' AND g.customer_key IN (SELECT customer_key FROM dim_customer WHERE is_current) AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 11 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+          "measures": [
+            "revenue"
+          ]
+        }
+      ]
+    },
+    "REV-095": {
+      "question": "Show the trend in revenue from customers over the last 12 months.",
+      "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.reporting_amount), 2) AS revenue FROM vw_gl_normalized g WHERE g.reporting_category = 'Revenue' AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 11 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+      "measures": [
+        "revenue"
+      ],
+      "mode": "set",
+      "notes": "Revenue from customers = GL revenue (reporting_category 'Revenue'); customer breakdowns count named customers only. TBD (D-A). 'Last 12 months' = the 12 calendar months up to and including the current month. Verified 2026-11-19: 4 row(s); first: year_month=202605, revenue=391.25. Alternative \"named customers only (GL revenue joined to dim_customer)\": 4 row(s); first: year_month=202605, revenue=391.25. Alternative \"daily trend (same measure by day)\": 21 row(s); first: date_key=20260511, revenue=391.25.",
+      "alternatives": [
+        {
+          "label": "named customers only (GL revenue joined to dim_customer)",
+          "sql": "SELECT CAST(FLOOR(g.date_key / 100) AS INTEGER) AS year_month, ROUND(SUM(g.reporting_amount), 2) AS revenue FROM vw_gl_normalized g WHERE g.reporting_category = 'Revenue' AND g.customer_key IN (SELECT customer_key FROM dim_customer WHERE is_current) AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 11 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+          "measures": [
+            "revenue"
+          ]
+        },
+        {
+          "label": "daily trend (same measure by day)",
+          "sql": "SELECT g.date_key AS date_key, ROUND(SUM(g.reporting_amount), 2) AS revenue FROM vw_gl_normalized g WHERE g.reporting_category = 'Revenue' AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 11 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 1",
+          "measures": [
+            "revenue"
+          ]
+        }
+      ]
+    },
+    "REV-096": {
+      "question": "Which customers contributed the most to revenue from customers in the last 12 months?",
+      "sql": "SELECT c.customer_name AS customer, ROUND(SUM(g.reporting_amount), 2) AS revenue FROM vw_gl_normalized g JOIN dim_customer c ON c.customer_key = g.customer_key AND c.is_current WHERE g.reporting_category = 'Revenue' AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 11 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "revenue"
+      ],
+      "mode": "set",
+      "notes": "Revenue from customers = GL revenue (reporting_category 'Revenue'); customer breakdowns count named customers only. TBD (D-A). 'Last 12 months' = the 12 calendar months up to and including the current month. Customer breakdowns count named customers only (inner join to dim_customer). Verified 2026-11-19: 23 row(s); first: customer=Cool Cars, revenue=2194. Alternative \"named customers only (GL revenue joined to dim_customer)\": 23 row(s); first: customer=Cool Cars, revenue=2194.",
+      "alternatives": [
+        {
+          "label": "named customers only (GL revenue joined to dim_customer)",
+          "sql": "SELECT c.customer_name AS customer, ROUND(SUM(g.reporting_amount), 2) AS revenue FROM vw_gl_normalized g JOIN dim_customer c ON c.customer_key = g.customer_key AND c.is_current WHERE g.reporting_category = 'Revenue' AND g.customer_key IN (SELECT customer_key FROM dim_customer WHERE is_current) AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 11 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+          "measures": [
+            "revenue"
+          ]
+        }
+      ]
+    },
+    "REV-097": {
+      "question": "Which products or services generated the highest revenue from customers in the last 12 months?",
+      "sql": "SELECT COALESCE(p.product_name, 'Unassigned') AS product_service, ROUND(SUM(i.gross_amount - i.discount_amount), 2) AS revenue FROM fact_invoice i LEFT JOIN dim_product_service p ON p.product_service_key = i.product_service_key WHERE CAST(FLOOR(i.invoice_date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 11 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "revenue"
+      ],
+      "mode": "set",
+      "notes": "Revenue from customers = GL revenue (reporting_category 'Revenue'); customer breakdowns count named customers only. TBD (D-A). 'Last 12 months' = the 12 calendar months up to and including the current month. Product breakdown uses invoice lines (fact_invoice) because the GL has no product key. Verified 2026-11-19: 16 row(s); first: product_service=Rock Fountain, revenue=2433.75."
+    },
+    "REV-098": {
+      "question": "Show revenue from customers by customer for the last 12 months, highest to lowest.",
+      "sql": "SELECT c.customer_name AS customer, ROUND(SUM(g.reporting_amount), 2) AS revenue FROM vw_gl_normalized g JOIN dim_customer c ON c.customer_key = g.customer_key AND c.is_current WHERE g.reporting_category = 'Revenue' AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 11 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+      "measures": [
+        "revenue"
+      ],
+      "mode": "set",
+      "notes": "Revenue from customers = GL revenue (reporting_category 'Revenue'); customer breakdowns count named customers only. TBD (D-A). 'Last 12 months' = the 12 calendar months up to and including the current month. Customer breakdowns count named customers only (inner join to dim_customer). Verified 2026-11-19: 23 row(s); first: customer=Cool Cars, revenue=2194. Alternative \"named customers only (GL revenue joined to dim_customer)\": 23 row(s); first: customer=Cool Cars, revenue=2194.",
+      "alternatives": [
+        {
+          "label": "named customers only (GL revenue joined to dim_customer)",
+          "sql": "SELECT c.customer_name AS customer, ROUND(SUM(g.reporting_amount), 2) AS revenue FROM vw_gl_normalized g JOIN dim_customer c ON c.customer_key = g.customer_key AND c.is_current WHERE g.reporting_category = 'Revenue' AND g.customer_key IN (SELECT customer_key FROM dim_customer WHERE is_current) AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 11 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC",
+          "measures": [
+            "revenue"
+          ]
+        }
+      ]
+    },
+    "REV-099": {
+      "question": "How did revenue from customers change during the last 12 months compared with the preceding period?",
+      "sql": "SELECT 'current period' AS period, ROUND(SUM(g.reporting_amount), 2) AS revenue FROM vw_gl_normalized g WHERE g.reporting_category = 'Revenue' AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 11 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) UNION ALL SELECT 'preceding period', ROUND(SUM(g.reporting_amount), 2) FROM vw_gl_normalized g WHERE g.reporting_category = 'Revenue' AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 23 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date - INTERVAL 12 MONTH, '%Y%m') AS INTEGER)",
+      "measures": [
+        "revenue"
+      ],
+      "mode": "set",
+      "notes": "Revenue from customers = GL revenue (reporting_category 'Revenue'); customer breakdowns count named customers only. TBD (D-A). 'Last 12 months' = the 12 calendar months up to and including the current month. Preceding period = the 12 months before that (TBD: the period of the same length immediately before). Verified 2026-11-19: 2 row(s); first: period=current period, revenue=10200.77. Alternative \"named customers only (GL revenue joined to dim_customer)\": 2 row(s); first: period=current period, revenue=10280.05.",
+      "alternatives": [
+        {
+          "label": "named customers only (GL revenue joined to dim_customer)",
+          "sql": "SELECT 'current period' AS period, ROUND(SUM(g.reporting_amount), 2) AS revenue FROM vw_gl_normalized g WHERE g.reporting_category = 'Revenue' AND g.customer_key IN (SELECT customer_key FROM dim_customer WHERE is_current) AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 11 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) UNION ALL SELECT 'preceding period', ROUND(SUM(g.reporting_amount), 2) FROM vw_gl_normalized g WHERE g.reporting_category = 'Revenue' AND g.customer_key IN (SELECT customer_key FROM dim_customer WHERE is_current) AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 23 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date - INTERVAL 12 MONTH, '%Y%m') AS INTEGER)",
+          "measures": [
+            "revenue"
+          ]
+        }
+      ]
+    },
+    "REV-100": {
+      "question": "Identify the top five contributors to revenue from customers for the last 12 months.",
+      "sql": "SELECT c.customer_name AS customer, ROUND(SUM(g.reporting_amount), 2) AS revenue FROM vw_gl_normalized g JOIN dim_customer c ON c.customer_key = g.customer_key AND c.is_current WHERE g.reporting_category = 'Revenue' AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 11 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC LIMIT 5",
+      "measures": [
+        "revenue"
+      ],
+      "mode": "set",
+      "notes": "Revenue from customers = GL revenue (reporting_category 'Revenue'); customer breakdowns count named customers only. TBD (D-A). 'Last 12 months' = the 12 calendar months up to and including the current month. Customer breakdowns count named customers only (inner join to dim_customer). 'Top five contributors' = the five named customers with the highest figure. TBD. Verified 2026-11-19: 5 row(s); first: customer=Cool Cars, revenue=2194. Alternative \"named customers only (GL revenue joined to dim_customer)\": 5 row(s); first: customer=Cool Cars, revenue=2194.",
+      "alternatives": [
+        {
+          "label": "named customers only (GL revenue joined to dim_customer)",
+          "sql": "SELECT c.customer_name AS customer, ROUND(SUM(g.reporting_amount), 2) AS revenue FROM vw_gl_normalized g JOIN dim_customer c ON c.customer_key = g.customer_key AND c.is_current WHERE g.reporting_category = 'Revenue' AND g.customer_key IN (SELECT customer_key FROM dim_customer WHERE is_current) AND CAST(FLOOR(g.date_key / 100) AS INTEGER) BETWEEN CAST(strftime(current_date - INTERVAL 11 MONTH, '%Y%m') AS INTEGER) AND CAST(strftime(current_date, '%Y%m') AS INTEGER) GROUP BY 1 ORDER BY 2 DESC LIMIT 5",
+          "measures": [
+            "revenue"
           ]
         }
       ]

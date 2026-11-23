@@ -84,6 +84,9 @@ export default defineConfig({
       title: 'Ortoni Test Report',
     }],
     ['./utils/ortoniAutoOpenReporter.ts', { folderPath: 'ortoni-report', filename: 'index.html' }],
+    // One-row-per-question Excel workbook (verdict, chat answer, why it failed, thumbs down), rewritten every
+    // 25 scenarios during a long run: test-results/final-report/EleviqAI_Final_Report_latest.xlsx.
+    ['./utils/finalRunReport.ts', { outputFolder: 'test-results/final-report', checkpointEvery: 25 }],
   ],
   outputDir: 'test-results/artifacts',
   use: {

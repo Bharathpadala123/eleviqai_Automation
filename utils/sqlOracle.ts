@@ -28,11 +28,15 @@ interface OracleAlternative {
 
 interface OracleCase {
   question: string;
-  sql: string;
+  /** null when mode is 'none' (no figure oracle). */
+  sql: string | null;
   measures: string[];
-  mode: 'scalar' | 'set';
+  /** 'none': no figure oracle exists (e.g. a multi-step diagnosis); Checks 1-3 run, Check 4 is skipped. */
+  mode: 'scalar' | 'set' | 'none';
   notes?: string;
   alternatives?: OracleAlternative[];
+  /** Compare figures by size only (variances and outflows, whose sign convention is TBD). */
+  absolute?: boolean;
 }
 
 interface OracleFile {
@@ -42,7 +46,7 @@ interface OracleFile {
   cases: Record<string, OracleCase>;
 }
 
-interface ChatAnswer {
+export interface ChatAnswer {
   conversationId: string;
   messageType: string;
   text: string;
@@ -112,7 +116,7 @@ function stripHtml(html: string): string {
 }
 
 /** Newest conversation whose title is the submitted question, with its last assistant message. */
-async function fetchChatAnswer(page: Page, question: string): Promise<ChatAnswer> {
+export async function fetchChatAnswer(page: Page, question: string): Promise<ChatAnswer> {
   let answer: ChatAnswer | undefined;
   let lastError = '';
   // The answer is persisted a moment after it renders, so poll briefly. Keep the last error so a
@@ -240,7 +244,7 @@ function sameValues(a: number[], b: number[]): boolean {
   return x.every((v, i) => Math.abs(v - y[i]) <= VALUE_TOLERANCE);
 }
 
-function rowsAsText(rows: Row[] | undefined): string {
+export function rowsAsText(rows: Row[] | undefined): string {
   if (!rows) return '(none)';
   if (rows.length === 0) return '(0 rows)';
   return rows
@@ -303,7 +307,11 @@ function consistencyCheck(chatRows: Row[], rerunRows: Row[], metricNames: string
 const CORRECTNESS = 'Check 4 - Correctness (oracle figures match the chat figures)';
 
 /** Compares one oracle reading with the chat's figures. */
-function compareFigures(mode: OracleCase['mode'], expected: number[], actual: number[]): { ok: boolean; detail: string } {
+function compareFigures(mode: OracleCase['mode'], expected: number[], actual: number[], absolute = false): { ok: boolean; detail: string } {
+  if (absolute) {
+    expected = expected.map(Math.abs);
+    actual = actual.map(Math.abs);
+  }
   if (sameValues(expected, actual)) {
     return { ok: true, detail: `Oracle: ${fmt(expected)}. Chat: ${fmt(actual)}.` };
   }
@@ -336,25 +344,27 @@ function compareFigures(mode: OracleCase['mode'], expected: number[], actual: nu
 
 function correctnessCheck(oracle: OracleCase, oracleRows: Row[], answer: ChatAnswer, alternatives: Array<{ alt: OracleAlternative; rows: Row[] }>): CheckResult {
   const actual = meaningful(measureValues(answer.result ?? [], answer.metricNames));
-  const primary = compareFigures(oracle.mode, meaningful(measureValues(oracleRows, oracle.measures)), actual);
-  if (primary.ok) return { name: CORRECTNESS, status: 'PASS', detail: primary.detail };
+  const abs = oracle.absolute === true;
+  const bySize = abs ? ' (compared by size: the sign convention is TBD)' : '';
+  const primary = compareFigures(oracle.mode, meaningful(measureValues(oracleRows, oracle.measures)), actual, abs);
+  if (primary.ok) return { name: CORRECTNESS, status: 'PASS', detail: primary.detail + bySize };
   for (const { alt, rows } of alternatives) {
-    const r = compareFigures(oracle.mode, meaningful(measureValues(rows, alt.measures)), actual);
+    const r = compareFigures(oracle.mode, meaningful(measureValues(rows, alt.measures)), actual, abs);
     if (r.ok) {
       return {
         name: CORRECTNESS,
         status: 'PASS',
-        detail: `Matches the accepted alternative "${alt.label}" (the primary oracle did not match: ${primary.detail}). Alternative: ${r.detail}`,
+        detail: `Matches the accepted alternative "${alt.label}" (the primary oracle did not match: ${primary.detail}). Alternative: ${r.detail}${bySize}`,
       };
     }
   }
   const tried = alternatives.length > 0 ? ` No accepted alternative matched either (${alternatives.map((a) => a.alt.label).join('; ')}).` : '';
-  return { name: CORRECTNESS, status: 'FAIL', detail: `${primary.detail}${tried}` };
+  return { name: CORRECTNESS, status: 'FAIL', detail: `${primary.detail}${tried}${bySize}` };
 }
 
 const escapeHtml = (s: string): string => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
-function annotate(type: string, description: string): void {
+export function annotate(type: string, description: string): void {
   test.info().annotations.push({ type, description: escapeHtml(description) });
 }
 
@@ -384,12 +394,16 @@ export async function verifyChatAnswerAgainstOracle(page: Page, caseId: string, 
       : `Message type "${answer.messageType}" without SQL/result. Text: ${answer.text || '(empty)'}`,
   });
 
+  // mode 'none': no figure oracle exists for this case (its notes say why); Checks 1-3 still run.
+  const figureOracle = oracle.mode !== 'none' && typeof oracle.sql === 'string' && oracle.sql.trim() !== '';
   let oracleRows: Row[] | undefined;
   const altNotes: Array<[string, string]> = [];
-  try {
-    oracleRows = await runDataExplorerQuery(page, file.connection, oracle.sql);
-  } catch (e) {
-    checks.push({ name: 'Oracle query', status: 'FAIL', detail: `Oracle SQL failed: ${(e as Error).message}` });
+  if (figureOracle) {
+    try {
+      oracleRows = await runDataExplorerQuery(page, file.connection, oracle.sql!);
+    } catch (e) {
+      checks.push({ name: 'Oracle query', status: 'FAIL', detail: `Oracle SQL failed: ${(e as Error).message}` });
+    }
   }
 
   if (hasData) {
@@ -404,7 +418,9 @@ export async function verifyChatAnswerAgainstOracle(page: Page, caseId: string, 
       });
     }
     checks.push(faithfulnessCheck(answer));
-    if (oracleRows) {
+    if (!figureOracle) {
+      checks.push({ name: CORRECTNESS, status: 'SKIPPED', detail: `Skipped: no figure oracle for this case. ${oracle.notes ?? 'TBD'}` });
+    } else if (oracleRows) {
       const alternatives: Array<{ alt: OracleAlternative; rows: Row[] }> = [];
       for (const alt of oracle.alternatives ?? []) {
         try {
@@ -423,13 +439,16 @@ export async function verifyChatAnswerAgainstOracle(page: Page, caseId: string, 
     }
   }
 
-  annotate(`Oracle SQL${draft ? ' [DRAFT - not yet reviewed]' : ''}`, `${oracle.sql}\n\nSource: ${source} (${file.reviewStatus})${oracle.notes ? `\nNotes: ${oracle.notes}` : ''}`);
-  annotate('Oracle result', rowsAsText(oracleRows));
+  annotate(
+    `Oracle SQL${draft ? ' [DRAFT - not yet reviewed]' : ''}`,
+    `${figureOracle ? oracle.sql : '(no figure oracle for this case)'}\n\nSource: ${source} (${file.reviewStatus})${oracle.notes ? `\nNotes: ${oracle.notes}` : ''}`,
+  );
+  annotate('Oracle result', figureOracle ? rowsAsText(oracleRows) : '(not applicable: no figure oracle)');
   for (const [type, description] of altNotes) annotate(type, description);
   for (const c of checks) annotate(c.name, `${c.status}: ${c.detail}`);
 
   const failed = checks.filter((c) => c.status === 'FAIL');
-  const verdict = failed.length === 0 ? 'MATCHED' : 'NOT MATCHED';
+  const verdict = failed.length > 0 ? 'NOT MATCHED' : figureOracle ? 'MATCHED' : 'PASSED CHECKS 1-3 (no figure oracle)';
   test.info().annotations.unshift({
     type: 'SQL oracle verdict',
     description: escapeHtml(

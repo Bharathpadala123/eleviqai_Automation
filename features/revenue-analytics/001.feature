@@ -1,7 +1,8 @@
 # Generated-by: Gherkin Generator Agent · 001 · 2026-11-18 · AI-generated, human review required
-# Source: docs/normalizer/001.md (REV-001 to REV-050; REV-011 to REV-020 and REV-021 to REV-050 added 2026-11-19). Req ID is TBD for every case, so no @RQ tag is written.
+# Source: docs/normalizer/001.md (REV-001 to REV-100; REV-011 to REV-020, REV-021 to REV-050 and REV-051 to REV-100 added 2026-11-19). Req ID is TBD for every case, so no @RQ tag is written.
 # Expected figures come from the SQL oracle in docs/oracle/001.json (Stage 3.5, draft pending Gate O review).
 # TBD: response wording; metric definitions D-A/D-B/D-C (see docs/oracle/spike_REV-001-003.md).
+# REV-051 to REV-100: cases with oracle mode "none" (recurring revenue: no recurring marker in the data) run Checks 1-3 only.
 
 @001
 Feature: Revenue analytics questions in the EleviqAI chat
@@ -608,3 +609,603 @@ Feature: Revenue analytics questions in the EleviqAI chat
     When the user waits for the response to finish
     Then the response is answered as a revenue analysis
     And the answer matches the database oracle for "REV-050"
+
+  @REV-051 @regression @chat
+  Scenario: Ask the chat: Show sales after discounts for last year.
+    When the user starts a new chat
+    Then the new chat screen is displayed with the question box
+    When the user types the question "Show sales after discounts for last year."
+    Then the question box shows "Show sales after discounts for last year."
+    When the user submits the question
+    Then the question appears in the conversation
+    When the user waits for the response to finish
+    Then the response is answered as a revenue analysis
+    And the answer matches the database oracle for "REV-051"
+
+  @REV-052 @regression @chat
+  Scenario: Ask the chat: What was sales after discounts during last year?
+    When the user starts a new chat
+    Then the new chat screen is displayed with the question box
+    When the user types the question "What was sales after discounts during last year?"
+    Then the question box shows "What was sales after discounts during last year?"
+    When the user submits the question
+    Then the question appears in the conversation
+    When the user waits for the response to finish
+    Then the response is answered as a revenue analysis
+    And the answer matches the database oracle for "REV-052"
+
+  @REV-053 @regression @chat
+  Scenario: Ask the chat: Break down sales after discounts by month for last year.
+    When the user starts a new chat
+    Then the new chat screen is displayed with the question box
+    When the user types the question "Break down sales after discounts by month for last year."
+    Then the question box shows "Break down sales after discounts by month for last year."
+    When the user submits the question
+    Then the question appears in the conversation
+    When the user waits for the response to finish
+    Then the response is answered as a revenue analysis
+    And the answer matches the database oracle for "REV-053"
+
+  @REV-054 @regression @chat
+  Scenario: Ask the chat: Compare sales after discounts across the months in last year.
+    When the user starts a new chat
+    Then the new chat screen is displayed with the question box
+    When the user types the question "Compare sales after discounts across the months in last year."
+    Then the question box shows "Compare sales after discounts across the months in last year."
+    When the user submits the question
+    Then the question appears in the conversation
+    When the user waits for the response to finish
+    Then the response is answered as a revenue analysis
+    And the answer matches the database oracle for "REV-054"
+
+  @REV-055 @regression @chat
+  Scenario: Ask the chat: Show the trend in sales after discounts over last year.
+    When the user starts a new chat
+    Then the new chat screen is displayed with the question box
+    When the user types the question "Show the trend in sales after discounts over last year."
+    Then the question box shows "Show the trend in sales after discounts over last year."
+    When the user submits the question
+    Then the question appears in the conversation
+    When the user waits for the response to finish
+    Then the response is answered as a revenue analysis
+    And the answer matches the database oracle for "REV-055"
+
+  @REV-056 @regression @chat
+  Scenario: Ask the chat: Which customers contributed the most to sales after discounts in last year?
+    When the user starts a new chat
+    Then the new chat screen is displayed with the question box
+    When the user types the question "Which customers contributed the most to sales after discounts in last year?"
+    Then the question box shows "Which customers contributed the most to sales after discounts in last year?"
+    When the user submits the question
+    Then the question appears in the conversation
+    When the user waits for the response to finish
+    Then the response is answered as a revenue analysis
+    And the answer matches the database oracle for "REV-056"
+
+  @REV-057 @regression @chat
+  Scenario: Ask the chat: Which products or services generated the highest sales after discounts in last year?
+    When the user starts a new chat
+    Then the new chat screen is displayed with the question box
+    When the user types the question "Which products or services generated the highest sales after discounts in last year?"
+    Then the question box shows "Which products or services generated the highest sales after discounts in last year?"
+    When the user submits the question
+    Then the question appears in the conversation
+    When the user waits for the response to finish
+    Then the response is answered as a revenue analysis
+    And the answer matches the database oracle for "REV-057"
+
+  @REV-058 @regression @chat
+  Scenario: Ask the chat: Show sales after discounts by customer for last year, highest to lowest.
+    When the user starts a new chat
+    Then the new chat screen is displayed with the question box
+    When the user types the question "Show sales after discounts by customer for last year, highest to lowest."
+    Then the question box shows "Show sales after discounts by customer for last year, highest to lowest."
+    When the user submits the question
+    Then the question appears in the conversation
+    When the user waits for the response to finish
+    Then the response is answered as a revenue analysis
+    And the answer matches the database oracle for "REV-058"
+
+  @REV-059 @regression @chat
+  Scenario: Ask the chat: How did sales after discounts change during last year compared with the preceding period?
+    When the user starts a new chat
+    Then the new chat screen is displayed with the question box
+    When the user types the question "How did sales after discounts change during last year compared with the preceding period?"
+    Then the question box shows "How did sales after discounts change during last year compared with the preceding period?"
+    When the user submits the question
+    Then the question appears in the conversation
+    When the user waits for the response to finish
+    Then the response is answered as a revenue analysis
+    And the answer matches the database oracle for "REV-059"
+
+  @REV-060 @regression @chat
+  Scenario: Ask the chat: Identify the top five contributors to sales after discounts for last year.
+    When the user starts a new chat
+    Then the new chat screen is displayed with the question box
+    When the user types the question "Identify the top five contributors to sales after discounts for last year."
+    Then the question box shows "Identify the top five contributors to sales after discounts for last year."
+    When the user submits the question
+    Then the question appears in the conversation
+    When the user waits for the response to finish
+    Then the response is answered as a revenue analysis
+    And the answer matches the database oracle for "REV-060"
+
+  @REV-061 @regression @chat
+  Scenario: Ask the chat: Show service revenue for the current fiscal year.
+    When the user starts a new chat
+    Then the new chat screen is displayed with the question box
+    When the user types the question "Show service revenue for the current fiscal year."
+    Then the question box shows "Show service revenue for the current fiscal year."
+    When the user submits the question
+    Then the question appears in the conversation
+    When the user waits for the response to finish
+    Then the response is answered as a revenue analysis
+    And the answer matches the database oracle for "REV-061"
+
+  @REV-062 @regression @chat
+  Scenario: Ask the chat: What was service revenue during the current fiscal year?
+    When the user starts a new chat
+    Then the new chat screen is displayed with the question box
+    When the user types the question "What was service revenue during the current fiscal year?"
+    Then the question box shows "What was service revenue during the current fiscal year?"
+    When the user submits the question
+    Then the question appears in the conversation
+    When the user waits for the response to finish
+    Then the response is answered as a revenue analysis
+    And the answer matches the database oracle for "REV-062"
+
+  @REV-063 @regression @chat
+  Scenario: Ask the chat: Break down service revenue by month for the current fiscal year.
+    When the user starts a new chat
+    Then the new chat screen is displayed with the question box
+    When the user types the question "Break down service revenue by month for the current fiscal year."
+    Then the question box shows "Break down service revenue by month for the current fiscal year."
+    When the user submits the question
+    Then the question appears in the conversation
+    When the user waits for the response to finish
+    Then the response is answered as a revenue analysis
+    And the answer matches the database oracle for "REV-063"
+
+  @REV-064 @regression @chat
+  Scenario: Ask the chat: Compare service revenue across the months in the current fiscal year.
+    When the user starts a new chat
+    Then the new chat screen is displayed with the question box
+    When the user types the question "Compare service revenue across the months in the current fiscal year."
+    Then the question box shows "Compare service revenue across the months in the current fiscal year."
+    When the user submits the question
+    Then the question appears in the conversation
+    When the user waits for the response to finish
+    Then the response is answered as a revenue analysis
+    And the answer matches the database oracle for "REV-064"
+
+  @REV-065 @regression @chat
+  Scenario: Ask the chat: Show the trend in service revenue over the current fiscal year.
+    When the user starts a new chat
+    Then the new chat screen is displayed with the question box
+    When the user types the question "Show the trend in service revenue over the current fiscal year."
+    Then the question box shows "Show the trend in service revenue over the current fiscal year."
+    When the user submits the question
+    Then the question appears in the conversation
+    When the user waits for the response to finish
+    Then the response is answered as a revenue analysis
+    And the answer matches the database oracle for "REV-065"
+
+  @REV-066 @regression @chat
+  Scenario: Ask the chat: Which customers contributed the most to service revenue in the current fiscal year?
+    When the user starts a new chat
+    Then the new chat screen is displayed with the question box
+    When the user types the question "Which customers contributed the most to service revenue in the current fiscal year?"
+    Then the question box shows "Which customers contributed the most to service revenue in the current fiscal year?"
+    When the user submits the question
+    Then the question appears in the conversation
+    When the user waits for the response to finish
+    Then the response is answered as a revenue analysis
+    And the answer matches the database oracle for "REV-066"
+
+  @REV-067 @regression @chat
+  Scenario: Ask the chat: Which products or services generated the highest service revenue in the current fiscal year?
+    When the user starts a new chat
+    Then the new chat screen is displayed with the question box
+    When the user types the question "Which products or services generated the highest service revenue in the current fiscal year?"
+    Then the question box shows "Which products or services generated the highest service revenue in the current fiscal year?"
+    When the user submits the question
+    Then the question appears in the conversation
+    When the user waits for the response to finish
+    Then the response is answered as a revenue analysis
+    And the answer matches the database oracle for "REV-067"
+
+  @REV-068 @regression @chat
+  Scenario: Ask the chat: Show service revenue by customer for the current fiscal year, highest to lowest.
+    When the user starts a new chat
+    Then the new chat screen is displayed with the question box
+    When the user types the question "Show service revenue by customer for the current fiscal year, highest to lowest."
+    Then the question box shows "Show service revenue by customer for the current fiscal year, highest to lowest."
+    When the user submits the question
+    Then the question appears in the conversation
+    When the user waits for the response to finish
+    Then the response is answered as a revenue analysis
+    And the answer matches the database oracle for "REV-068"
+
+  @REV-069 @regression @chat
+  Scenario: Ask the chat: How did service revenue change during the current fiscal year compared with the preceding period?
+    When the user starts a new chat
+    Then the new chat screen is displayed with the question box
+    When the user types the question "How did service revenue change during the current fiscal year compared with the preceding period?"
+    Then the question box shows "How did service revenue change during the current fiscal year compared with the preceding period?"
+    When the user submits the question
+    Then the question appears in the conversation
+    When the user waits for the response to finish
+    Then the response is answered as a revenue analysis
+    And the answer matches the database oracle for "REV-069"
+
+  @REV-070 @regression @chat
+  Scenario: Ask the chat: Identify the top five contributors to service revenue for the current fiscal year.
+    When the user starts a new chat
+    Then the new chat screen is displayed with the question box
+    When the user types the question "Identify the top five contributors to service revenue for the current fiscal year."
+    Then the question box shows "Identify the top five contributors to service revenue for the current fiscal year."
+    When the user submits the question
+    Then the question appears in the conversation
+    When the user waits for the response to finish
+    Then the response is answered as a revenue analysis
+    And the answer matches the database oracle for "REV-070"
+
+  @REV-071 @regression @chat
+  Scenario: Ask the chat: Show product revenue for the previous fiscal year.
+    When the user starts a new chat
+    Then the new chat screen is displayed with the question box
+    When the user types the question "Show product revenue for the previous fiscal year."
+    Then the question box shows "Show product revenue for the previous fiscal year."
+    When the user submits the question
+    Then the question appears in the conversation
+    When the user waits for the response to finish
+    Then the response is answered as a revenue analysis
+    And the answer matches the database oracle for "REV-071"
+
+  @REV-072 @regression @chat
+  Scenario: Ask the chat: What was product revenue during the previous fiscal year?
+    When the user starts a new chat
+    Then the new chat screen is displayed with the question box
+    When the user types the question "What was product revenue during the previous fiscal year?"
+    Then the question box shows "What was product revenue during the previous fiscal year?"
+    When the user submits the question
+    Then the question appears in the conversation
+    When the user waits for the response to finish
+    Then the response is answered as a revenue analysis
+    And the answer matches the database oracle for "REV-072"
+
+  @REV-073 @regression @chat
+  Scenario: Ask the chat: Break down product revenue by month for the previous fiscal year.
+    When the user starts a new chat
+    Then the new chat screen is displayed with the question box
+    When the user types the question "Break down product revenue by month for the previous fiscal year."
+    Then the question box shows "Break down product revenue by month for the previous fiscal year."
+    When the user submits the question
+    Then the question appears in the conversation
+    When the user waits for the response to finish
+    Then the response is answered as a revenue analysis
+    And the answer matches the database oracle for "REV-073"
+
+  @REV-074 @regression @chat
+  Scenario: Ask the chat: Compare product revenue across the months in the previous fiscal year.
+    When the user starts a new chat
+    Then the new chat screen is displayed with the question box
+    When the user types the question "Compare product revenue across the months in the previous fiscal year."
+    Then the question box shows "Compare product revenue across the months in the previous fiscal year."
+    When the user submits the question
+    Then the question appears in the conversation
+    When the user waits for the response to finish
+    Then the response is answered as a revenue analysis
+    And the answer matches the database oracle for "REV-074"
+
+  @REV-075 @regression @chat
+  Scenario: Ask the chat: Show the trend in product revenue over the previous fiscal year.
+    When the user starts a new chat
+    Then the new chat screen is displayed with the question box
+    When the user types the question "Show the trend in product revenue over the previous fiscal year."
+    Then the question box shows "Show the trend in product revenue over the previous fiscal year."
+    When the user submits the question
+    Then the question appears in the conversation
+    When the user waits for the response to finish
+    Then the response is answered as a revenue analysis
+    And the answer matches the database oracle for "REV-075"
+
+  @REV-076 @regression @chat
+  Scenario: Ask the chat: Which customers contributed the most to product revenue in the previous fiscal year?
+    When the user starts a new chat
+    Then the new chat screen is displayed with the question box
+    When the user types the question "Which customers contributed the most to product revenue in the previous fiscal year?"
+    Then the question box shows "Which customers contributed the most to product revenue in the previous fiscal year?"
+    When the user submits the question
+    Then the question appears in the conversation
+    When the user waits for the response to finish
+    Then the response is answered as a revenue analysis
+    And the answer matches the database oracle for "REV-076"
+
+  @REV-077 @regression @chat
+  Scenario: Ask the chat: Which products or services generated the highest product revenue in the previous fiscal year?
+    When the user starts a new chat
+    Then the new chat screen is displayed with the question box
+    When the user types the question "Which products or services generated the highest product revenue in the previous fiscal year?"
+    Then the question box shows "Which products or services generated the highest product revenue in the previous fiscal year?"
+    When the user submits the question
+    Then the question appears in the conversation
+    When the user waits for the response to finish
+    Then the response is answered as a revenue analysis
+    And the answer matches the database oracle for "REV-077"
+
+  @REV-078 @regression @chat
+  Scenario: Ask the chat: Show product revenue by customer for the previous fiscal year, highest to lowest.
+    When the user starts a new chat
+    Then the new chat screen is displayed with the question box
+    When the user types the question "Show product revenue by customer for the previous fiscal year, highest to lowest."
+    Then the question box shows "Show product revenue by customer for the previous fiscal year, highest to lowest."
+    When the user submits the question
+    Then the question appears in the conversation
+    When the user waits for the response to finish
+    Then the response is answered as a revenue analysis
+    And the answer matches the database oracle for "REV-078"
+
+  @REV-079 @regression @chat
+  Scenario: Ask the chat: How did product revenue change during the previous fiscal year compared with the preceding period?
+    When the user starts a new chat
+    Then the new chat screen is displayed with the question box
+    When the user types the question "How did product revenue change during the previous fiscal year compared with the preceding period?"
+    Then the question box shows "How did product revenue change during the previous fiscal year compared with the preceding period?"
+    When the user submits the question
+    Then the question appears in the conversation
+    When the user waits for the response to finish
+    Then the response is answered as a revenue analysis
+    And the answer matches the database oracle for "REV-079"
+
+  @REV-080 @regression @chat
+  Scenario: Ask the chat: Identify the top five contributors to product revenue for the previous fiscal year.
+    When the user starts a new chat
+    Then the new chat screen is displayed with the question box
+    When the user types the question "Identify the top five contributors to product revenue for the previous fiscal year."
+    Then the question box shows "Identify the top five contributors to product revenue for the previous fiscal year."
+    When the user submits the question
+    Then the question appears in the conversation
+    When the user waits for the response to finish
+    Then the response is answered as a revenue analysis
+    And the answer matches the database oracle for "REV-080"
+
+  @REV-081 @regression @chat
+  Scenario: Ask the chat: Show recurring revenue for the last 90 days.
+    When the user starts a new chat
+    Then the new chat screen is displayed with the question box
+    When the user types the question "Show recurring revenue for the last 90 days."
+    Then the question box shows "Show recurring revenue for the last 90 days."
+    When the user submits the question
+    Then the question appears in the conversation
+    When the user waits for the response to finish
+    Then the response is answered as a revenue analysis
+    And the answer matches the database oracle for "REV-081"
+
+  @REV-082 @regression @chat
+  Scenario: Ask the chat: What was recurring revenue during the last 90 days?
+    When the user starts a new chat
+    Then the new chat screen is displayed with the question box
+    When the user types the question "What was recurring revenue during the last 90 days?"
+    Then the question box shows "What was recurring revenue during the last 90 days?"
+    When the user submits the question
+    Then the question appears in the conversation
+    When the user waits for the response to finish
+    Then the response is answered as a revenue analysis
+    And the answer matches the database oracle for "REV-082"
+
+  @REV-083 @regression @chat
+  Scenario: Ask the chat: Break down recurring revenue by month for the last 90 days.
+    When the user starts a new chat
+    Then the new chat screen is displayed with the question box
+    When the user types the question "Break down recurring revenue by month for the last 90 days."
+    Then the question box shows "Break down recurring revenue by month for the last 90 days."
+    When the user submits the question
+    Then the question appears in the conversation
+    When the user waits for the response to finish
+    Then the response is answered as a revenue analysis
+    And the answer matches the database oracle for "REV-083"
+
+  @REV-084 @regression @chat
+  Scenario: Ask the chat: Compare recurring revenue across the months in the last 90 days.
+    When the user starts a new chat
+    Then the new chat screen is displayed with the question box
+    When the user types the question "Compare recurring revenue across the months in the last 90 days."
+    Then the question box shows "Compare recurring revenue across the months in the last 90 days."
+    When the user submits the question
+    Then the question appears in the conversation
+    When the user waits for the response to finish
+    Then the response is answered as a revenue analysis
+    And the answer matches the database oracle for "REV-084"
+
+  @REV-085 @regression @chat
+  Scenario: Ask the chat: Show the trend in recurring revenue over the last 90 days.
+    When the user starts a new chat
+    Then the new chat screen is displayed with the question box
+    When the user types the question "Show the trend in recurring revenue over the last 90 days."
+    Then the question box shows "Show the trend in recurring revenue over the last 90 days."
+    When the user submits the question
+    Then the question appears in the conversation
+    When the user waits for the response to finish
+    Then the response is answered as a revenue analysis
+    And the answer matches the database oracle for "REV-085"
+
+  @REV-086 @regression @chat
+  Scenario: Ask the chat: Which customers contributed the most to recurring revenue in the last 90 days?
+    When the user starts a new chat
+    Then the new chat screen is displayed with the question box
+    When the user types the question "Which customers contributed the most to recurring revenue in the last 90 days?"
+    Then the question box shows "Which customers contributed the most to recurring revenue in the last 90 days?"
+    When the user submits the question
+    Then the question appears in the conversation
+    When the user waits for the response to finish
+    Then the response is answered as a revenue analysis
+    And the answer matches the database oracle for "REV-086"
+
+  @REV-087 @regression @chat
+  Scenario: Ask the chat: Which products or services generated the highest recurring revenue in the last 90 days?
+    When the user starts a new chat
+    Then the new chat screen is displayed with the question box
+    When the user types the question "Which products or services generated the highest recurring revenue in the last 90 days?"
+    Then the question box shows "Which products or services generated the highest recurring revenue in the last 90 days?"
+    When the user submits the question
+    Then the question appears in the conversation
+    When the user waits for the response to finish
+    Then the response is answered as a revenue analysis
+    And the answer matches the database oracle for "REV-087"
+
+  @REV-088 @regression @chat
+  Scenario: Ask the chat: Show recurring revenue by customer for the last 90 days, highest to lowest.
+    When the user starts a new chat
+    Then the new chat screen is displayed with the question box
+    When the user types the question "Show recurring revenue by customer for the last 90 days, highest to lowest."
+    Then the question box shows "Show recurring revenue by customer for the last 90 days, highest to lowest."
+    When the user submits the question
+    Then the question appears in the conversation
+    When the user waits for the response to finish
+    Then the response is answered as a revenue analysis
+    And the answer matches the database oracle for "REV-088"
+
+  @REV-089 @regression @chat
+  Scenario: Ask the chat: How did recurring revenue change during the last 90 days compared with the preceding period?
+    When the user starts a new chat
+    Then the new chat screen is displayed with the question box
+    When the user types the question "How did recurring revenue change during the last 90 days compared with the preceding period?"
+    Then the question box shows "How did recurring revenue change during the last 90 days compared with the preceding period?"
+    When the user submits the question
+    Then the question appears in the conversation
+    When the user waits for the response to finish
+    Then the response is answered as a revenue analysis
+    And the answer matches the database oracle for "REV-089"
+
+  @REV-090 @regression @chat
+  Scenario: Ask the chat: Identify the top five contributors to recurring revenue for the last 90 days.
+    When the user starts a new chat
+    Then the new chat screen is displayed with the question box
+    When the user types the question "Identify the top five contributors to recurring revenue for the last 90 days."
+    Then the question box shows "Identify the top five contributors to recurring revenue for the last 90 days."
+    When the user submits the question
+    Then the question appears in the conversation
+    When the user waits for the response to finish
+    Then the response is answered as a revenue analysis
+    And the answer matches the database oracle for "REV-090"
+
+  @REV-091 @regression @chat
+  Scenario: Ask the chat: Show revenue from customers for the last 12 months.
+    When the user starts a new chat
+    Then the new chat screen is displayed with the question box
+    When the user types the question "Show revenue from customers for the last 12 months."
+    Then the question box shows "Show revenue from customers for the last 12 months."
+    When the user submits the question
+    Then the question appears in the conversation
+    When the user waits for the response to finish
+    Then the response is answered as a revenue analysis
+    And the answer matches the database oracle for "REV-091"
+
+  @REV-092 @regression @chat
+  Scenario: Ask the chat: What was revenue from customers during the last 12 months?
+    When the user starts a new chat
+    Then the new chat screen is displayed with the question box
+    When the user types the question "What was revenue from customers during the last 12 months?"
+    Then the question box shows "What was revenue from customers during the last 12 months?"
+    When the user submits the question
+    Then the question appears in the conversation
+    When the user waits for the response to finish
+    Then the response is answered as a revenue analysis
+    And the answer matches the database oracle for "REV-092"
+
+  @REV-093 @regression @chat
+  Scenario: Ask the chat: Break down revenue from customers by month for the last 12 months.
+    When the user starts a new chat
+    Then the new chat screen is displayed with the question box
+    When the user types the question "Break down revenue from customers by month for the last 12 months."
+    Then the question box shows "Break down revenue from customers by month for the last 12 months."
+    When the user submits the question
+    Then the question appears in the conversation
+    When the user waits for the response to finish
+    Then the response is answered as a revenue analysis
+    And the answer matches the database oracle for "REV-093"
+
+  @REV-094 @regression @chat
+  Scenario: Ask the chat: Compare revenue from customers across the months in the last 12 months.
+    When the user starts a new chat
+    Then the new chat screen is displayed with the question box
+    When the user types the question "Compare revenue from customers across the months in the last 12 months."
+    Then the question box shows "Compare revenue from customers across the months in the last 12 months."
+    When the user submits the question
+    Then the question appears in the conversation
+    When the user waits for the response to finish
+    Then the response is answered as a revenue analysis
+    And the answer matches the database oracle for "REV-094"
+
+  @REV-095 @regression @chat
+  Scenario: Ask the chat: Show the trend in revenue from customers over the last 12 months.
+    When the user starts a new chat
+    Then the new chat screen is displayed with the question box
+    When the user types the question "Show the trend in revenue from customers over the last 12 months."
+    Then the question box shows "Show the trend in revenue from customers over the last 12 months."
+    When the user submits the question
+    Then the question appears in the conversation
+    When the user waits for the response to finish
+    Then the response is answered as a revenue analysis
+    And the answer matches the database oracle for "REV-095"
+
+  @REV-096 @regression @chat
+  Scenario: Ask the chat: Which customers contributed the most to revenue from customers in the last 12 months?
+    When the user starts a new chat
+    Then the new chat screen is displayed with the question box
+    When the user types the question "Which customers contributed the most to revenue from customers in the last 12 months?"
+    Then the question box shows "Which customers contributed the most to revenue from customers in the last 12 months?"
+    When the user submits the question
+    Then the question appears in the conversation
+    When the user waits for the response to finish
+    Then the response is answered as a revenue analysis
+    And the answer matches the database oracle for "REV-096"
+
+  @REV-097 @regression @chat
+  Scenario: Ask the chat: Which products or services generated the highest revenue from customers in the last 12 months?
+    When the user starts a new chat
+    Then the new chat screen is displayed with the question box
+    When the user types the question "Which products or services generated the highest revenue from customers in the last 12 months?"
+    Then the question box shows "Which products or services generated the highest revenue from customers in the last 12 months?"
+    When the user submits the question
+    Then the question appears in the conversation
+    When the user waits for the response to finish
+    Then the response is answered as a revenue analysis
+    And the answer matches the database oracle for "REV-097"
+
+  @REV-098 @regression @chat
+  Scenario: Ask the chat: Show revenue from customers by customer for the last 12 months, highest to lowest.
+    When the user starts a new chat
+    Then the new chat screen is displayed with the question box
+    When the user types the question "Show revenue from customers by customer for the last 12 months, highest to lowest."
+    Then the question box shows "Show revenue from customers by customer for the last 12 months, highest to lowest."
+    When the user submits the question
+    Then the question appears in the conversation
+    When the user waits for the response to finish
+    Then the response is answered as a revenue analysis
+    And the answer matches the database oracle for "REV-098"
+
+  @REV-099 @regression @chat
+  Scenario: Ask the chat: How did revenue from customers change during the last 12 months compared with the preceding period?
+    When the user starts a new chat
+    Then the new chat screen is displayed with the question box
+    When the user types the question "How did revenue from customers change during the last 12 months compared with the preceding period?"
+    Then the question box shows "How did revenue from customers change during the last 12 months compared with the preceding period?"
+    When the user submits the question
+    Then the question appears in the conversation
+    When the user waits for the response to finish
+    Then the response is answered as a revenue analysis
+    And the answer matches the database oracle for "REV-099"
+
+  @REV-100 @regression @chat
+  Scenario: Ask the chat: Identify the top five contributors to revenue from customers for the last 12 months.
+    When the user starts a new chat
+    Then the new chat screen is displayed with the question box
+    When the user types the question "Identify the top five contributors to revenue from customers for the last 12 months."
+    Then the question box shows "Identify the top five contributors to revenue from customers for the last 12 months."
+    When the user submits the question
+    Then the question appears in the conversation
+    When the user waits for the response to finish
+    Then the response is answered as a revenue analysis
+    And the answer matches the database oracle for "REV-100"
