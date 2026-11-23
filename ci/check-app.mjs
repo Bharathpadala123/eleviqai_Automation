@@ -57,7 +57,15 @@ async function look(browser) {
     if (answer.mitigated === 'challenge') return { kind: 'cloudflare', detail: `the app's API answered HTTP ${answer.status} with a Cloudflare check` };
     if (reachOnly) {
       if (answer.status >= 500) return { kind: 'down', detail: `the app's health check answered HTTP ${answer.status}` };
-      return { kind: 'ok', detail: `answers GitHub's machine: page HTTP ${response?.status()}, health check HTTP ${answer.status}, ${seconds()} s` };
+      // For information: what Playwright's own HTTP client gets (the tests only use the browser).
+      const client = await context.request
+        .get(new URL('/api/health', BASE).href, { timeout: 15_000, failOnStatusCode: false })
+        .then((r) => `HTTP ${r.status()}${r.headers()['cf-mitigated'] ? ` (cf-mitigated: ${r.headers()['cf-mitigated']})` : ''}`)
+        .catch((error) => firstLine(error));
+      return {
+        kind: 'ok',
+        detail: `answers GitHub's machine: page HTTP ${response?.status()}, health check HTTP ${answer.status} in the browser, ${client} outside the browser, ${seconds()} s`,
+      };
     }
     if (answer.status === 401) return { kind: 'signed-out', detail: 'the app does not accept the saved sign-in (HTTP 401)' };
     if (answer.status >= 400) return { kind: 'down', detail: `the sign-in check answered HTTP ${answer.status}` };

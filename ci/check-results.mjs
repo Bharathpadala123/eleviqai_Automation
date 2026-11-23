@@ -35,7 +35,7 @@ let text =
   `${rows.length} questions: ${passed} passed, ${wrong} failed the answer checks, ${broken} failed before the answer could be checked, ` +
   `${rows.length - finished} not run. ${minutes} min.`;
 if (trial) {
-  for (const r of rows) text += `\n${r.caseId}: ${r.status}${r.verdict ? `, ${r.verdict}` : ''}${r.durationS ? `, ${r.durationS} s` : ''}${r.failedStep ? `, failed at "${r.failedStep}"` : ''}`;
+  for (const r of rows) text += `\n${r.caseId}: ${r.status}${r.verdict ? `, ${r.verdict}` : ''}${r.durationS ? `, ${r.durationS} s` : ''}${r.failedStep ? `, failed at "${r.failedStep}"` : ''}${r.why ? `: ${r.why.split('\n')[0].slice(0, 160)}` : ''}${r.envNotes ? ` [${r.envNotes.slice(0, 160)}]` : ''}`;
 }
 annotate('notice', `${category} results`, text);
 
