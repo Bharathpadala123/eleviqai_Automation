@@ -90,6 +90,10 @@ jobs:
         if: steps.mode.outputs.mode != 'skip'
         run: npx playwright install --with-deps chromium
 
+      - name: Can GitHub reach the app
+        if: steps.mode.outputs.mode != 'skip'
+        run: node ci/check-app.mjs reach
+
       - name: Prepare the saved sign-in
         if: steps.mode.outputs.mode != 'skip'
         env:
