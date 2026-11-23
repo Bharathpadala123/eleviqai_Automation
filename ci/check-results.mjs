@@ -45,6 +45,9 @@ if (answered === 0) {
   annotate('error', `${category}: no answers`, `None of the ${rows.length} questions got an answer that could be checked.${why}`);
   process.exit(1);
 }
+if (rows.length > finished) {
+  annotate('warning', `${category}: not all asked`, `${rows.length - finished} of ${rows.length} questions were not asked, because the time limit was reached or the run was stopped. The Excel lists them as Not run.`);
+}
 if (broken > finished * 0.2) {
   annotate('warning', `${category}: app problems`, `${broken} of ${finished} questions failed before their answer could be checked (slow or unavailable app).`);
 }

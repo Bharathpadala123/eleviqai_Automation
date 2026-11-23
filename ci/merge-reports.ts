@@ -100,7 +100,7 @@ const meta: RunMeta = {
   workers: 1,
   retries: 0,
   finished: rows.filter((r) => r.status !== 'Not run').length,
-  note: `GitHub Actions run ${runNumber}${trial ? ` (trial of ${rows.length} questions)` : ''}: ${parts.length} of ${new Set(expected.map((q) => q.prefix)).size} category jobs delivered results, two jobs at a time, one question at a time in each. ${runUrl}`.trim(),
+  note: `GitHub Actions run ${runNumber}${trial ? ` (trial of ${rows.length} questions)` : ''}: ${parts.length} of ${new Set(expected.map((q) => q.prefix)).size} category jobs delivered results, ${process.env.PARALLEL || '2'} jobs at a time, one question at a time in each. ${runUrl}`.trim(),
   evidenceNote:
     'Sheets: All Questions (one row per question), Failed, Thumbs Down Log, Not Run. Screenshots, videos and the HTML reports are not made on GitHub, because the repository is public.',
 };

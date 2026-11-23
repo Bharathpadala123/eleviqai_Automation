@@ -1,4 +1,5 @@
-# Asks the chat all 800 regression questions every night at 9:00 pm India time and makes one Excel report.
+# Asks the chat all 800 regression questions every night from 9:00 pm India time and makes one Excel report, ready by
+# 7:00 am at the latest.
 # How to use it, and where the Excel is: README, "Nightly run on GitHub Actions".
 name: Nightly 800 questions
 
@@ -13,8 +14,14 @@ on:
         type: choice
         options: [trial, all]
         default: trial
+      at_a_time:
+        description: 'How many categories are asked at the same time (2 = about 6.5 hours for all 800, 3 = about 4.5)'
+        type: choice
+        options: ['1', '2', '3', '4']
+        default: '2'
   push:
-    # A push to this branch runs the trial, or all 800 if the commit message contains [run-800].
+    # A push to this branch runs the trial, or all 800 if the commit message contains [run-800]. [3-at-a-time] in the
+    # message sets how many categories are asked at the same time.
     branches: [nightly-800]
 
 permissions:
@@ -27,7 +34,7 @@ concurrency:
 
 env:
   # First and last night of the 9 pm runs (India dates). Outside these dates the schedule does nothing.
-  FIRST_NIGHT: '2026-11-25'
+  FIRST_NIGHT: '2026-11-24'
   LAST_NIGHT: '2026-12-08'
   TRIAL_QUESTIONS: REV-073 REV-083 PRO-071 EXP-046 EXP-048 CAS-030 BUD-047 COM-037 AMB-020 UNS-004
   BASE_URL: https://app.eleviqai.com/
@@ -45,27 +52,44 @@ jobs:
     timeout-minutes: 30
     outputs:
       mode: ${{ steps.mode.outputs.mode }}
+      parallel: ${{ steps.mode.outputs.parallel }}
+      stop_at: ${{ steps.mode.outputs.stop_at }}
     steps:
       - name: Decide what to run
         id: mode
         env:
           EVENT: ${{ github.event_name }}
           CHOICE: ${{ inputs.questions }}
+          AT_A_TIME: ${{ inputs.at_a_time }}
           COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
         run: |
+          parallel=2
+          stop_at=0
           case "$EVENT" in
             schedule)
               # The date of the evening this run belongs to, also when GitHub starts it after midnight.
               night=$(date -d '-12 hours' +%F)
               if [[ "$night" < "$FIRST_NIGHT" || "$night" > "$LAST_NIGHT" ]]; then mode=skip; else mode=all; fi
+              # No question is asked after 6:45 am the next morning, so the Excel is there by 7:00 am.
+              stop_at=$(( $(date -d "$night 00:00" +%s) + 86400 + 6 * 3600 + 45 * 60 ))
               ;;
-            workflow_dispatch) mode=$CHOICE ;;
-            *) if [[ "$COMMIT_MESSAGE" == *'[run-800]'* ]]; then mode=all; else mode=trial; fi ;;
+            workflow_dispatch)
+              mode=$CHOICE
+              parallel=${AT_A_TIME:-2}
+              ;;
+            *)
+              if [[ "$COMMIT_MESSAGE" == *'[run-800]'* ]]; then mode=all; else mode=trial; fi
+              if [[ "$COMMIT_MESSAGE" =~ \[([1-4])-at-a-time\] ]]; then parallel=${BASH_REMATCH[1]}; fi
+              ;;
           esac
-          echo "mode=$mode" >> "$GITHUB_OUTPUT"
+          {
+            echo "mode=$mode"
+            echo "parallel=$parallel"
+            echo "stop_at=$stop_at"
+          } >> "$GITHUB_OUTPUT"
           case "$mode" in
-            all) text='All 800 questions.' ;;
-            trial) text="Trial: $TRIAL_QUESTIONS" ;;
+            all) text="All 800 questions, $parallel categories at a time." ;;
+            trial) text="Trial, $parallel categories at a time: $TRIAL_QUESTIONS" ;;
             *) text="Nothing to run: the 9 pm runs are set for $FIRST_NIGHT to $LAST_NIGHT." ;;
           esac
           echo "::notice title=What this run does::$text"
@@ -112,12 +136,12 @@ jobs:
     timeout-minutes: 200
     strategy:
       fail-fast: false
-      # Two categories at a time: about 6 to 7 hours for all 800.
-      max-parallel: 2
+      max-parallel: ${{ fromJSON(needs.check.outputs.parallel) }}
       matrix:
         category: [REV, PRO, EXP, CAS, BUD, COM, AMB, UNS]
     env:
       MODE: ${{ needs.check.outputs.mode }}
+      STOP_AT: ${{ needs.check.outputs.stop_at }}
       CATEGORY: ${{ matrix.category }}
     steps:
       - name: Get the code
@@ -147,18 +171,29 @@ jobs:
       - name: Ask the questions
         id: ask
         run: |
+          MAX_MINUTES=170
+          if [ "$STOP_AT" -gt 0 ]; then
+            left=$(( (STOP_AT - $(date +%s)) / 60 ))
+            if [ "$left" -lt "$MAX_MINUTES" ]; then MAX_MINUTES=$left; fi
+          fi
+          if [ "$MAX_MINUTES" -lt 5 ]; then
+            echo "::error title=$CATEGORY not asked::It is too late to start: the nightly run stops at 6:45 am so that the Excel is ready by 7:00 am."
+            exit 1
+          fi
+          export MAX_MINUTES
           questions=$(node ci/questions.mjs)
           npx bddgen -c playwright.ci.config.ts
+          echo "asked=yes" >> "$GITHUB_OUTPUT"
           set +e
           npx playwright test -c playwright.ci.config.ts --project=chromium --grep "$questions" 2>&1 | node ci/redact-log.mjs
           echo "Playwright ended with exit code ${PIPESTATUS[0]} (0 = every question passed, 1 = some questions failed or did not run)."
 
       - name: Check the results
-        if: always() && steps.ask.outcome != 'skipped'
+        if: always() && steps.ask.outputs.asked == 'yes'
         run: node ci/check-results.mjs
 
       - name: Keep this category's rows for the Excel
-        if: always() && steps.ask.outcome != 'skipped'
+        if: always() && steps.ask.outputs.asked == 'yes'
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: rows-${{ matrix.category }}
@@ -198,6 +233,7 @@ jobs:
         id: excel
         env:
           MODE: ${{ needs.check.outputs.mode }}
+          PARALLEL: ${{ needs.check.outputs.parallel }}
         run: npx tsx ci/merge-reports.ts
 
       - name: Put the Excel on the run's page
