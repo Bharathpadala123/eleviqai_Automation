@@ -13,16 +13,34 @@ function stop(message) {
   process.exit(1);
 }
 
+/** The secret as JSON. Stops with facts about what is wrong with it, without showing any of its content. */
+function parse(text) {
+  try {
+    return JSON.parse(text);
+  } catch {
+    // A copy taken from a terminal window can have line breaks inside long values; JSON needs no line breaks at all.
+  }
+  try {
+    return JSON.parse(text.split(/\r?\n/).join(''));
+  } catch {
+    // Fall through to the explanation.
+  }
+  const yesNo = (value) => (value ? 'yes' : 'no');
+  const facts = [`${text.length} characters in ${text.split('\n').length} line(s)`];
+  if (/Get-Content|Set-Clipboard/i.test(text)) facts.push('it holds the copy command instead of the file content');
+  else if (/app-session\.json"?$/i.test(text)) facts.push('it holds the path of the file instead of its content');
+  facts.push(`starts with { : ${yesNo(text.startsWith('{'))}`);
+  facts.push(`ends with } : ${yesNo(text.endsWith('}'))}`);
+  facts.push(`has the cookie list: ${yesNo(text.includes('"cookies"'))}`);
+  facts.push(`has the sign-in cookie: ${yesNo(text.includes('elv_session'))}`);
+  facts.push(`has the local storage part: ${yesNo(text.includes('"origins"'))}`);
+  return stop(`The repository secret APP_SESSION_JSON is not the complete content of the file (${facts.join('; ')}; a complete file has about 2,700 characters).`);
+}
+
 // trim() also removes a byte order mark, which some editors add when a file is copied.
 const raw = (process.env.APP_SESSION_JSON ?? '').trim();
 if (!raw) stop('The repository secret APP_SESSION_JSON is empty or missing.');
-
-let state;
-try {
-  state = JSON.parse(raw);
-} catch {
-  stop('The repository secret APP_SESSION_JSON is not complete JSON (it must start with { and end with }).');
-}
+const state = parse(raw);
 if (!state || !Array.isArray(state.cookies)) stop('The repository secret APP_SESSION_JSON holds no cookies.');
 
 const host = new URL(process.env.BASE_URL || 'https://app.eleviqai.com/').hostname;
