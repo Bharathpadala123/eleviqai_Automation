@@ -13,6 +13,10 @@ const BASE = process.env.BASE_URL || 'https://app.eleviqai.com/';
 const STATE = process.env.STORAGE_STATE || '.auth/app-session.json';
 const GIVE_UP_AFTER_MS = 15 * 60_000;
 const RETRY_AFTER_MS = 60_000;
+// Cloudflare can let the page and the first calls in and refuse everything a few seconds later, so the signed-in check
+// keeps using the app for this long before it says the app works.
+const WATCH_MS = 30_000;
+const WATCH_EVERY_MS = 3_000;
 const secrets = loadSecrets();
 const firstLine = (error) => redact(String(error?.message ?? error).split('\n')[0], secrets).slice(0, 160);
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -35,6 +39,15 @@ async function look(browser) {
     const page = await context.newPage();
     const started = Date.now();
     const seconds = () => Math.round((Date.now() - started) / 1000);
+    // The app's own calls that Cloudflare answered with its check instead of passing them on to the app.
+    const refused = [];
+    const refusedLate = () => ({
+      kind: 'cloudflare',
+      detail: `the page opened, but after ${seconds()} s the app's API answered HTTP ${refused[0]} with a Cloudflare check`,
+    });
+    page.on('response', (r) => {
+      if (r.headers()['cf-mitigated'] === 'challenge' && new URL(r.url()).host === new URL(BASE).host) refused.push(r.status());
+    });
     let response;
     try {
       response = await page.goto(BASE, { timeout: 60_000, waitUntil: 'domcontentloaded' });
@@ -57,15 +70,7 @@ async function look(browser) {
     if (answer.mitigated === 'challenge') return { kind: 'cloudflare', detail: `the app's API answered HTTP ${answer.status} with a Cloudflare check` };
     if (reachOnly) {
       if (answer.status >= 500) return { kind: 'down', detail: `the app's health check answered HTTP ${answer.status}` };
-      // For information: what Playwright's own HTTP client gets (the tests only use the browser).
-      const client = await context.request
-        .get(new URL('/api/health', BASE).href, { timeout: 15_000, failOnStatusCode: false })
-        .then((r) => `HTTP ${r.status()}${r.headers()['cf-mitigated'] ? ` (cf-mitigated: ${r.headers()['cf-mitigated']})` : ''}`)
-        .catch((error) => firstLine(error));
-      return {
-        kind: 'ok',
-        detail: `answers GitHub's machine: page HTTP ${response?.status()}, health check HTTP ${answer.status} in the browser, ${client} outside the browser, ${seconds()} s`,
-      };
+      return { kind: 'ok', detail: `answers GitHub's machine: page HTTP ${response?.status()}, health check HTTP ${answer.status}, ${seconds()} s` };
     }
     if (answer.status === 401) return { kind: 'signed-out', detail: 'the app does not accept the saved sign-in (HTTP 401)' };
     if (answer.status >= 400) return { kind: 'down', detail: `the sign-in check answered HTTP ${answer.status}` };
@@ -73,12 +78,21 @@ async function look(browser) {
     try {
       await page.getByRole('button', { name: 'Overview' }).first().waitFor({ timeout: 60_000 });
     } catch {
+      if (refused.length > 0) return refusedLate();
       const onSignIn = (await page.locator('input[type="password"]').count()) > 0;
       return onSignIn
         ? { kind: 'signed-out', detail: 'the app shows its sign-in page' }
         : { kind: 'down', detail: 'the app did not show its Overview button within 60 s' };
     }
-    return { kind: 'ok', detail: `opened and signed in after ${seconds()} s` };
+    const openedAfter = seconds();
+
+    await page.getByRole('button', { name: /new (chat|conversation)/i }).first().click({ timeout: 15_000 }).catch(() => undefined);
+    for (const end = Date.now() + WATCH_MS; Date.now() < end && refused.length === 0; ) {
+      await sleep(WATCH_EVERY_MS);
+      await ask(page, '/api/conversations').catch(() => undefined);
+    }
+    if (refused.length > 0) return refusedLate();
+    return { kind: 'ok', detail: `opened and signed in after ${openedAfter} s, and kept answering for ${Math.round(WATCH_MS / 1000)} s` };
   } finally {
     await context.close().catch(() => undefined);
   }
@@ -103,7 +117,7 @@ await browser.close();
 if (result.kind === 'ok') {
   annotate('notice', TITLE, `The app ${result.detail}.`);
 } else if (result.kind === 'cloudflare') {
-  annotate('error', TITLE, `Cloudflare does not let GitHub's machine into the app (${result.detail}). The app team has to allow it; the pipeline does not try to get around the check.`);
+  annotate('error', TITLE, `Cloudflare does not let GitHub's machine use the app (${result.detail}). The app team has to allow it; the pipeline does not try to get around the check.`);
   process.exit(1);
 } else if (result.kind === 'signed-out') {
   annotate('error', TITLE, `The saved sign-in does not work: ${result.detail}. Sign in again by hand (README, "Sign in once") and update the repository secret APP_SESSION_JSON.`);

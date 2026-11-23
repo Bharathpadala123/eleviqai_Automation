@@ -79,9 +79,7 @@ jobs:
               parallel=${AT_A_TIME:-2}
               ;;
             *)
-              if [[ "$COMMIT_MESSAGE" == *'[diagnose]'* ]]; then mode=diagnose
-              elif [[ "$COMMIT_MESSAGE" == *'[run-800]'* ]]; then mode=all
-              else mode=trial; fi
+              if [[ "$COMMIT_MESSAGE" == *'[run-800]'* ]]; then mode=all; else mode=trial; fi
               if [[ "$COMMIT_MESSAGE" =~ \[([1-4])-at-a-time\] ]]; then parallel=${BASH_REMATCH[1]}; fi
               ;;
           esac
@@ -93,7 +91,6 @@ jobs:
           case "$mode" in
             all) text="All 800 questions, $parallel categories at a time." ;;
             trial) text="Trial, $parallel categories at a time: $TRIAL_QUESTIONS" ;;
-            diagnose) text="One question, listing the app's requests." ;;
             *) text="Nothing to run: the 9 pm runs are set for $FIRST_NIGHT to $LAST_NIGHT." ;;
           esac
           echo "::notice title=What this run does::$text"
@@ -132,14 +129,10 @@ jobs:
         if: steps.mode.outputs.mode != 'skip'
         run: node ci/check-app.mjs
 
-      - name: Ask one question and list its requests
-        if: steps.mode.outputs.mode == 'diagnose'
-        run: node ci/diagnose-chat.mjs
-
   ask:
     name: Ask ${{ matrix.category }}
     needs: check
-    if: needs.check.outputs.mode == 'trial' || needs.check.outputs.mode == 'all'
+    if: needs.check.outputs.mode != 'skip'
     runs-on: ubuntu-24.04
     timeout-minutes: 200
     strategy:
@@ -213,7 +206,7 @@ jobs:
   report:
     name: Excel report
     needs: [check, ask]
-    if: always() && needs.check.result == 'success' && (needs.check.outputs.mode == 'trial' || needs.check.outputs.mode == 'all')
+    if: always() && needs.check.result == 'success' && needs.check.outputs.mode != 'skip'
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
